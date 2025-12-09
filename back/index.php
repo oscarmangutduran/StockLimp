@@ -1,54 +1,145 @@
 <?php
-// back/index.php
+// back/controllers/ProductController.php
 
-// ----------------------------------------------------
-// 1. CABECERAS CORS (ESENCIAL PARA COMUNICACIÓN REACT-PHP)
-// ----------------------------------------------------
-header("Access-Control-Allow-Origin: *"); // Permite cualquier origen (para desarrollo)
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+// Incluir el modelo
+include_once 'models/Product.php';
 
-// Responde a peticiones OPTIONS (pre-vuelo CORS)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+class ProductController {
+    private $db;
+    private $product;
+
+    public function __construct($db) {
+        $this->db = $db;
+        $this->product = new Product($db);
+    }
+
+    // Router para los métodos HTTP
+    public function handleRequest($method) {
+        switch ($method) {
+            case 'GET':
+                $this->readAll();
+                break;
+            case 'POST':
+                $this->create();
+                break;
+            case 'PUT':
+                $this->update();
+                break;
+            case 'DELETE':
+                $this->delete();
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(["message" => "Método no permitido."]);
+                break;
+        }
+    }
+
+    // ============================================================
+    // GET - Listar productos
+    // ============================================================
+    private function readAll() {
+        $stmt = $this->product->read();
+        $num = $stmt->rowCount();
+
+        if ($num > 0) {
+            $products_arr = array();
+
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                extract($row);
+
+                $product_item = array(
+                    "producto_id"  => (int)$producto_id,
+                    "nombre"       => $nombre,
+                    "es_toxico"    => (bool)$es_toxico,
+                    "precio_unidad"=> (float)$precio_unidad,
+                    "stock_actual" => (int)$stock_actual
+                );
+
+                $products_arr[] = $product_item;
+            }
+
+            http_response_code(200);
+            echo json_encode($products_arr);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "No se encontraron productos."]);
+        }
+    }
+
+    // ============================================================
+    // POST - Crear producto
+    // ============================================================
+    private function create() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->nombre) || empty($data->precio_unidad)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Datos incompletos (nombre y precio son obligatorios)."]);
+            return;
+        }
+
+        $this->product->nombre        = $data->nombre;
+        $this->product->es_toxico     = $data->es_toxico ?? 0;
+        $this->product->precio_unidad = $data->precio_unidad;
+        $this->product->stock_actual  = $data->stock_actual ?? 0;
+
+        if ($this->product->create()) {
+            http_response_code(201);
+            echo json_encode(["message" => "Producto creado correctamente."]);
+        } else {
+            http_response_code(503);
+            echo json_encode(["message" => "No se pudo crear el producto."]);
+        }
+    }
+
+    // ============================================================
+    // PUT - Actualizar producto
+    // ============================================================
+    private function update() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->producto_id) || empty($data->nombre) || empty($data->precio_unidad)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Datos incompletos o falta el ID."]);
+            return;
+        }
+
+        $this->product->producto_id   = $data->producto_id;
+        $this->product->nombre        = $data->nombre;
+        $this->product->es_toxico     = $data->es_toxico ?? 0;
+        $this->product->precio_unidad = $data->precio_unidad;
+        $this->product->stock_actual  = $data->stock_actual ?? 0;
+
+        if ($this->product->update()) {
+            http_response_code(200);
+            echo json_encode(["message" => "Producto actualizado correctamente."]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Producto no encontrado o sin cambios."]);
+        }
+    }
+
+    // ============================================================
+    // DELETE - Eliminar producto
+    // ============================================================
+    private function delete() {
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (empty($data->producto_id)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Error. Falta el ID del producto."]);
+            return;
+        }
+
+        $this->product->producto_id = $data->producto_id;
+
+        if ($this->product->delete()) {
+            http_response_code(200);
+            echo json_encode(["message" => "Producto eliminado correctamente."]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "No se pudo eliminar. Producto no encontrado."]);
+        }
+    }
 }
-
-// ----------------------------------------------------
-// 2. INCLUSIÓN DE ARCHIVOS CLAVE
-// ----------------------------------------------------
-include_once 'config/Database.php';
-include_once 'controllers/ProductController.php';
-
-// Inicializar la conexión
-$database = new Database();
-$db = $database->getConnection();
-
-// ----------------------------------------------------
-// 3. ENRUTAMIENTO (Routing Básico)
-// ----------------------------------------------------
-
-$request_method = $_SERVER['REQUEST_METHOD'];
-$request_uri = $_SERVER['REQUEST_URI'];
-$base_path = '/back/'; // Ruta base de la carpeta en XAMPP
-
-// Quitar la ruta base para obtener el recurso real (ej: 'productos')
-$uri_without_base = str_replace($base_path, '', $request_uri);
-$uri_parts = explode('/', trim($uri_without_base, '/'));
-$resource = $uri_parts[0]; // El primer segmento es el recurso ('productos', 'users', etc.)
-
-// Manejo de la entidad 'productos' (Sprint 1)
-if ($resource === 'productos') {
-    $controller = new ProductController($db);
-    $controller->handleRequest($request_method);
-} 
-// Futuros recursos (Sprint 2): else if ($resource === 'users') { ... }
-else {
-    // Si la ruta no existe
-    http_response_code(404);
-    echo json_encode(["message" => "Recurso no encontrado. La API soporta: /productos."]);
-}
-
-?>

@@ -2,35 +2,35 @@
 // back/config/Database.php
 
 class Database {
-    // Ajustes de conexión para XAMPP en Windows
+    // Ajustes de conexión para XAMPP
     private $host = "localhost";
-    private $db_name = "stocklimp"; // ¡VERIFICA ESTE NOMBRE!
+    private $db_name = "stocklimp"; // ¡Asegúrate de que coincida con tu BD!
     private $username = "root";
-    private $password = ""; // Contraseña vacía por defecto en XAMPP
+    private $password = ""; // En XAMPP por defecto va vacía
     public $conn;
 
     /**
-     * Obtiene la conexión a la base de datos.
-     * @return PDO
+     * Obtiene la conexión a la base de datos (PDO).
+     * @return PDO|null
      */
     public function getConnection() {
         $this->conn = null;
 
         try {
-            $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name;
-            
-            $this->conn = new PDO($dsn, $this->username, $this->password);
-            
-            // Configuración crucial para atrapar errores SQL
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            // Conjunto de caracteres
-            $this->conn->exec("set names utf8");
+            // Charset agregado en el DSN (correcto para MySQL)
+            $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset=utf8";
 
-        } catch(PDOException $exception) {
-            // Error de conexión, no debería ocurrir si XAMPP está corriendo.
+            $this->conn = new PDO($dsn, $this->username, $this->password);
+
+            // Configurar errores como excepciones (muy importante)
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        } catch (PDOException $exception) {
             http_response_code(500);
-            echo json_encode(["message" => "Error de conexión a la base de datos: " . $exception->getMessage()]);
+            echo json_encode([
+                "message" => "Error al conectar con la base de datos.",
+                "error"   => $exception->getMessage()
+            ]);
             exit();
         }
 

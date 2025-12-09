@@ -13,7 +13,7 @@ class ProductController {
     }
 
     // ----------------------------------------------------
-    // MANEJADOR PRINCIPAL DE PETICIONES (CRUD)
+    // Manejo de métodos HTTP
     // ----------------------------------------------------
     public function handleRequest($method) {
         switch ($method) {
@@ -30,97 +30,103 @@ class ProductController {
                 $this->delete();
                 break;
             default:
-                http_response_code(405); // Método no permitido
+                http_response_code(405);
                 echo json_encode(["message" => "Método no permitido."]);
                 break;
         }
     }
 
-    // Lógica para listar todos (GET)
+    // ----------------------------------------------------
+    // GET – Listar todos
+    // ----------------------------------------------------
     private function readAll() {
         $stmt = $this->product->read();
         $num = $stmt->rowCount();
 
         if ($num > 0) {
-            $products_arr = array();
-            
+            $products_arr = [];
+
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                extract($row);
-                $product_item = array(
-                    "producto_id" => $producto_id,
-                    "nombre" => $nombre,
-                    "es_toxico" => (bool)$es_toxico, // Convertir a booleano para React
-                    "precio_unidad" => $precio_unidad,
-                    "stock_actual" => $stock_actual
-                );
-                array_push($products_arr, $product_item);
+                $products_arr[] = [
+                    "producto_id"   => (int)$row["producto_id"],
+                    "nombre"        => $row["nombre"],
+                    "es_toxico"     => (bool)$row["es_toxico"],
+                    "precio_unidad" => (float)$row["precio_unidad"],
+                    "stock_actual"  => (int)$row["stock_actual"]
+                ];
             }
 
             http_response_code(200);
             echo json_encode($products_arr);
+
         } else {
             http_response_code(404);
-            echo json_encode(array("message" => "No se encontraron productos."));
+            echo json_encode(["message" => "No se encontraron productos."]);
         }
     }
 
-    // Lógica para crear (POST)
+    // ----------------------------------------------------
+    // POST – Crear producto
+    // ----------------------------------------------------
     private function create() {
-        $data = json_decode(file_get_contents("php://input")); // Lee el JSON de React
+        $data = json_decode(file_get_contents("php://input"));
 
         if (empty($data->nombre) || empty($data->precio_unidad)) {
-            http_response_code(400); // Bad Request
-            echo json_encode(array("message" => "Error. Datos incompletos (nombre y precio son obligatorios)."));
+            http_response_code(400);
+            echo json_encode(["message" => "Error. Datos incompletos (nombre y precio son obligatorios)."]);
             return;
         }
 
-        $this->product->nombre = $data->nombre;
-        $this->product->es_toxico = $data->es_toxico ?? 0;
+        $this->product->nombre        = $data->nombre;
+        $this->product->es_toxico     = $data->es_toxico ?? 0;
         $this->product->precio_unidad = $data->precio_unidad;
-        $this->product->stock_actual = $data->stock_actual ?? 0;
+        $this->product->stock_actual  = $data->stock_actual ?? 0;
 
         if ($this->product->create()) {
-            http_response_code(201); // Created
-            echo json_encode(array("message" => "Producto creado correctamente."));
+            http_response_code(201);
+            echo json_encode(["message" => "Producto creado correctamente."]);
         } else {
-            http_response_code(503); // Service Unavailable
-            echo json_encode(array("message" => "No se pudo crear el producto. Error en el servidor."));
+            http_response_code(503);
+            echo json_encode(["message" => "No se pudo crear el producto. Error en el servidor."]);
         }
     }
 
-    // Lógica para actualizar (PUT)
+    // ----------------------------------------------------
+    // PUT – Actualizar producto
+    // ----------------------------------------------------
     private function update() {
-        $data = json_decode(file_get_contents("php://input")); // Lee el JSON
+        $data = json_decode(file_get_contents("php://input"));
 
         if (empty($data->producto_id) || empty($data->nombre) || empty($data->precio_unidad)) {
             http_response_code(400);
-            echo json_encode(array("message" => "Error. Datos incompletos o falta el ID."));
+            echo json_encode(["message" => "Error. Datos incompletos o falta el ID."]);
             return;
         }
 
-        // Asignar todos los campos
-        $this->product->producto_id = $data->producto_id;
-        $this->product->nombre = $data->nombre;
-        $this->product->es_toxico = $data->es_toxico ?? 0;
+        $this->product->producto_id   = $data->producto_id;
+        $this->product->nombre        = $data->nombre;
+        $this->product->es_toxico     = $data->es_toxico ?? 0;
         $this->product->precio_unidad = $data->precio_unidad;
-        $this->product->stock_actual = $data->stock_actual;
+        $this->product->stock_actual  = $data->stock_actual ?? 0;
 
         if ($this->product->update()) {
             http_response_code(200);
-            echo json_encode(array("message" => "Producto actualizado correctamente."));
+            echo json_encode(["message" => "Producto actualizado correctamente."]);
         } else {
             http_response_code(404);
-            echo json_encode(array("message" => "Error. Producto no encontrado o no se realizaron cambios."));
+            echo json_encode(["message" => "Producto no encontrado o sin cambios."]);
         }
     }
 
-    // Lógica para eliminar (DELETE)
+    // ----------------------------------------------------
+    // DELETE – Eliminar producto
+    // ----------------------------------------------------
     private function delete() {
-        $data = json_decode(file_get_contents("php://input")); // Lee el JSON
-        
+        $data = json_decode(file_get_contents("php://input"));
+
         if (empty($data->producto_id)) {
             http_response_code(400);
-            echo json_encode(array("message" => "Error. Falta el ID del producto a eliminar."));
+            echo json_encode(["message" => "Error. Falta el ID del producto a eliminar."]);
             return;
         }
 
@@ -128,10 +134,10 @@ class ProductController {
 
         if ($this->product->delete()) {
             http_response_code(200);
-            echo json_encode(array("message" => "Producto eliminado correctamente."));
+            echo json_encode(["message" => "Producto eliminado correctamente."]);
         } else {
             http_response_code(404);
-            echo json_encode(array("message" => "Error al eliminar. Producto no encontrado."));
+            echo json_encode(["message" => "Error al eliminar. Producto no encontrado."]);
         }
     }
 }
