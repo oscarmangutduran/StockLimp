@@ -27,5 +27,16 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
+  },
+  "vite": {
+    "server": {
+      "proxy": {
+        "/index.php": {
+          "target": "http://localhost/StockLimp/back",
+          "changeOrigin": true,
+          "secure": false
+        }
+      }
+    }
   }
 }

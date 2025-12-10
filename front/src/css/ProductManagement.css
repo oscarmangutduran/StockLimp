@@ -1,0 +1,46 @@
+.product-management {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: #333;
+}
+
+h3 {
+    margin-top: 10px;
+    color: #555;
+}
+
+.product-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.product-table th, 
+.product-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.product-table th {
+    background-color: #f2f2f2;
+}
+
+.product-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.loading {
+    padding: 20px;
+    font-size: 18px;
+    color: #555;
+}
+
+.error {
+    padding: 20px;
+    color: red;
+    font-weight: bold;
+}
