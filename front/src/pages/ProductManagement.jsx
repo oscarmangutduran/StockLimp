@@ -8,7 +8,6 @@ function ProductManagement() {
     const [error, setError] = useState(null); 
     const [selectedResource, setSelectedResource] = useState('productos');
 
-    // Opciones disponibles (¡Todas tus tablas!)
     const resourceOptions = [
         { value: 'productos', label: 'Productos' },
         { value: 'users', label: 'Usuarios' },
@@ -23,7 +22,6 @@ function ProductManagement() {
         setError(null);
         
         try {
-            // Llama a la API con el recurso seleccionado
             const fetchedData = await fetchResourceData(selectedResource); 
             
             console.log(`Datos recibidos para el recurso "${selectedResource}":`, fetchedData); 
@@ -31,7 +29,6 @@ function ProductManagement() {
             if (Array.isArray(fetchedData)) {
                 setData(fetchedData);
             } else if (fetchedData && fetchedData.message) {
-                 // Manejo del error 404/mensaje de PHP
                 setError(`API ERROR: ${fetchedData.message}`);
                 setData([]);
             } else {
@@ -55,7 +52,7 @@ function ProductManagement() {
             return <p>No se encontraron datos en la tabla **"{selectedResource}"**.</p>;
         }
         
-        // Renderizado genérico: funciona con cualquier tabla extrayendo las claves como encabezados
+        // Renderizado genérico
         const headers = Object.keys(data[0]);
 
         return (
@@ -85,12 +82,12 @@ function ProductManagement() {
 
     return (
         <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h1>Herramienta de Diagnóstico de API</h1>
+            <h1>StockLimp</h1>
             
             <div style={{ margin: '20px 0', border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '15px', alignItems: 'center' }}>
                 
                 <label htmlFor="resource-select" style={{ fontWeight: 'bold' }}>
-                    Seleccionar Tabla/Recurso:
+                    Seleccionar Tabla:
                 </label>
                 <select 
                     id="resource-select" 
