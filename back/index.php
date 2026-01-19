@@ -1,10 +1,8 @@
 <?php
 /**
- * API Entry Point - StockLimp
- * Manejo de rutas y configuración de cabeceras
+ * API Entry Point - StockLimp (Versión Dinámica)
  */
 
-// Configuración de CORS
 if (isset($_SERVER['HTTP_ORIGIN'])) {
     header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -12,7 +10,6 @@ if (isset($_SERVER['HTTP_ORIGIN'])) {
     header("Access-Control-Max-Age: 3600");
 }
 
-// Responder rápido a peticiones de pre-vuelo (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -20,26 +17,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header("Content-Type: application/json; charset=UTF-8");
 
-// Carga de dependencias
 require_once 'config/Database.php';
 require_once 'controllers/ProductController.php';
 
-// Conexión principal
 $db = (new Database())->getConnection();
-
-// Captura de parámetros
 $method = $_SERVER['REQUEST_METHOD'];
 $resource = $_GET['resource'] ?? null;
 
-// Routing de la API
-switch ($resource) {
-    case 'productos':
-        $api = new ProductController($db);
-        $api->handleRequest($method);
-        break;
+// Lista de tablas permitidas en tu base de datos
+$tablas_permitidas = ['productos', 'users', 'pedidos', 'detalle_pedido', 'centros_trabajo'];
 
-    default:
-        http_response_code(404);
-        echo json_encode(["error" => "Resource not found"]);
-        break;
+if (in_array($resource, $tablas_permitidas)) {
+    $api = new ProductController($db);
+    // IMPORTANTE: Ahora pasamos el recurso al método handleRequest
+    $api->handleRequest($method, $resource);
+} else {
+    http_response_code(404);
+    echo json_encode(["error" => "La tabla '$resource' no existe o no está permitida"]);
 }

@@ -1,7 +1,4 @@
 <?php
-/**
- * Lógica para el recurso Productos
- */
 require_once 'models/Product.php';
 
 class ProductController {
@@ -11,34 +8,32 @@ class ProductController {
         $this->model = new Product($db);
     }
 
-    public function handleRequest($method) {
-        if ($method !== 'GET') {
+    public function handleRequest($method, $tabla) {
+        if ($method === 'GET') {
+            $this->fetchData($tabla);
+        } else {
             http_response_code(405);
-            echo json_encode(["error" => "Method not allowed"]);
-            return;
+            echo json_encode(["error" => "Método no permitido"]);
         }
-
-        $this->getAll();
     }
 
-    private function getAll() {
-        $res = $this->model->read();
+    private function fetchData($tabla) {
+        $stmt = $this->model->readAny($tabla);
         
-        if ($res && $res->rowCount() > 0) {
-            $data = [];
-
-            while ($row = $res->fetch()) {
-                // Casteo manual de tipos específicos
-                $row['es_toxico'] = (bool)$row['es_toxico'];
-                $row['precio_unidad'] = (float)$row['precio_unidad'];
-                $data[] = $row;
+        if ($stmt) {
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Ajuste manual para booleanos (opcional)
+            foreach ($data as &$row) {
+                if (isset($row['es_toxico'])) {
+                    $row['es_toxico'] = (bool)$row['es_toxico'];
+                }
             }
-
-            http_response_code(200);
+            
             echo json_encode($data);
         } else {
-            http_response_code(404);
-            echo json_encode(["msg" => "No hay registros"]);
+            http_response_code(500);
+            echo json_encode(["error" => "Fallo al leer la tabla $tabla"]);
         }
     }
 }
