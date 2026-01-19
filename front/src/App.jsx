@@ -1,13 +1,12 @@
-// front/src/App.jsx
 import React from 'react';
-import ProductManagement from './pages/ProductManagement.jsx'; 
+import ProductManagement from './pages/ProductManagement';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <ProductManagement /> 
-    </div>
+    <main className="app-container">
+      <ProductManagement />
+    </main>
   );
-}
+};
 
 export default App;

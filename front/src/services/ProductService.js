@@ -1,20 +1,28 @@
-// front/src/services/ProductService.js
 import axios from 'axios';
 
-// 🚨 CRÍTICO: Usamos localhost para que coincida con el Origen de React 🚨
-const API_URL = 'http://localhost/stocklimp/back/index.php'; 
+/**
+ * Configuración de la API local
+ * Se usa localhost para evitar conflictos de origen con el dev server de Vite
+ */
+const API = axios.create({
+    baseURL: 'http://localhost/stocklimp/back/index.php'
+});
 
-export const fetchResourceData = async (resourceName) => {
+export const fetchResourceData = async (resource) => {
     try {
-        const response = await axios.get(API_URL, {
-            params: {
-                resource: resourceName 
-            }
+        const { data } = await API.get('', {
+            params: { resource }
         });
         
-        return response.data; 
-    } catch (error) {
-        console.error(`Error al obtener datos del recurso ${resourceName}:`, error);
-        return { message: "Error de conexión de red o CORS." }; 
+        return data;
+    } catch (err) {
+        // Log para depuración interna
+        console.error(`[API Error] Fail fetching ${resource}:`, err.message);
+        
+        // Devolvemos un objeto estructurado para que el front no rompa
+        return { 
+            error: true, 
+            message: "No se pudo conectar con el servicio. Verifique el backend." 
+        };
     }
 };

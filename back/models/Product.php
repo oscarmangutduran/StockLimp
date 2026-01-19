@@ -1,26 +1,27 @@
 <?php
-// back/models/Product.php
-
+/**
+ * Modelo de Productos
+ */
 class Product {
-private $conn;
- private $table_name = "productos";
+    private $db;
+    private $table = "productos";
 
- public $id_producto;
- public $nombre;
- public $es_toxico;
- public $precio_unidad;
- public $stock_actual;
+    public function __construct($conn) {
+        $this->db = $conn;
+    }
 
- public function __construct($db) {
- $this->conn = $db;
- }
-
-
- public function read() {
- $query = "SELECT * FROM " . $this->table_name . " ORDER BY nombre ASC";
- $stmt = $this->conn->prepare($query);
-$stmt->execute();
- return $stmt;
+    /**
+     * Obtener listado completo
+     */
+    public function read() {
+        $sql = "SELECT * FROM {$this->table} ORDER BY nombre ASC";
+        
+        try {
+            $query = $this->db->prepare($sql);
+            $query->execute();
+            return $query;
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
 }
-}
-?>

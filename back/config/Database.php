@@ -1,29 +1,32 @@
 <?php
-// back/config/Database.php
-
+/**
+ * Database Config
+ * Conexión PDO para el sistema StockLimp
+ */
 class Database {
- private $host = "localhost";
-private $db_name = "stocklimp"; 
- private $username = "root"; 
- private $password = ""; 
- public $conn;
+    private $host = "localhost";
+    private $db   = "stocklimp";
+    private $user = "root";
+    private $pass = "";
+    public $conn;
 
- public function getConnection() {
- $this->conn = null;
+    public function getConnection() {
+        $this->conn = null;
 
- try {
- $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->db_name;
- $this->conn = new PDO($dsn, $this->username, $this->password);
- $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
- $this->conn->exec("set names utf8");
+        try {
+            $dsn = "mysql:host={$this->host};dbname={$this->db};charset=utf8";
+            $this->conn = new PDO($dsn, $this->user, $this->pass);
+            
+            // Reporte de errores para desarrollo
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
- } catch(PDOException $exception) {
- http_response_code(500);
-echo json_encode(["message" => "Error de conexión a la base de datos: " . $exception->getMessage()]);
- exit();
- }
+        } catch(PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "DB_CONN_FAIL", "details" => $e->getMessage()]);
+            die();
+        }
 
-    return $this->conn;
+        return $this->conn;
     }
 }
-?>
