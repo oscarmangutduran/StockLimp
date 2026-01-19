@@ -1,76 +1,64 @@
-// front/src/pages/ProductManagement.jsx
 import React, { useState } from 'react';
-import { fetchResourceData } from '../services/ProductService'; 
+import { fetchResourceData } from '../services/ProductService';
 
-function ProductManagement() {
-    const [data, setData] = useState(null); 
+const ProductManagement = () => {
+    const [list, setList] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null); 
-    const [selectedResource, setSelectedResource] = useState('productos');
+    const [alert, setAlert] = useState(null);
+    const [resource, setResource] = useState('productos');
 
-    const resourceOptions = [
-        { value: 'productos', label: 'Productos' },
-        { value: 'users', label: 'Usuarios' },
-        { value: 'pedidos', label: 'Pedidos' },
-        { value: 'centros_trabajo', label: 'Centros de Trabajo' },
-        { value: 'detalle_pedido', label: 'Detalle de Pedido' },
+    // Mapeo de tablas del sistema
+    const tables = [
+        { id: 'productos', name: 'Catálogo de Productos' },
+        { id: 'users', name: 'Gestión de Usuarios' },
+        { id: 'pedidos', name: 'Historial de Pedidos' },
+        { id: 'centros_trabajo', name: 'Centros Operativos' },
+        { id: 'detalle_pedido', name: 'Desglose de Pedidos' }
     ];
-    
-    const handleFetchData = async () => {
-        setData(null);
+
+    const loadData = async () => {
         setLoading(true);
-        setError(null);
+        setAlert(null);
         
         try {
-            const fetchedData = await fetchResourceData(selectedResource); 
-            
-            console.log(`Datos recibidos para el recurso "${selectedResource}":`, fetchedData); 
+            const result = await fetchResourceData(resource);
 
-            if (Array.isArray(fetchedData)) {
-                setData(fetchedData);
-            } else if (fetchedData && fetchedData.message) {
-                setError(`API ERROR: ${fetchedData.message}`);
-                setData([]);
+            if (result && !result.error) {
+                setList(Array.isArray(result) ? result : []);
             } else {
-                setError("Fallo: La API devolvió un formato de datos inesperado.");
-                setData([]);
+                setAlert(result.message || "Error al procesar la respuesta.");
+                setList([]);
             }
         } catch (err) {
-            console.error("Fallo de conexión:", err);
-            setError(`Fallo de conexión. Revisa XAMPP y el enrutamiento de la API.`);
+            setAlert("Error de conexión con el servidor local.");
         } finally {
             setLoading(false);
         }
     };
-    
-    const renderTable = () => {
-        if (data === null) {
-            return <p>Selecciona una tabla y haz clic en "Mostrar Datos".</p>;
-        }
-        
-        if (data.length === 0) {
-            return <p>No se encontraron datos en la tabla **"{selectedResource}"**.</p>;
-        }
-        
-        // Renderizado genérico
-        const headers = Object.keys(data[0]);
+
+    const DynamicTable = () => {
+        if (!list) return <p style={{ color: '#666' }}>Seleccione un módulo para visualizar los registros.</p>;
+        if (list.length === 0) return <p>No se encontraron registros en este módulo.</p>;
+
+        const cols = Object.keys(list[0]);
 
         return (
-            <div style={{ overflowX: 'auto' }}>
-                <p style={{marginTop: '20px', fontWeight: 'bold'}}>Datos de la tabla: {selectedResource} ({data.length} filas)</p>
-                <table border="1" cellPadding="10" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', minWidth: '600px' }}>
+            <div className="table-container" style={{ marginTop: '20px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
                     <thead>
-                        <tr style={{ backgroundColor: '#f2f2f2' }}>
-                            {headers.map(header => (
-                                <th key={header} style={{textTransform: 'uppercase'}}>{header}</th>
+                        <tr style={{ backgroundColor: '#f8f9fa', textAlign: 'left' }}>
+                            {cols.map(col => (
+                                <th key={col} style={{ padding: '12px', borderBottom: '2px solid #dee2e6', textTransform: 'capitalize' }}>
+                                    {col.replace('_', ' ')}
+                                </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((row, index) => (
-                            <tr key={index}> 
-                                {headers.map(header => (
-                                    <td key={header}>{String(row[header])}</td>
+                        {list.map((row, i) => (
+                            <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+                                {cols.map(col => (
+                                    <td key={col} style={{ padding: '10px' }}>{String(row[col])}</td>
                                 ))}
                             </tr>
                         ))}
@@ -81,42 +69,43 @@ function ProductManagement() {
     };
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h1>StockLimp</h1>
-            
-            <div style={{ margin: '20px 0', border: '1px solid #ccc', padding: '15px', borderRadius: '5px', display: 'flex', gap: '15px', alignItems: 'center' }}>
-                
-                <label htmlFor="resource-select" style={{ fontWeight: 'bold' }}>
-                    Seleccionar Tabla:
-                </label>
-                <select 
-                    id="resource-select" 
-                    value={selectedResource} 
-                    onChange={(e) => setSelectedResource(e.target.value)}
-                    style={{ padding: '8px', borderRadius: '4px' }}
-                    disabled={loading}
-                >
-                    {resourceOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-                
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+            <header style={{ marginBottom: '30px', borderBottom: '2px solid #007bff', paddingBottom: '10px' }}>
+                <h1 style={{ margin: 0, color: '#efe7e7ff' }}>Sistema de Control StockLimp</h1>
+            </header>
+
+            <section style={{ background: '#fdfdfd', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Módulo de consulta:</label>
+                    <select 
+                        value={resource} 
+                        onChange={(e) => setResource(e.target.value)}
+                        style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                    >
+                        {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                </div>
+
                 <button 
-                    onClick={handleFetchData}
+                    onClick={loadData}
                     disabled={loading}
-                    style={{ padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer' }}
+                    style={{ marginTop: '22px', padding: '10px 25px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                 >
-                    {loading ? 'Cargando...' : 'Mostrar Datos'}
+                    {loading ? 'Procesando...' : 'Consultar'}
                 </button>
-            </div>
+            </section>
 
-            {error && <div style={{ color: 'red', padding: '10px', border: '1px solid red', backgroundColor: '#fee', borderRadius: '4px', marginBottom: '15px' }}>⚠️ **Error de Carga:** {error}</div>}
+            {alert && (
+                <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', borderRadius: '4px' }}>
+                    <strong>Aviso:</strong> {alert}
+                </div>
+            )}
 
-            {renderTable()}
+            <hr style={{ margin: '40px 0', border: '0', borderTop: '1px solid #eee' }} />
+
+            <DynamicTable />
         </div>
     );
-}
+};
 
 export default ProductManagement;
