@@ -1,82 +1,58 @@
 import React, { useState } from 'react';
 import { fetchResourceData } from '../services/ProductService';
+import '../css/ProductManagement.css';
 
 const ProductManagement = () => {
-    const [list, setList] = useState(null);
+    const [dataList, setDataList] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [resource, setResource] = useState('productos');
+    const [currentResource, setCurrentResource] = useState('productos');
 
-    // Definición de las tablas permitidas
-    const modules = [
-        { id: 'productos', label: '📦 Inventario de Productos' },
-        { id: 'pedidos', label: '🚚 Órdenes de Pedido' },
-        { id: 'detalle_pedido', label: '🔍 Detalle de Pedidos' },
-        { id: 'centros_trabajo', label: '🏢 Centros de Trabajo' }
+    const availableModules = [
+        { id: 'productos', label: '📦 Productos' },
+        { id: 'pedidos', label: '🚚 Pedidos' },
+        { id: 'detalle_pedido', label: '📋 Detalles' },
+        { id: 'centros_trabajo', label: '🏢 Centros' }
     ];
 
-    const loadData = async () => {
+    const handleRefresh = async () => {
         setLoading(true);
-        const result = await fetchResourceData(resource);
-        
-        if (result && !result.error) {
-            setList(result);
-        } else {
-            setList([]);
-        }
+        const result = await fetchResourceData(currentResource);
+        setDataList(!result.error ? result : []);
         setLoading(false);
     };
 
     return (
-        <div style={{ padding: '30px', maxWidth: '1100px', margin: 'auto', fontFamily: 'Segoe UI, sans-serif' }}>
-            <h2 style={{ color: '#2c3e50', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
-                Panel de Control - StockLimp
-            </h2>
-
-            <div style={{ display: 'flex', gap: '15px', margin: '25px 0', alignItems: 'center' }}>
+        <div className="management-page">
+            <div className="controls-bar">
                 <select 
-                    value={resource} 
-                    onChange={(e) => setResource(e.target.value)}
-                    style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
+                    className="resource-select" 
+                    value={currentResource} 
+                    onChange={(e) => setCurrentResource(e.target.value)}
                 >
-                    {modules.map(m => (
+                    {availableModules.map(m => (
                         <option key={m.id} value={m.id}>{m.label}</option>
                     ))}
                 </select>
-                
-                <button 
-                    onClick={loadData} 
-                    disabled={loading}
-                    style={{ 
-                        padding: '10px 25px', 
-                        backgroundColor: '#3498db', 
-                        color: '#fff', 
-                        border: 'none', 
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontWeight: '600'
-                    }}
-                >
-                    {loading ? 'Consultando...' : 'Ver Registros'}
+                <button className="btn-load" onClick={handleRefresh} disabled={loading}>
+                    {loading ? 'Cargando...' : 'Actualizar Tabla'}
                 </button>
             </div>
 
-            {list && list.length > 0 ? (
-                <div style={{ overflowX: 'auto', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ background: '#f8f9fa' }}>
+            {dataList && dataList.length > 0 ? (
+                <div className="table-container">
+                    <table className="data-grid">
+                        <thead>
                             <tr>
-                                {Object.keys(list[0]).map(key => (
-                                    <th key={key} style={{ padding: '12px', borderBottom: '2px solid #dee2e6', textAlign: 'left', textTransform: 'uppercase', fontSize: '13px' }}>
-                                        {key.replace('_', ' ')}
-                                    </th>
+                                {Object.keys(dataList[0]).map(key => (
+                                    <th key={key}>{key.replace('_', ' ')}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {list.map((row, i) => (
-                                <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#fff' : '#fcfcfc' }}>
+                            {dataList.map((row, i) => (
+                                <tr key={i}>
                                     {Object.values(row).map((val, j) => (
-                                        <td key={j} style={{ padding: '12px', borderBottom: '1px solid #eee', fontSize: '14px', color: '#444' }}>
+                                        <td key={j}>
                                             {typeof val === 'boolean' ? (val ? '✅' : '❌') : String(val)}
                                         </td>
                                     ))}
@@ -85,9 +61,7 @@ const ProductManagement = () => {
                         </tbody>
                     </table>
                 </div>
-            ) : list && (
-                <p style={{ textAlign: 'center', color: '#888', marginTop: '40px' }}>No hay registros para mostrar en esta sección.</p>
-            )}
+            ) : dataList && <p className="empty-msg">No se encontraron registros disponibles.</p>}
         </div>
     );
 };

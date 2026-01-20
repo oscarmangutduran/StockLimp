@@ -20,13 +20,23 @@ $db = (new Database())->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $resource = $_GET['resource'] ?? null;
 
-// Lista blanca: Todas excepto 'users'
-$allowed = ['productos', 'pedidos', 'detalle_pedido', 'centros_trabajo'];
+$api = new ProductController($db);
 
-if (in_array($resource, $allowed)) {
-    $api = new ProductController($db);
-    $api->handleRequest($method, $resource);
-} else {
-    http_response_code(403); // Prohibido
-    echo json_encode(["error" => "Acceso denegado a este recurso"]);
+switch ($resource) {
+    case 'login':
+        // Capturamos el POST para el login
+        $api->login($_POST);
+        break;
+
+    case 'productos':
+    case 'pedidos':
+    case 'detalle_pedido':
+    case 'centros_trabajo':
+        $api->handleRequest($method, $resource);
+        break;
+
+    default:
+        http_response_code(404);
+        echo json_encode(["error" => "Recurso no encontrado"]);
+        break;
 }
