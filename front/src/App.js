@@ -1,31 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import ProductManagement from './pages/ProductManagement';
+import ForgotPassword from './pages/ForgotPassword';
+import './css/App.css'; // Ruta hacia tu carpeta CSS
 
 const App = () => {
     const [user, setUser] = useState(null);
+    const [view, setView] = useState('login'); 
 
     useEffect(() => {
         const savedUser = localStorage.getItem('session_user');
-        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedUser) {
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (e) {
+                localStorage.removeItem('session_user');
+            }
+        }
     }, []);
 
-    const logout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('session_user');
         setUser(null);
+        setView('login');
     };
 
-    if (!user) return <Login onLoginSuccess={setUser} />;
+    if (!user) {
+        return (
+            <div className="auth-wrapper">
+                {view === 'login' ? (
+                    <Login 
+                        onLoginSuccess={(userData) => setUser(userData)} 
+                        onForgotPassword={() => setView('forgot')} 
+                    />
+                ) : (
+                    <ForgotPassword 
+                        onBack={() => setView('login')} 
+                    />
+                )}
+            </div>
+        );
+    }
 
     return (
-        <div>
-            <header style={{ background: '#2c3e50', color: 'white', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>Sesión: <strong>{user.nombre}</strong> ({user.rol})</span>
-                <button onClick={logout} style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>
-                    Salir
-                </button>
+        <div className="main-app">
+            <header className="top-nav">
+                <div className="logo-section"><h1>StockLimp</h1></div>
+                <div className="user-controls">
+                    <span>Bienvenido, <strong>{user.nombre}</strong></span>
+                    <button className="btn-exit" onClick={handleLogout}>Cerrar Sesión</button>
+                </div>
             </header>
-            <ProductManagement />
+            <main className="content-area">
+                <ProductManagement />
+            </main>
         </div>
     );
 };

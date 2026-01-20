@@ -24,8 +24,9 @@ $api = new ProductController($db);
 
 switch ($resource) {
     case 'login':
-        // Capturamos el POST para el login
-        $api->login($_POST);
+        // Capturamos el cuerpo de la petición (soporta JSON)
+        $data = json_decode(file_get_contents("php://input"), true) ?: $_POST;
+        $api->login($data);
         break;
 
     case 'productos':

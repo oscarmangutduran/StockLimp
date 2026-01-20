@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import '../css/Login.css';
+import '../css/Login.css'; 
 
-const Login = ({ onLoginSuccess }) => {
-    const [credentials, setCredentials] = useState({ email: '', password: '' });
+const Login = ({ onLoginSuccess, onForgotPassword }) => {
+    const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const handleInput = (e) => {
-        setCredentials({ ...credentials, [e.target.name]: e.target.value });
-    };
-
-    const onFormSubmit = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = new FormData();
-        data.append('email', credentials.email);
-        data.append('password', credentials.password);
+        setLoading(true);
+        setError(null);
 
         try {
-            const res = await axios.post('http://localhost/stocklimp/back/index.php?resource=login', data);
-            if (res.data.success) {
-                localStorage.setItem('session_user', JSON.stringify(res.data.user));
-                onLoginSuccess(res.data.user);
+            const res = await axios.post('http://localhost/stocklimp/back/index.php?resource=login', {
+                email: form.email,
+                password: form.password
+            });
+
+            if (res.data && res.data.id_user) {
+                localStorage.setItem('session_user', JSON.stringify(res.data));
+                onLoginSuccess(res.data);
             }
         } catch (err) {
-            setError("Email o clave incorrectos.");
+            setError(err.response?.data?.message || "Email o contraseña incorrectos.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -31,27 +33,18 @@ const Login = ({ onLoginSuccess }) => {
         <div className="login-container">
             <div className="login-card">
                 <h2>StockLimp Admin</h2>
-                <form className="login-form" onSubmit={onFormSubmit}>
-                    <div className="input-group">
-                        <input 
-                            type="email" 
-                            name="email" 
-                            placeholder="Correo electrónico" 
-                            required 
-                            onChange={handleInput} 
-                        />
-                    </div>
-                    <div className="input-group">
-                        <input 
-                            type="password" 
-                            name="password" 
-                            placeholder="Contraseña" 
-                            required 
-                            onChange={handleInput} 
-                        />
-                    </div>
+                <form className="login-form" onSubmit={handleSubmit}>
+                    <input type="email" placeholder="Email" required 
+                        onChange={e => setForm({...form, email: e.target.value})} />
+                    <input type="password" placeholder="Contraseña" required 
+                        onChange={e => setForm({...form, password: e.target.value})} />
                     {error && <p className="error-text">{error}</p>}
-                    <button type="submit" className="btn-submit">Entrar</button>
+                    <button type="submit" className="btn-submit" disabled={loading}>
+                        {loading ? 'Entrando...' : 'Entrar'}
+                    </button>
+                    <p className="forgot-link" onClick={onForgotPassword}>
+                        ¿Olvidaste tu contraseña?
+                    </p>
                 </form>
             </div>
         </div>
