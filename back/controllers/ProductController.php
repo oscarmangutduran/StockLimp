@@ -8,32 +8,18 @@ class ProductController {
         $this->model = new Product($db);
     }
 
-    public function handleRequest($method, $tabla) {
-        if ($method === 'GET') {
-            $this->fetchData($tabla);
-        } else {
+    public function handleRequest($method, $table) {
+        if ($method !== 'GET') {
             http_response_code(405);
-            echo json_encode(["error" => "Método no permitido"]);
+            return;
         }
-    }
 
-    private function fetchData($tabla) {
-        $stmt = $this->model->readAny($tabla);
-        
-        if ($stmt) {
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Ajuste manual para booleanos (opcional)
-            foreach ($data as &$row) {
-                if (isset($row['es_toxico'])) {
-                    $row['es_toxico'] = (bool)$row['es_toxico'];
-                }
-            }
-            
-            echo json_encode($data);
+        $res = $this->model->readAny($table);
+        if ($res) {
+            echo json_encode($res->fetchAll(PDO::FETCH_ASSOC));
         } else {
             http_response_code(500);
-            echo json_encode(["error" => "Fallo al leer la tabla $tabla"]);
+            echo json_encode(["error" => "Error al obtener registros de $table"]);
         }
     }
 }
