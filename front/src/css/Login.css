@@ -38,7 +38,7 @@
 .btn-submit {
     width: 100%;
     padding: 12px;
-    background: #27ae60;
+    background: #447870;
     color: white;
     border: none;
     border-radius: 5px;
@@ -48,7 +48,7 @@
 }
 
 .btn-submit:hover {
-    background: #219150;
+    background: #3c6660;
 }
 
 .error-text {
