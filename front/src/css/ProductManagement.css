@@ -1,69 +1,81 @@
-.management-page {
-    padding: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  font-family: sans-serif;
 }
 
-.controls-bar {
-    display: flex;
-    gap: 15px;
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
-    align-items: center;
+.sidebar {
+  width: 250px;
+  background: #2c3e50;
+  color: white;
+  display: flex;
+  flex-direction: column;
 }
 
-.resource-select {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 15px;
+.sidebar-logo {
+  padding: 20px;
+  font-size: 1.5rem;
+  text-align: center;
+  background: #1a252f;
+  color: #27ae60;
+  font-weight: bold;
 }
 
-.btn-load {
-    padding: 10px 25px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
+.sidebar-nav {
+  flex: 1;
+  margin-top: 10px;
 }
 
-.table-container {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.sidebar-nav button {
+  width: 100%;
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  color: #ecf0f1;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.data-grid {
-    width: 100%;
-    border-collapse: collapse;
+.sidebar-nav button:hover,
+.sidebar-nav button.active {
+  background: #34495e;
+  border-left: 4px solid #27ae60;
+  color: white;
 }
 
-.data-grid th {
-    background: #2c3e50;
-    color: white;
-    padding: 15px;
-    text-align: left;
-    text-transform: uppercase;
-    font-size: 12px;
+.content {
+  flex: 1;
+  background: #f4f7f6;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-.data-grid td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
+.content-header {
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
 }
 
-.data-grid tr:nth-child(even) {
-    background: #f9f9f9;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.data-grid tr:hover {
-    background: #f1f1f1;
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background: #27ae60;
+  color: white;
+}
+
+tr:hover {
+  background: #f9f9f9;
 }

@@ -1,94 +1,84 @@
-import React, { useState } from 'react';
-import { fetchResourceData } from '../services/ProductService';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import '../css/ProductManagement.css';
 
 const ProductManagement = () => {
-    const [list, setList] = useState(null);
+    const [activeTab, setActiveTab] = useState('productos');
+    const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [resource, setResource] = useState('productos');
 
-    // Mapeo de tablas para el menú desplegable
-    const tables = [
-        { id: 'productos', name: '📦 Inventario' },
-        { id: 'users', name: '👥 Usuarios' },
-        { id: 'pedidos', name: '🚚 Pedidos' },
-        { id: 'detalle_pedido', name: '📋 Detalle Pedidos' },
-        { id: 'centros_trabajo', name: '🏢 Sedes/Centros' }
+    // Nombres exactos de tus tablas en phpMyAdmin
+    const menuItems = [
+        { id: 'productos', label: '📦 Productos' },
+        { id: 'pedidos', label: '🛒 Pedidos' },
+        { id: 'detalle_pedido', label: '📄 Detalle Pedidos' },
+        { id: 'centros_trabajo', label: '🏢 Centros' },
+        
     ];
 
-    const loadData = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const result = await fetchResourceData(resource);
-            if (result && !result.error) {
-                setList(result);
-            } else {
-                setError(result.message || "Error al cargar datos.");
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                // IMPORTANTE: Verifica que 'stocklimp' sea el nombre de tu carpeta en htdocs
+                const response = await axios.get(`http://localhost/stocklimp/back/index.php?resource=${activeTab}`);
+                console.log("Datos de XAMPP:", response.data);
+                setData(response.data);
+            } catch (error) {
+                console.error("Error conectando a XAMPP:", error);
+                setData([]);
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            setError("Error de conexión con el servidor.");
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+        loadData();
+    }, [activeTab]);
 
     return (
-        <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-            <h1 style={{ color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '10px' }}>
-                Admin StockLimp
-            </h1>
+        <div className="dashboard-container">
+            <aside className="sidebar">
+                <div className="sidebar-logo">STOCKLIMP</div>
+                <nav className="sidebar-nav">
+                    {menuItems.map(item => (
+                        <button 
+                            key={item.id} 
+                            className={activeTab === item.id ? 'active' : ''}
+                            onClick={() => setActiveTab(item.id)}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
+            </aside>
 
-            <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
-                <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Seleccionar Recurso:</label>
-                    <select 
-                        value={resource} 
-                        onChange={(e) => setResource(e.target.value)}
-                        style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
-                    >
-                        {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                </div>
-                <button 
-                    onClick={loadData} 
-                    disabled={loading}
-                    style={{ padding: '10px 25px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                    {loading ? 'Cargando...' : 'Consultar'}
-                </button>
-            </div>
+            <main className="content">
+                <header className="content-header">
+                    <h2>Gestión de {activeTab.replace('_', ' ').toUpperCase()}</h2>
+                </header>
 
-            {error && <div style={{ color: 'red', background: '#ffdada', padding: '10px', borderRadius: '4px', marginBottom: '20px' }}>⚠️ {error}</div>}
-
-            {list && list.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}>
-                        <thead>
-                            <tr style={{ background: '#34495e', color: 'white' }}>
-                                {Object.keys(list[0]).map(key => (
-                                    <th key={key} style={{ padding: '12px', textAlign: 'left', textTransform: 'uppercase', fontSize: '12px' }}>
-                                        {key.replace('_', ' ')}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {list.map((row, i) => (
-                                <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f2f2f2', borderBottom: '1px solid #ddd' }}>
-                                    {Object.values(row).map((val, j) => (
-                                        <td key={j} style={{ padding: '12px', fontSize: '14px' }}>
-                                            {typeof val === 'boolean' ? (val ? '✅' : '❌') : String(val)}
-                                        </td>
-                                    ))}
+                <div className="table-section">
+                    {loading ? (
+                        <p>Cargando datos desde XAMPP...</p>
+                    ) : data.length > 0 ? (
+                        <table>
+                            <thead>
+                                <tr>
+                                    {Object.keys(data[0]).map(key => <th key={key}>{key.toUpperCase()}</th>)}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {data.map((row, i) => (
+                                    <tr key={i}>
+                                        {Object.values(row).map((val, j) => <td key={j}>{val}</td>)}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p>No hay datos disponibles o error de conexión.</p>
+                    )}
                 </div>
-            ) : (
-                list && <p>No hay datos disponibles en esta tabla.</p>
-            )}
+            </main>
         </div>
     );
 };
