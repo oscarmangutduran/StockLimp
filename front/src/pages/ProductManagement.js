@@ -19,7 +19,6 @@ const ProductManagement = () => {
     const menuItems = [
         { id: 'productos', label: '📦 Productos' },
         { id: 'pedidos', label: '🛒 Pedidos' },
-        { id: 'detalle_pedido', label: '📄 Detalle Pedidos' },
         { id: 'centros_trabajo', label: '🏢 Centros' }
     ];
 
