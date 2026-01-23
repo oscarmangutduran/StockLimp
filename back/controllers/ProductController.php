@@ -7,25 +7,61 @@ class ProductController {
     }
 
     public function handleRequest($method, $resource) {
-        if ($method === 'GET' && !empty($resource)) {
-            // Consulta dinámica: Selecciona todo de la tabla indicada en el menú
-            $query = "SELECT * FROM " . $resource;
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            
-            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode($results);
+        $action = $_GET['action'] ?? '';
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if ($method === 'POST') {
+            if ($action === 'update') {
+                $this->updateRecord($resource, $data);
+            } else if ($action === 'delete') {
+                $this->deleteRecord($resource, $data);
+            }
+        } else if ($method === 'GET' && !empty($resource)) {
+            $this->getAll($resource);
         }
     }
 
-    public function login($data) {
-        // Lógica de login simplificada
-        $email = $data['email'] ?? '';
-        $pass = $data['password'] ?? '';
-        $query = "SELECT id_user, nombre FROM users WHERE email = ? AND password_hash = ? LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([$email, $pass]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo json_encode($user ? ["success" => true, "user" => $user] : ["success" => false]);
+    private function getAll($table) {
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM $table");
+            $stmt->execute();
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (PDOException $e) {
+            echo json_encode([]);
+        }
+    }
+
+    private function updateRecord($table, $data) {
+        $columns = array_keys($data);
+        $idColumn = $columns[0];
+        $fields = "";
+        foreach ($columns as $col) {
+            if ($col !== $idColumn) { $fields .= "$col = :$col, "; }
+        }
+        $fields = rtrim($fields, ", ");
+
+        try {
+            $sql = "UPDATE $table SET $fields WHERE $idColumn = :$idColumn";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($data);
+            echo json_encode(["success" => true]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $e->getMessage()]);
+        }
+    }
+
+    private function deleteRecord($table, $data) {
+        $idColumn = $data['column'];
+        $idValue = $data['id'];
+        try {
+            $sql = "DELETE FROM $table WHERE $idColumn = :id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id' => $idValue]);
+            echo json_encode(["success" => true]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "No se puede eliminar: el registro tiene dependencias."]);
+        }
     }
 }
