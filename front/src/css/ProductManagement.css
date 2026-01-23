@@ -79,3 +79,34 @@ th {
 tr:hover {
   background: #f9f9f9;
 }
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+}
+
+.search-box input {
+    padding: 10px 15px;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.search-box input:focus {
+    border-color: #27ae60;
+    box-shadow: 0 0 5px rgba(39, 174, 96, 0.2);
+}
+
+.status-info {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
