@@ -11,10 +11,10 @@ class ProductController {
         $data = json_decode(file_get_contents("php://input"), true);
 
         if ($method === 'POST') {
-            if ($action === 'update') {
-                $this->updateRecord($resource, $data);
-            } else if ($action === 'delete') {
-                $this->deleteRecord($resource, $data);
+            switch ($action) {
+                case 'create': $this->createRecord($resource, $data); break;
+                case 'update': $this->updateRecord($resource, $data); break;
+                case 'delete': $this->deleteRecord($resource, $data); break;
             }
         } else if ($method === 'GET' && !empty($resource)) {
             $this->getAll($resource);
@@ -26,8 +26,25 @@ class ProductController {
             $stmt = $this->db->prepare("SELECT * FROM $table");
             $stmt->execute();
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        } catch (PDOException $e) { echo json_encode([]); }
+    }
+
+    private function createRecord($table, $data) {
+        $columns = array_keys($data);
+        $idColumn = $columns[0];
+        unset($data[$idColumn]); // MySQL asigna el ID automáticamente
+        
+        $cols = implode(", ", array_keys($data));
+        $placeholders = ":" . implode(", :", array_keys($data));
+
+        try {
+            $sql = "INSERT INTO $table ($cols) VALUES ($placeholders)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($data);
+            echo json_encode(["success" => true]);
         } catch (PDOException $e) {
-            echo json_encode([]);
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $e->getMessage()]);
         }
     }
 
@@ -39,7 +56,6 @@ class ProductController {
             if ($col !== $idColumn) { $fields .= "$col = :$col, "; }
         }
         $fields = rtrim($fields, ", ");
-
         try {
             $sql = "UPDATE $table SET $fields WHERE $idColumn = :$idColumn";
             $stmt = $this->db->prepare($sql);
@@ -53,15 +69,14 @@ class ProductController {
 
     private function deleteRecord($table, $data) {
         $idColumn = $data['column'];
-        $idValue = $data['id'];
         try {
             $sql = "DELETE FROM $table WHERE $idColumn = :id";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute(['id' => $idValue]);
+            $stmt->execute(['id' => $data['id']]);
             echo json_encode(["success" => true]);
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => "No se puede eliminar: el registro tiene dependencias."]);
+            echo json_encode(["success" => false, "message" => "Error al eliminar registro"]);
         }
     }
 }
