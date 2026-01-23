@@ -8,7 +8,6 @@ const ProductManagement = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(false);
     
-    // Estados para controlar los 3 Popups
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -27,23 +26,71 @@ const ProductManagement = () => {
         try {
             const res = await axios.get(`http://localhost/stocklimp/back/index.php?resource=${activeTab}`);
             setData(Array.isArray(res.data) ? res.data : []);
-        } catch (err) { 
-            console.error("Error cargando datos:", err);
-            setData([]); 
-        } finally { 
-            setLoading(false); 
-        }
+        } catch (err) { setData([]); }
+        finally { setLoading(false); }
     };
 
     useEffect(() => { loadData(); }, [activeTab]);
 
-    // Lógica para preparar el formulario de "Añadir"
+    // --- LÓGICA DE FORMATEO PARA TODAS LAS TABLAS ---
+
+    const formatHeader = (key) => {
+        const mapping = {
+            // Productos
+            'id_producto': 'ID',
+            'nombre_producto': 'NOMBRE',
+            'es_toxico': '¿TÓXICO?',
+            'precio_unidad': 'PVP UNIDAD',
+            // Pedidos
+            'id_pedido': 'Nº PEDIDO',
+            'fecha_pedido': 'FECHA',
+            'estado_pedido': 'ESTADO',
+            'total_pedido': 'TOTAL',
+            // Centros
+            'id_centro': 'ID',
+            'nombre_centro': 'CENTRO',
+            'direccion_centro': 'DIRECCIÓN',
+            'telefono_centro': 'TELÉFONO'
+        };
+        return mapping[key] || key.toUpperCase().replace('_', ' ');
+    };
+
+    const formatValue = (key, value) => {
+        if (value === null || value === undefined) return '-';
+
+        // 1. Precios y Totales (Moneda)
+        if (key.includes('precio') || key.includes('total') || key === 'subtotal') {
+            return `${parseFloat(value).toFixed(2)}€`;
+        }
+
+        // 2. Lógica Booleana (Tóxico)
+        if (key === 'es_toxico') {
+            return (value === 1 || value === "1" || value === true) ? '⚠️ SÍ' : '✅ NO';
+        }
+
+        // 3. Stock y Cantidades (Enteros)
+        if (key.includes('stock') || key === 'cantidad') {
+            return parseInt(value);
+        }
+
+        // 4. Fechas (Solo YYYY-MM-DD)
+        if (key.toLowerCase().includes('fecha')) {
+            return value.split(' ')[0];
+        }
+
+        // 5. Estados de Pedido (Capitalizar)
+        if (key === 'estado_pedido') {
+            return value.charAt(0).toUpperCase() + value.slice(1);
+        }
+
+        return value.toString();
+    };
+
+    // --- MANEJADORES DE EVENTOS ---
+
     const handleAddClick = () => {
         if (data.length > 0) {
-            const emptyRow = Object.keys(data[0]).reduce((acc, key) => { 
-                acc[key] = ""; 
-                return acc; 
-            }, {});
+            const emptyRow = Object.keys(data[0]).reduce((acc, key) => { acc[key] = ""; return acc; }, {});
             setNewRow(emptyRow);
             setIsAddModalOpen(true);
         }
@@ -55,7 +102,7 @@ const ProductManagement = () => {
             await axios.post(`http://localhost/stocklimp/back/index.php?resource=${activeTab}&action=create`, newRow);
             setIsAddModalOpen(false);
             loadData();
-        } catch (err) { alert("Error al crear registro"); }
+        } catch (err) { alert("Error al añadir registro"); }
     };
 
     const handleSaveEdit = async (e) => {
@@ -64,16 +111,13 @@ const ProductManagement = () => {
             await axios.post(`http://localhost/stocklimp/back/index.php?resource=${activeTab}&action=update`, selectedRow);
             setIsEditModalOpen(false);
             loadData();
-        } catch (err) { alert("Error al guardar cambios"); }
+        } catch (err) { alert("Error al actualizar"); }
     };
 
     const confirmDelete = async () => {
         const idCol = Object.keys(selectedRow)[0];
         try {
-            await axios.post(`http://localhost/stocklimp/back/index.php?resource=${activeTab}&action=delete`, { 
-                id: selectedRow[idCol], 
-                column: idCol 
-            });
+            await axios.post(`http://localhost/stocklimp/back/index.php?resource=${activeTab}&action=delete`, { id: selectedRow[idCol], column: idCol });
             setIsDeleteModalOpen(false);
             loadData();
         } catch (err) { alert("Error al eliminar"); }
@@ -83,17 +127,15 @@ const ProductManagement = () => {
         Object.values(row).some(val => String(val).toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    // Función auxiliar para renderizar inputs dinámicos (Texto o Fecha)
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         return (
             <div className="form-group" key={key}>
-                <label>{key.toUpperCase().replace('_', ' ')}</label>
+                <label>{formatHeader(key)}</label>
                 <input 
                     type={isDateField ? "date" : "text"} 
                     value={value || ''} 
                     disabled={isDisabled}
-                    placeholder={isDisabled ? "Automático (ID)" : ""}
                     onChange={onChange} 
                 />
             </div>
@@ -106,11 +148,7 @@ const ProductManagement = () => {
                 <div className="sidebar-logo">STOCKLIMP</div>
                 <nav className="sidebar-nav">
                     {menuItems.map(item => (
-                        <button 
-                            key={item.id} 
-                            className={activeTab === item.id ? 'active' : ''} 
-                            onClick={() => setActiveTab(item.id)}
-                        >
+                        <button key={item.id} className={activeTab === item.id ? 'active' : ''} onClick={() => setActiveTab(item.id)}>
                             {item.label}
                         </button>
                     ))}
@@ -122,29 +160,27 @@ const ProductManagement = () => {
                     <h2>Gestión de {activeTab.toUpperCase()}</h2>
                     <div className="header-actions">
                         <button className="btn-add" onClick={handleAddClick}>➕ Nuevo Registro</button>
-                        <input 
-                            className="search-input" 
-                            type="text" 
-                            placeholder="Buscar..." 
-                            value={searchTerm} 
-                            onChange={(e) => setSearchTerm(e.target.value)} 
-                        />
+                        <input className="search-input" type="text" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </header>
 
                 <div className="table-section">
-                    {loading ? <p>Cargando datos...</p> : (
+                    {loading ? <p className="status-info">Cargando datos...</p> : (
                         <table>
                             <thead>
                                 <tr>
-                                    {data[0] && Object.keys(data[0]).map(key => <th key={key}>{key.toUpperCase()}</th>)}
+                                    {data[0] && Object.keys(data[0]).map(key => (
+                                        <th key={key}>{formatHeader(key)}</th>
+                                    ))}
                                     <th>ACCIONES</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredData.map((row, i) => (
                                     <tr key={i}>
-                                        {Object.values(row).map((val, j) => <td key={j}>{val ?? '-'}</td>)}
+                                        {Object.entries(row).map(([key, val], j) => (
+                                            <td key={j}>{formatValue(key, val)}</td>
+                                        ))}
                                         <td className="actions-cell">
                                             <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
                                             <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
@@ -157,16 +193,14 @@ const ProductManagement = () => {
                 </div>
             </main>
 
-            {/* POPUP AÑADIR */}
+            {/* MODAL AÑADIR */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <button className="close-x" onClick={() => setIsAddModalOpen(false)}>&times;</button>
                         <h3>Añadir en {activeTab.toUpperCase()}</h3>
                         <form onSubmit={handleSaveNew}>
-                            {Object.keys(newRow).map((key, i) => 
-                                renderInput(key, newRow[key], (e) => setNewRow({...newRow, [key]: e.target.value}), i === 0)
-                            )}
+                            {Object.keys(newRow).map((key, i) => renderInput(key, newRow[key], (e) => setNewRow({...newRow, [key]: e.target.value}), i === 0))}
                             <div className="modal-btns">
                                 <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
                                 <button type="submit" className="btn-save">Añadir</button>
@@ -176,16 +210,14 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* POPUP EDITAR */}
+            {/* MODAL EDITAR */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <button className="close-x" onClick={() => setIsEditModalOpen(false)}>&times;</button>
-                        <h3>Editar Registro</h3>
+                        <h3>Editar {formatHeader(Object.keys(selectedRow)[0])}: {Object.values(selectedRow)[0]}</h3>
                         <form onSubmit={handleSaveEdit}>
-                            {Object.keys(selectedRow).map((key, i) => 
-                                renderInput(key, selectedRow[key], (e) => setSelectedRow({...selectedRow, [key]: e.target.value}), i === 0)
-                            )}
+                            {Object.keys(selectedRow).map((key, i) => renderInput(key, selectedRow[key], (e) => setSelectedRow({...selectedRow, [key]: e.target.value}), i === 0))}
                             <div className="modal-btns">
                                 <button type="button" className="btn-cancel" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
                                 <button type="submit" className="btn-save">Guardar Cambios</button>
@@ -195,16 +227,16 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* POPUP ELIMINAR */}
+            {/* MODAL ELIMINAR */}
             {isDeleteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
                         <div className="icon-warning">⚠️</div>
                         <h3>¿Deseas eliminar este registro?</h3>
-                        <p>Esta acción no se puede deshacer.</p>
+                        <p>Se borrará permanentemente de la tabla {activeTab}.</p>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-                            <button className="btn-danger" onClick={confirmDelete}>Aceptar y Eliminar</button>
+                            <button className="btn-danger" onClick={confirmDelete}>Confirmar Borrado</button>
                         </div>
                     </div>
                 </div>
