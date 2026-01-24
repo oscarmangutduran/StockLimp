@@ -3,6 +3,10 @@ import axios from 'axios';
 import '../css/ProductManagement.css';
 
 const ProductManagement = () => {
+    // --- ESTADO DE ACCESO ---
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // --- ESTADOS DE LA GESTIÓN ---
     const [activeTab, setActiveTab] = useState('productos');
     const [data, setData] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +25,11 @@ const ProductManagement = () => {
         { id: 'centros_trabajo', label: '🏢 Centros' }
     ];
 
+    // Carga de datos
+    useEffect(() => {
+        if (isLoggedIn) loadData();
+    }, [activeTab, isLoggedIn]);
+
     const loadData = async () => {
         setLoading(true);
         try {
@@ -30,64 +39,27 @@ const ProductManagement = () => {
         finally { setLoading(false); }
     };
 
-    useEffect(() => { loadData(); }, [activeTab]);
-
-    // --- LÓGICA DE FORMATEO PARA TODAS LAS TABLAS ---
-
+    // --- FUNCIONES DE FORMATEO ---
     const formatHeader = (key) => {
         const mapping = {
-            // Productos
-            'id_producto': 'ID',
-            'nombre_producto': 'NOMBRE',
-            'es_toxico': '¿TÓXICO?',
-            'precio_unidad': 'PVP UNIDAD',
-            // Pedidos
-            'id_pedido': 'Nº PEDIDO',
-            'fecha_pedido': 'FECHA',
-            'estado_pedido': 'ESTADO',
-            'total_pedido': 'TOTAL',
-            // Centros
-            'id_centro': 'ID',
-            'nombre_centro': 'CENTRO',
-            'direccion_centro': 'DIRECCIÓN',
-            'telefono_centro': 'TELÉFONO'
+            'id_producto': 'ID', 'nombre_producto': 'NOMBRE', 'es_toxico': '¿TÓXICO?',
+            'precio_unidad': 'PVP UNIDAD', 'id_pedido': 'Nº PEDIDO', 'fecha_pedido': 'FECHA',
+            'estado_pedido': 'ESTADO', 'total_pedido': 'TOTAL', 'id_centro': 'ID',
+            'nombre_centro': 'CENTRO', 'direccion_centro': 'DIRECCIÓN', 'telefono_centro': 'TELÉFONO'
         };
         return mapping[key] || key.toUpperCase().replace('_', ' ');
     };
 
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
-
-        // 1. Precios y Totales (Moneda)
-        if (key.includes('precio') || key.includes('total') || key === 'subtotal') {
-            return `${parseFloat(value).toFixed(2)}€`;
-        }
-
-        // 2. Lógica Booleana (Tóxico)
-        if (key === 'es_toxico') {
-            return (value === 1 || value === "1" || value === true) ? '⚠️ SÍ' : '✅ NO';
-        }
-
-        // 3. Stock y Cantidades (Enteros)
-        if (key.includes('stock') || key === 'cantidad') {
-            return parseInt(value);
-        }
-
-        // 4. Fechas (Solo YYYY-MM-DD)
-        if (key.toLowerCase().includes('fecha')) {
-            return value.split(' ')[0];
-        }
-
-        // 5. Estados de Pedido (Capitalizar)
-        if (key === 'estado_pedido') {
-            return value.charAt(0).toUpperCase() + value.slice(1);
-        }
-
+        if (key.includes('precio') || key.includes('total') || key === 'subtotal') return `${parseFloat(value).toFixed(2)}€`;
+        if (key === 'es_toxico') return (value === 1 || value === "1" || value === true) ? '⚠️ SÍ' : '✅ NO';
+        if (key.includes('stock') || key === 'cantidad') return parseInt(value);
+        if (key.toLowerCase().includes('fecha')) return value.split(' ')[0];
         return value.toString();
     };
 
-    // --- MANEJADORES DE EVENTOS ---
-
+    // --- ACCIONES CRUD ---
     const handleAddClick = () => {
         if (data.length > 0) {
             const emptyRow = Object.keys(data[0]).reduce((acc, key) => { acc[key] = ""; return acc; }, {});
@@ -102,7 +74,7 @@ const ProductManagement = () => {
             await axios.post(`http://localhost/stocklimp/back/index.php?resource=${activeTab}&action=create`, newRow);
             setIsAddModalOpen(false);
             loadData();
-        } catch (err) { alert("Error al añadir registro"); }
+        } catch (err) { alert("Error al añadir"); }
     };
 
     const handleSaveEdit = async (e) => {
@@ -132,16 +104,28 @@ const ProductManagement = () => {
         return (
             <div className="form-group" key={key}>
                 <label>{formatHeader(key)}</label>
-                <input 
-                    type={isDateField ? "date" : "text"} 
-                    value={value || ''} 
-                    disabled={isDisabled}
-                    onChange={onChange} 
-                />
+                <input type={isDateField ? "date" : "text"} value={value || ''} disabled={isDisabled} onChange={onChange} />
             </div>
         );
     };
 
+    // --- VISTA DE ENTRADA (SOLO BOTÓN) ---
+    if (!isLoggedIn) {
+        return (
+            <div className="login-container">
+                <div className="login-card">
+                    <div className="login-logo">STOCKLIMP</div>
+                    <h2>Bienvenido</h2>
+                    <p>Pulsa el botón para acceder al panel de gestión.</p>
+                    <button className="btn-login" onClick={() => setIsLoggedIn(true)}>
+                        Entrar a la Aplicación
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // --- VISTA DE DASHBOARD ---
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -153,6 +137,7 @@ const ProductManagement = () => {
                         </button>
                     ))}
                 </nav>
+                <button className="btn-logout" onClick={() => setIsLoggedIn(false)}>🚪 Salir</button>
             </aside>
 
             <main className="content">
@@ -165,22 +150,18 @@ const ProductManagement = () => {
                 </header>
 
                 <div className="table-section">
-                    {loading ? <p className="status-info">Cargando datos...</p> : (
+                    {loading ? <p className="status-info">Cargando...</p> : (
                         <table>
                             <thead>
                                 <tr>
-                                    {data[0] && Object.keys(data[0]).map(key => (
-                                        <th key={key}>{formatHeader(key)}</th>
-                                    ))}
+                                    {data[0] && Object.keys(data[0]).map(key => <th key={key}>{formatHeader(key)}</th>)}
                                     <th>ACCIONES</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredData.map((row, i) => (
                                     <tr key={i}>
-                                        {Object.entries(row).map(([key, val], j) => (
-                                            <td key={j}>{formatValue(key, val)}</td>
-                                        ))}
+                                        {Object.entries(row).map(([key, val], j) => <td key={j}>{formatValue(key, val)}</td>)}
                                         <td className="actions-cell">
                                             <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
                                             <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
@@ -193,7 +174,7 @@ const ProductManagement = () => {
                 </div>
             </main>
 
-            {/* MODAL AÑADIR */}
+            {/* MODALES */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -210,33 +191,30 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL EDITAR */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <button className="close-x" onClick={() => setIsEditModalOpen(false)}>&times;</button>
-                        <h3>Editar {formatHeader(Object.keys(selectedRow)[0])}: {Object.values(selectedRow)[0]}</h3>
+                        <h3>Editar Registro</h3>
                         <form onSubmit={handleSaveEdit}>
                             {Object.keys(selectedRow).map((key, i) => renderInput(key, selectedRow[key], (e) => setSelectedRow({...selectedRow, [key]: e.target.value}), i === 0))}
                             <div className="modal-btns">
                                 <button type="button" className="btn-cancel" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-save">Guardar Cambios</button>
+                                <button type="submit" className="btn-save">Guardar</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* MODAL ELIMINAR */}
             {isDeleteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
                         <div className="icon-warning">⚠️</div>
                         <h3>¿Deseas eliminar este registro?</h3>
-                        <p>Se borrará permanentemente de la tabla {activeTab}.</p>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-                            <button className="btn-danger" onClick={confirmDelete}>Confirmar Borrado</button>
+                            <button className="btn-danger" onClick={confirmDelete}>Eliminar</button>
                         </div>
                     </div>
                 </div>
