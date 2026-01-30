@@ -1,26 +1,25 @@
 <?php
-// Permitir que React acceda a los datos
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Credentials: true");
+header("Content-Type: application/json");
 
-require_once 'config/Database.php';
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
+
+require_once 'db.php';
 require_once 'controllers/ProductController.php';
-
-$database = new Database();
-$db = $database->getConnection();
+require_once 'controllers/AuthController.php';
 
 $resource = $_GET['resource'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-$controller = new ProductController($db);
+$productCtrl = new ProductController($db);
+$authCtrl = new AuthController($db);
 
-// Si la petición es para el login o para listar tablas
-if ($resource === 'login') {
+if ($resource === 'login' && $method === 'POST') {
     $data = json_decode(file_get_contents("php://input"), true);
-    $controller->login($data);
-} else {
-    // Para cualquier otro recurso (productos, pedidos, etc.)
-    $controller->handleRequest($method, $resource);
+    $authCtrl->login($data['user'], $data['pass']);
+} else if ($resource) {
+    $productCtrl->handleRequest($method, $resource);
 }
