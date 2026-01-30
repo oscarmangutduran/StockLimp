@@ -12,37 +12,33 @@ class ProductController {
             $stmt->execute();
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
         } else if ($method === 'POST') {
-            switch ($action) {
-                case 'create': $this->create($resource, $data); break;
-                case 'update': $this->update($resource, $data); break;
-                case 'delete': $this->delete($resource, $data); break;
+            // Mantenemos la integridad de datos para fechas y nulos
+            foreach ($data as $key => $value) {
+                if ($value === "") $data[$key] = null;
             }
+
+            if ($action === 'create') $this->create($resource, $data);
+            if ($action === 'update') $this->update($resource, $data);
+            if ($action === 'delete') $this->delete($resource, $data);
         }
     }
 
     private function create($table, $data) {
-        // Filtramos campos vacíos (como el ID autoincremental)
-        $data = array_filter($data, function($v) { return $v !== ""; });
         $columns = implode(", ", array_keys($data));
         $placeholders = ":" . implode(", :", array_keys($data));
-        
         $stmt = $this->db->prepare("INSERT INTO $table ($columns) VALUES ($placeholders)");
         echo json_encode(["success" => $stmt->execute($data)]);
     }
 
     private function update($table, $data) {
-        $idCol = array_key_first($data); // Detecta id_producto, id_centro, etc.
+        $idCol = array_key_first($data);
         $idVal = $data[$idCol];
         unset($data[$idCol]);
-
         $sets = "";
         foreach ($data as $key => $val) { $sets .= "$key = :$key, "; }
         $sets = rtrim($sets, ", ");
-
-        $sql = "UPDATE $table SET $sets WHERE $idCol = :primary_id";
-        $data['primary_id'] = $idVal;
-        
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare("UPDATE $table SET $sets WHERE $idCol = :pid");
+        $data['pid'] = $idVal;
         echo json_encode(["success" => $stmt->execute($data)]);
     }
 
@@ -52,3 +48,4 @@ class ProductController {
         echo json_encode(["success" => $stmt->execute(['id' => $data['id']])]);
     }
 }
+?>
