@@ -12,9 +12,13 @@ class ProductController {
             $stmt->execute();
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
         } else if ($method === 'POST') {
-            // Mantenemos la integridad de datos para fechas y nulos
+            // Limpieza de datos
             foreach ($data as $key => $value) {
                 if ($value === "") $data[$key] = null;
+                // Conversión de booleano para SQL
+                if ($key === 'es_toxico') {
+                    $data[$key] = ($value === 'SÍ' || $value === '1' || $value === 1) ? 1 : 0;
+                }
             }
 
             if ($action === 'create') $this->create($resource, $data);

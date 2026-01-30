@@ -40,18 +40,47 @@ const ProductManagement = () => {
         } else { alert("Error en la operación"); }
     };
 
-    // Función que garantiza la funcionalidad del CALENDARIO
+    // --- FORMATEO DE VALORES PARA LA TABLA ---
+    const formatValue = (key, value) => {
+        if (value === null || value === undefined) return '-';
+        
+        // 1. Mostrar SÍ/NO para toxicidad
+        if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
+        
+        // 2. Formato de Moneda para precios
+        if (key.toLowerCase().includes('precio') || key.toLowerCase().includes('total')) {
+            return `${parseFloat(value).toFixed(2)}€`;
+        }
+        
+        // 3. Stock sin decimales
+        if (key.toLowerCase().includes('stock') || key.toLowerCase().includes('cantidad')) {
+            return Math.floor(value);
+        }
+
+        return value;
+    };
+
+    // --- RENDERIZADO DE INPUTS CON CALENDARIO Y SELECTOR ---
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
+        const isToxicField = key === 'es_toxico';
+
         return (
             <div className="form-group" key={key}>
                 <label>{key.replace('_', ' ').toUpperCase()}</label>
-                <input 
-                    type={isDateField ? "date" : "text"} 
-                    value={value || ''} 
-                    disabled={isDisabled}
-                    onChange={onChange}
-                />
+                {isToxicField ? (
+                    <select value={value || '0'} onChange={onChange} disabled={isDisabled}>
+                        <option value="1">SÍ</option>
+                        <option value="0">NO</option>
+                    </select>
+                ) : (
+                    <input 
+                        type={isDateField ? "date" : "text"} 
+                        value={value || ''} 
+                        disabled={isDisabled}
+                        onChange={onChange}
+                    />
+                )}
             </div>
         );
     };
@@ -109,7 +138,7 @@ const ProductManagement = () => {
                         <tbody>
                             {data.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))).map((row, i) => (
                                 <tr key={i}>
-                                    {Object.values(row).map((v, j) => <td key={j}>{v}</td>)}
+                                    {Object.entries(row).map(([k, v], j) => <td key={j}>{formatValue(k, v)}</td>)}
                                     <td className="actions-cell">
                                         <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
                                         <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
@@ -121,7 +150,7 @@ const ProductManagement = () => {
                 </div>
             </main>
 
-            {/* MODAL EDITAR */}
+            {/* MODALES FUNCIONALES */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -137,7 +166,6 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL NUEVO */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -153,7 +181,6 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL ELIMINAR */}
             {isDeleteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
