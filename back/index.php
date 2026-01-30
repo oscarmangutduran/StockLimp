@@ -17,9 +17,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 $productCtrl = new ProductController($db);
 $authCtrl = new AuthController($db);
 
-if ($resource === 'login' && $method === 'POST') {
+if ($resource === 'login') {
     $data = json_decode(file_get_contents("php://input"), true);
     $authCtrl->login($data['user'], $data['pass']);
-} else if ($resource) {
+} else {
     $productCtrl->handleRequest($method, $resource);
 }
+?>
