@@ -40,27 +40,18 @@ const ProductManagement = () => {
         } else { alert("Error en la operación"); }
     };
 
-    // --- FORMATEO DE VALORES PARA LA TABLA ---
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
-        
-        // 1. Mostrar SÍ/NO para toxicidad
         if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
-        
-        // 2. Formato de Moneda para precios
         if (key.toLowerCase().includes('precio') || key.toLowerCase().includes('total')) {
             return `${parseFloat(value).toFixed(2)}€`;
         }
-        
-        // 3. Stock sin decimales
         if (key.toLowerCase().includes('stock') || key.toLowerCase().includes('cantidad')) {
             return Math.floor(value);
         }
-
         return value;
     };
 
-    // --- RENDERIZADO DE INPUTS CON CALENDARIO Y SELECTOR ---
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         const isToxicField = key === 'es_toxico';
@@ -148,9 +139,20 @@ const ProductManagement = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* FOOTER AÑADIDO */}
+                <footer className="footer-credits">
+                    <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
+                    <div className="social-icons">
+                        <a href="https://linkedin.com" target="_blank" rel="noreferrer"><i className="fab fa-linkedin"></i></a>
+                        <a href="https://instagram.com" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
+                        <a href="https://behance.net" target="_blank" rel="noreferrer"><i className="fab fa-behance"></i></a>
+                        <a href="https://youtube.com" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+                    </div>
+                </footer>
             </main>
 
-            {/* MODALES FUNCIONALES */}
+            {/* MODALES */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
