@@ -155,14 +155,22 @@ const ProductManagement = () => {
                 </div>
 
                 <footer className="footer-credits">
-                    <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
-                    <div className="social-icons">
-                        <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer"><i className="fab fa-linkedin"></i></a>
-                        <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
-                        <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer"><i className="fab fa-behance"></i></a>
-                        <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
-                    </div>
-                </footer>
+        <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
+        <div className="social-icons">
+            <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer">
+                <i className="fab fa-linkedin"></i>
+            </a>
+            <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer">
+                <i className="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer">
+                <i className="fab fa-behance"></i>
+            </a>
+            <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer">
+                <i className="fab fa-youtube"></i>
+            </a>
+        </div>
+    </footer>
             </main>
 
             {/* MODAL EDITAR */}
