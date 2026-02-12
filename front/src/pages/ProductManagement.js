@@ -11,7 +11,6 @@ const ProductManagement = () => {
     const [userData, setUserData] = useState(null);
     const [loginData, setLoginData] = useState({ user: '', pass: '' });
     
-    // Detectamos la pestaña desde la URL limpia (pathname)
     const activeTab = location.pathname.split('/')[1] || 'productos';
     
     const [data, setData] = useState([]);
@@ -31,8 +30,11 @@ const ProductManagement = () => {
     const loadData = async () => {
         try {
             const res = await axios.get(`http://localhost/StockLimp/back/index.php?resource=${activeTab}`);
-            setData(res.data);
-        } catch (e) { console.error("Error al cargar datos"); }
+            setData(Array.isArray(res.data) ? res.data : []);
+        } catch (e) { 
+            console.error("Error al cargar datos"); 
+            setData([]);
+        }
     };
 
     const handleLogin = async (e) => {
@@ -48,11 +50,17 @@ const ProductManagement = () => {
     };
 
     const executeAction = async (action, payload) => {
-        const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, payload);
-        if (res.data.success) {
-            setIsAddModalOpen(false); setIsEditModalOpen(false); setIsDeleteModalOpen(false);
-            loadData();
-        }
+        try {
+            const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, payload);
+            if (res.data.success) {
+                setIsAddModalOpen(false); 
+                setIsEditModalOpen(false); 
+                setIsDeleteModalOpen(false);
+                loadData();
+            } else {
+                alert("Error en la operación: " + (res.data.message || "Desconocido"));
+            }
+        } catch (e) { alert("Error de red al ejecutar acción"); }
     };
 
     const formatValue = (key, value) => {
@@ -115,8 +123,10 @@ const ProductManagement = () => {
                     <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
                     <div className="header-actions">
                         <button className="btn-add" onClick={() => {
-                            const empty = Object.keys(data[0] || {}).reduce((a,k)=>({...a,[k]:""}),{});
-                            setNewRow(empty); setIsAddModalOpen(true);
+                            // Crear un objeto vacío basado en las columnas de la tabla
+                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                            setNewRow(empty); 
+                            setIsAddModalOpen(true);
                         }}>+ Nuevo</button>
                         <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
                     </div>
@@ -126,7 +136,7 @@ const ProductManagement = () => {
                     <table>
                         <thead>
                             <tr>
-                                {data[0] && Object.keys(data[0]).map(k => <th key={k}>{k.replace('_',' ').toUpperCase()}</th>)}
+                                {data.length > 0 && Object.keys(data[0]).map(k => <th key={k}>{k.replace('_',' ').toUpperCase()}</th>)}
                                 <th>ACCIONES</th>
                             </tr>
                         </thead>
@@ -155,7 +165,7 @@ const ProductManagement = () => {
                 </footer>
             </main>
 
-            {/* MODALES IGUAL QUE ANTES... */}
+            {/* MODAL EDITAR */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -167,6 +177,40 @@ const ProductManagement = () => {
                                 <button type="submit" className="btn-save">Actualizar</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL NUEVO (AÑADIR) - ¡RESTAURADO! */}
+            {isAddModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Nuevo Registro</h3>
+                        <form onSubmit={(e) => { e.preventDefault(); executeAction('create', newRow); }}>
+                            {Object.keys(newRow).map((k, i) => renderInput(k, newRow[k], (e) => setNewRow({...newRow, [k]: e.target.value}), i === 0))}
+                            <div className="modal-btns">
+                                <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cerrar</button>
+                                <button type="submit" className="btn-save">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL ELIMINAR - ¡RESTAURADO! */}
+            {isDeleteModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-confirm">
+                        <div className="icon-warning">⚠️</div>
+                        <h3>¿Eliminar este registro?</h3>
+                        <p>Esta acción no se puede deshacer.</p>
+                        <div className="modal-btns">
+                            <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>No, cancelar</button>
+                            <button className="btn-danger" onClick={() => {
+                                const idKey = Object.keys(selectedRow)[0];
+                                executeAction('delete', { id: selectedRow[idKey], column: idKey });
+                            }}>Sí, Eliminar</button>
+                        </div>
                     </div>
                 </div>
             )}
