@@ -19,7 +19,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  overflow: hidden; /* Bloqueamos el scroll general para usar scrolls internos */
+  overflow: hidden; /* Evita scroll general en el navegador */
 }
 
 /* --- 2. LAYOUT PRINCIPAL --- */
@@ -30,7 +30,7 @@ html, body, #root {
   background: var(--bg-light);
 }
 
-/* --- 3. BARRA LATERAL (SIDEBAR) - FIJA HASTA ABAJO --- */
+/* --- 3. BARRA LATERAL (SIDEBAR) --- */
 .sidebar {
   width: 260px;
   min-width: 260px;
@@ -61,7 +61,6 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-nav {
@@ -94,7 +93,7 @@ html, body, #root {
   padding: 18px;
   font-weight: bold;
   cursor: pointer;
-  margin-top: auto; /* Empuja el botón al final de la sidebar */
+  margin-top: auto; /* Pega el botón al final de la sidebar */
   transition: background 0.3s;
 }
 
@@ -102,13 +101,13 @@ html, body, #root {
   background: #c0392b;
 }
 
-/* --- 4. CONTENIDO PRINCIPAL (COLUMNA FIJA) --- */
+/* --- 4. CONTENIDO PRINCIPAL --- */
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden; /* El scroll será solo de la sección de la tabla */
+  overflow: hidden;
   background: var(--bg-light);
 }
 
@@ -124,14 +123,14 @@ html, body, #root {
   margin: 0;
 }
 
-/* --- 5. SECCIÓN DE TABLA (SCROLL INTERNO) --- */
+/* --- 5. TABLA CON SCROLL INTERNO --- */
 .table-section {
-  flex: 1; /* Ocupa todo el espacio entre header y footer */
+  flex: 1;
   margin: 10px 40px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  overflow-y: auto; /* Solo la tabla tiene scroll */
+  overflow-y: auto; /* El scroll ocurre solo dentro de la tabla */
   border: 1px solid #eee;
 }
 
@@ -145,7 +144,7 @@ th {
   color: white;
   padding: 15px;
   text-align: left;
-  position: sticky; /* Cabecera de tabla fija al hacer scroll */
+  position: sticky; /* Cabecera siempre visible al hacer scroll */
   top: 0;
   z-index: 10;
 }
@@ -155,45 +154,21 @@ td {
   border-bottom: 1px solid #f0f0f0;
 }
 
-/* --- 6. BUSCADOR Y BOTONES --- */
-.header-actions {
-  display: flex;
-  gap: 15px;
-}
-
-.search-input {
-  padding: 10px 20px;
-  border: 1px solid #ddd;
-  border-radius: 25px;
-  outline: none;
-}
-
-.btn-add {
-  background: var(--primary-green);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* --- 7. FOOTER FIJO ABAJO --- */
+/* --- 6. FOOTER FIJO --- */
 .footer-credits {
-  height: 130px; /* Altura suficiente para que no se vea cortado */
-  padding: 20px 0;
-  text-align: center;
-  border-top: 1px solid #ddd;
+  height: 130px;
   background: var(--bg-light);
-  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  border-top: 1px solid #ddd;
+  width: 100%;
   z-index: 50;
 }
 
 .footer-credits p {
-  margin: 0 0 15px 0;
+  margin: 0 0 10px 0;
   font-size: 0.95rem;
   color: #555;
 }
@@ -208,7 +183,6 @@ td {
   color: var(--primary-green);
   font-size: 1.8rem;
   transition: all 0.3s ease;
-  text-decoration: none;
 }
 
 .social-icons a:hover {
@@ -216,117 +190,315 @@ td {
   color: var(--dark-blue);
 }
 
-/* --- 8. MODALES --- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+/* --- 7. BUSCADOR ANIMADO --- */
+.header-actions {
   display: flex;
+  gap: 15px;
   align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
+  justify-content: flex-end;
 }
 
-.modal-content, .modal-confirm {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 400px;
+.search-input {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  background-color: white;
+  outline: none;
+  width: 240px; 
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
 }
-/* --- 9. PANTALLA DE LOGIN --- */
+
+.search-input:focus {
+  width: 350px;
+  border: 2px solid var(--primary-green);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+  cursor: text;
+}
+
+.btn-add {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.btn-add:hover {
+  transform: scale(1.05);
+  background: #219150;
+}
+
+/* --- 8. BOTONES DE ACCIÓN --- */
+.btn-edit { background: var(--warning-yellow); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
+.btn-delete { background: var(--danger-red); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+/* --- 9. MODALES (GENERAL) --- */
+/* --- 9. MODALES (GENERAL) --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+}
+
+/* Contenedor base para Nuevo, Editar y Confirmar */
+.modal-content, 
+.modal-confirm {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease-out;
+    
+    /* --- LÓGICA DE SCROLL INTERNO --- */
+    max-height: 90vh; /* No permite que sea más alto que el 90% de la pantalla */
+    overflow-y: auto; /* Activa el scroll vertical si el contenido desborda */
+}
+
+/* Estilo de la barra de scroll personalizada para el modal */
+.modal-content::-webkit-scrollbar,
+.modal-confirm::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.modal-confirm::-webkit-scrollbar-thumb {
+    background: var(--primary-green);
+    border-radius: 10px;
+}
+
+/* Títulos de los modales */
+.modal-content h3,
+.modal-confirm h3 {
+    margin-top: 0;
+    color: var(--dark-blue);
+    border-bottom: 2px solid var(--primary-green);
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+    position: sticky; /* El título se queda fijo mientras haces scroll */
+    top: 0;
+    background: white;
+    z-index: 5;
+}
+
+/* Variación roja para el título de eliminar */
+.modal-confirm h3 {
+    border-bottom-color: var(--danger-red);
+}
+
+/* --- FORMULARIOS DENTRO DEL MODAL --- */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--text-gray);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.form-group input, 
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+    box-sizing: border-box; /* Evita que el padding ensanche el input */
+}
+
+.form-group input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 8px rgba(39, 174, 96, 0.15);
+}
+
+/* --- ICONO ADVERTENCIA (Eliminar) --- */
+.icon-warning {
+    font-size: 4rem;
+    color: var(--warning-yellow);
+    margin-bottom: 20px;
+    display: block;
+    text-align: center;
+}
+
+/* --- BOTONES DE ACCIÓN EN MODAL --- */
+.modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* Botones centrados para el modal de eliminar */
+.modal-confirm .modal-btns {
+    justify-content: center;
+}
+
+.btn-save {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-save:hover {
+    background: #219150;
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: var(--danger-red);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* --- ANIMACIONES --- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* --- 10. PANTALLA DE LOGIN --- */
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  /* Degradado corporativo de azul a verde */
-  background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-green) 100%);
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 5000; /* Asegura que cubra el dashboard si no está logueado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    /* Degradado inmersivo con tus colores corporativos */
+    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-green) 100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999; /* Asegura que cubra absolutamente todo */
 }
 
 .login-card {
-  background: white;
-  padding: 50px 40px;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  animation: modalIn 0.5s ease-out;
+    background: white;
+    padding: 50px 40px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    animation: fadeInScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .login-logo {
-  color: var(--primary-green);
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  letter-spacing: 3px;
+    color: var(--primary-green);
+    font-size: 2.8rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
 }
 
 .login-card h2 {
-  color: var(--dark-blue);
-  font-size: 1.2rem;
-  margin-bottom: 30px;
-  font-weight: 400;
-  text-transform: uppercase;
+    color: var(--dark-blue);
+    font-size: 0.9rem;
+    margin-bottom: 35px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.7;
+}
+
+/* --- INPUTS DEL LOGIN --- */
+.login-inputs {
+    margin-bottom: 25px;
 }
 
 .login-card input {
-  width: 100%;
-  padding: 14px 20px;
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background-color: #f9f9f9;
+    width: 100%;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #f8fafb;
+    box-sizing: border-box; /* Evita que el input se salga de la tarjeta */
 }
 
 .login-card input:focus {
-  outline: none;
-  border-color: var(--primary-green);
-  background-color: white;
-  box-shadow: 0 0 8px rgba(39, 174, 96, 0.2);
+    outline: none;
+    border-color: var(--primary-green);
+    background-color: white;
+    box-shadow: 0 0 12px rgba(39, 174, 96, 0.15);
 }
 
+/* --- BOTÓN INGRESAR --- */
 .btn-login {
-  width: 100%;
-  background: var(--primary-green);
-  color: white;
-  padding: 15px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+    width: 100%;
+    background: var(--primary-green);
+    color: white;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
 }
 
 .btn-login:hover {
-  background: #219150;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(33, 145, 80, 0.3);
+    background: #219150;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(33, 145, 80, 0.4);
 }
 
 .btn-login:active {
-  transform: translateY(0);
+    transform: translateY(-1px);
 }
 
-/* --- ANIMACIÓN DE ENTRADA --- */
-@keyframes modalIn {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+/* --- ANIMACIONES --- */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
