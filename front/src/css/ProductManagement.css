@@ -503,18 +503,13 @@ td {
     }
 }
 
-.btn-download {
-    background-color: #27ae60;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-right: 10px;
-    transition: background 0.3s;
+/* Hereda todo de .btn-add, solo sobreescribimos el color de fondo */
+.btn-export {
+    background-color: #27ae60 !important; /* Verde profesional */
+    margin-left: 10px; /* Separación entre botones */
 }
 
-.btn-download:hover {
-    background-color: #219150;
+.btn-export:hover {
+    background-color: #219150 !important;
+    transform: translateY(-2px); /* El mismo efecto de levante que suele tener el btn-add */
 }

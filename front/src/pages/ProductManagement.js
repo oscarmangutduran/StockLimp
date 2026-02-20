@@ -150,21 +150,23 @@ const ProductManagement = () => {
             </aside>
 
             <main className="content">
-                <header className="content-header">
-                    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
-                    <div className="header-actions">
-                        <button className="btn-add" onClick={() => {
-                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-                            setNewRow(empty); 
-                            setIsAddModalOpen(true);
-                        }}>+ Nuevo</button>
-                        
-                        {/* BOTÓN DESCARGAR */}
-                        <button className="btn-download" onClick={downloadCSV}>📥 Exportar</button>
-                        
-                        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
-                    </div>
-                </header>
+               <header className="content-header">
+    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
+    <div className="header-actions">
+        <button className="btn-add" onClick={() => {
+            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+            setNewRow(empty); 
+            setIsAddModalOpen(true);
+        }}>+ Nuevo</button>
+        
+        {/* BOTÓN EXPORTAR CON EL MISMO ESTILO */}
+        <button className="btn-add btn-export" onClick={downloadCSV}>
+            📥 Exportar
+        </button>
+        
+        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
+    </div>
+</header>
 
                 <div className="table-section">
                     <table>
