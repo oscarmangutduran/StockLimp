@@ -1,12 +1,13 @@
 import React from 'react';
 import ProductManagement from './pages/ProductManagement';
+import './css/App.css';
 
-const App = () => {
+function App() {
   return (
-    <main className="app-container">
+    <div className="App">
       <ProductManagement />
-    </main>
+    </div>
   );
-};
+}
 
 export default App;

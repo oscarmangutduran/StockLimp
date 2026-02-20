@@ -1,11 +1,12 @@
 import axios from 'axios';
 
 /**
- * Configuración de la API local
- * Se usa localhost para evitar conflictos de origen con el dev server de Vite
+ * Forzamos el adaptador de XHR (navegador) para evitar 
+ * errores de módulos de Node.js (http/https) en Webpack 5.
  */
 const API = axios.create({
-    baseURL: 'http://localhost/stocklimp/back/index.php'
+    baseURL: 'http://localhost/stocklimp/back/index.php',
+    adapter: 'xhr' // 🚨 ESTA LÍNEA ES LA SOLUCIÓN
 });
 
 export const fetchResourceData = async (resource) => {
@@ -13,16 +14,9 @@ export const fetchResourceData = async (resource) => {
         const { data } = await API.get('', {
             params: { resource }
         });
-        
         return data;
     } catch (err) {
-        // Log para depuración interna
-        console.error(`[API Error] Fail fetching ${resource}:`, err.message);
-        
-        // Devolvemos un objeto estructurado para que el front no rompa
-        return { 
-            error: true, 
-            message: "No se pudo conectar con el servicio. Verifique el backend." 
-        };
+        console.error(`[API Error]:`, err.message);
+        return { error: true, message: "Error de conexión." };
     }
 };
