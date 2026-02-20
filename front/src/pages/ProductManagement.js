@@ -51,7 +51,7 @@ const ProductManagement = () => {
         } catch (e) { alert("Error de conexión"); }
     };
 
-    // 3. ACCIONES CRUD (CREATE, UPDATE, DELETE)
+    // 3. ACCIONES CRUD
     const executeAction = async (action, payload) => {
         try {
             const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, payload);
@@ -66,11 +66,11 @@ const ProductManagement = () => {
         } catch (e) { alert("Error de red al ejecutar acción"); }
     };
 
-    // 4. FUNCIÓN DE DESCARGA CSV (NUEVA)
+    // 4. FUNCIÓN DE DESCARGA CSV (RESTAURADA)
     const downloadCSV = () => {
         if (data.length === 0) return alert("No hay datos para exportar");
 
-        // Obtenemos solo los datos que coinciden con la búsqueda actual
+        // Filtramos para descargar solo lo que el usuario ve en pantalla
         const filteredData = data.filter(r => 
             Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))
         );
@@ -80,6 +80,7 @@ const ProductManagement = () => {
             Object.values(row).map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(",")
         ).join("\n");
 
+        // \uFEFF es para que Excel detecte bien los acentos/eñes
         const csvContent = "\uFEFF" + headers + "\n" + rows;
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -91,7 +92,7 @@ const ProductManagement = () => {
         URL.revokeObjectURL(url);
     };
 
-    // 5. FORMATEO DE VALORES PARA LA TABLA
+    // 5. FORMATEO DE VALORES
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
         if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
@@ -100,25 +101,41 @@ const ProductManagement = () => {
         return value;
     };
 
+    // 6. RENDERIZADO DE INPUTS (CON DESPLEGABLE DE ESTADO)
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         const isToxicField = key === 'es_toxico';
+        const isStatusField = key === 'estado';
+
         return (
             <div className="form-group" key={key}>
                 <label>{key.replace('_', ' ').toUpperCase()}</label>
-                {isToxicField ? (
+                
+                {isStatusField ? (
+                    <select value={value || 'PENDIENTE'} onChange={onChange} disabled={isDisabled}>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="EN_PREPARACION">EN PREPARACIÓN</option>
+                        <option value="DESPACHADO">DESPACHADO</option>
+                        <option value="ENTREGADO">ENTREGADO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                ) : isToxicField ? (
                     <select value={value || '0'} onChange={onChange} disabled={isDisabled}>
                         <option value="1">SÍ</option>
                         <option value="0">NO</option>
                     </select>
                 ) : (
-                    <input type={isDateField ? "date" : "text"} value={value || ''} disabled={isDisabled} onChange={onChange} />
+                    <input 
+                        type={isDateField ? "datetime-local" : "text"} 
+                        value={value || ''} 
+                        disabled={isDisabled} 
+                        onChange={onChange} 
+                    />
                 )}
             </div>
         );
     };
 
-    // VISTA DE LOGIN
     if (!isLoggedIn) {
         return (
             <div className="login-container">
@@ -132,7 +149,6 @@ const ProductManagement = () => {
         );
     }
 
-    // VISTA DE DASHBOARD PRINCIPAL
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -150,23 +166,23 @@ const ProductManagement = () => {
             </aside>
 
             <main className="content">
-               <header className="content-header">
-    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
-    <div className="header-actions">
-        <button className="btn-add" onClick={() => {
-            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-            setNewRow(empty); 
-            setIsAddModalOpen(true);
-        }}>+ Nuevo</button>
-        
-        {/* BOTÓN EXPORTAR CON EL MISMO ESTILO */}
-        <button className="btn-add btn-export" onClick={downloadCSV}>
-            📥 Exportar
-        </button>
-        
-        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
-    </div>
-</header>
+                <header className="content-header">
+                    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
+                    <div className="header-actions">
+                        <button className="btn-add" onClick={() => {
+                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                            setNewRow(empty); 
+                            setIsAddModalOpen(true);
+                        }}>+ Nuevo</button>
+                        
+                        {/* Botón Exportar con estilo igual al de Nuevo */}
+                        <button className="btn-add btn-export" onClick={downloadCSV}>
+                            📥 Exportar
+                        </button>
+                        
+                        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
+                    </div>
+                </header>
 
                 <div className="table-section">
                     <table>
