@@ -21,6 +21,7 @@ const ProductManagement = () => {
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
 
+    // 1. CARGA DE DATOS
     useEffect(() => {
         if (isLoggedIn) {
             loadData();
@@ -37,6 +38,7 @@ const ProductManagement = () => {
         }
     };
 
+    // 2. LÓGICA DE LOGIN
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
@@ -49,6 +51,7 @@ const ProductManagement = () => {
         } catch (e) { alert("Error de conexión"); }
     };
 
+    // 3. ACCIONES CRUD (CREATE, UPDATE, DELETE)
     const executeAction = async (action, payload) => {
         try {
             const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, payload);
@@ -63,6 +66,32 @@ const ProductManagement = () => {
         } catch (e) { alert("Error de red al ejecutar acción"); }
     };
 
+    // 4. FUNCIÓN DE DESCARGA CSV (NUEVA)
+    const downloadCSV = () => {
+        if (data.length === 0) return alert("No hay datos para exportar");
+
+        // Obtenemos solo los datos que coinciden con la búsqueda actual
+        const filteredData = data.filter(r => 
+            Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        const headers = Object.keys(data[0]).join(",");
+        const rows = filteredData.map(row => 
+            Object.values(row).map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(",")
+        ).join("\n");
+
+        const csvContent = "\uFEFF" + headers + "\n" + rows;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `StockLimp_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    // 5. FORMATEO DE VALORES PARA LA TABLA
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
         if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
@@ -89,6 +118,7 @@ const ProductManagement = () => {
         );
     };
 
+    // VISTA DE LOGIN
     if (!isLoggedIn) {
         return (
             <div className="login-container">
@@ -102,6 +132,7 @@ const ProductManagement = () => {
         );
     }
 
+    // VISTA DE DASHBOARD PRINCIPAL
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -123,11 +154,14 @@ const ProductManagement = () => {
                     <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
                     <div className="header-actions">
                         <button className="btn-add" onClick={() => {
-                            // Crear un objeto vacío basado en las columnas de la tabla
                             const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
                             setNewRow(empty); 
                             setIsAddModalOpen(true);
                         }}>+ Nuevo</button>
+                        
+                        {/* BOTÓN DESCARGAR */}
+                        <button className="btn-download" onClick={downloadCSV}>📥 Exportar</button>
+                        
                         <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </header>
@@ -155,25 +189,17 @@ const ProductManagement = () => {
                 </div>
 
                 <footer className="footer-credits">
-        <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
-        <div className="social-icons">
-            <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer">
-                <i className="fab fa-linkedin"></i>
-            </a>
-            <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer">
-                <i className="fab fa-instagram"></i>
-            </a>
-            <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer">
-                <i className="fab fa-behance"></i>
-            </a>
-            <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer">
-                <i className="fab fa-youtube"></i>
-            </a>
-        </div>
-    </footer>
+                    <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
+                    <div className="social-icons">
+                        <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer"><i className="fab fa-linkedin"></i></a>
+                        <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
+                        <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer"><i className="fab fa-behance"></i></a>
+                        <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+                    </div>
+                </footer>
             </main>
 
-            {/* MODAL EDITAR */}
+            {/* MODALES */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -189,7 +215,6 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL NUEVO (AÑADIR) - ¡RESTAURADO! */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -205,7 +230,6 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL ELIMINAR - ¡RESTAURADO! */}
             {isDeleteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">

@@ -502,3 +502,19 @@ td {
         transform: scale(1);
     }
 }
+
+.btn-download {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 10px;
+    transition: background 0.3s;
+}
+
+.btn-download:hover {
+    background-color: #219150;
+}
