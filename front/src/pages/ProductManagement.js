@@ -18,6 +18,7 @@ const ProductManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // NUEVO
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
 
@@ -66,11 +67,10 @@ const ProductManagement = () => {
         } catch (e) { alert("Error de red al ejecutar acción"); }
     };
 
-    // 4. FUNCIÓN DE DESCARGA CSV (RESTAURADA)
+    // 4. FUNCIÓN DE DESCARGA CSV
     const downloadCSV = () => {
         if (data.length === 0) return alert("No hay datos para exportar");
 
-        // Filtramos para descargar solo lo que el usuario ve en pantalla
         const filteredData = data.filter(r => 
             Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))
         );
@@ -80,7 +80,6 @@ const ProductManagement = () => {
             Object.values(row).map(value => `"${String(value || '').replace(/"/g, '""')}"`).join(",")
         ).join("\n");
 
-        // \uFEFF es para que Excel detecte bien los acentos/eñes
         const csvContent = "\uFEFF" + headers + "\n" + rows;
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -101,7 +100,7 @@ const ProductManagement = () => {
         return value;
     };
 
-    // 6. RENDERIZADO DE INPUTS (CON DESPLEGABLE DE ESTADO)
+    // 6. RENDERIZADO DE INPUTS
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         const isToxicField = key === 'es_toxico';
@@ -174,12 +173,7 @@ const ProductManagement = () => {
                             setNewRow(empty); 
                             setIsAddModalOpen(true);
                         }}>+ Nuevo</button>
-                        
-                        {/* Botón Exportar con estilo igual al de Nuevo */}
-                        <button className="btn-add btn-export" onClick={downloadCSV}>
-                            📥 Exportar
-                        </button>
-                        
+                        <button className="btn-add btn-export" onClick={downloadCSV}>📥 Exportar</button>
                         <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </header>
@@ -197,6 +191,7 @@ const ProductManagement = () => {
                                 <tr key={i}>
                                     {Object.entries(row).map(([k, v], j) => <td key={j}>{formatValue(k, v)}</td>)}
                                     <td className="actions-cell">
+                                        <button className="btn-info" onClick={() => { setSelectedRow(row); setIsInfoModalOpen(true); }}>ℹ️</button>
                                         <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
                                         <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
                                     </td>
@@ -217,7 +212,27 @@ const ProductManagement = () => {
                 </footer>
             </main>
 
-            {/* MODALES */}
+            {/* MODAL INFORMACIÓN (NUEVA) */}
+            {isInfoModalOpen && selectedRow && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Detalles del Registro</h3>
+                        <div className="info-grid">
+                            {Object.entries(selectedRow).map(([key, value]) => (
+                                <div className="info-item" key={key}>
+                                    <strong>{key.replace('_', ' ').toUpperCase()}:</strong>
+                                    <span>{formatValue(key, value)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="modal-btns">
+                            <button className="btn-save" onClick={() => setIsInfoModalOpen(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* RESTO DE MODALES */}
             {isEditModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">

@@ -513,3 +513,35 @@ td {
     background-color: #219150 !important;
     transform: translateY(-2px); /* El mismo efecto de levante que suele tener el btn-add */
 }
+
+/* Botón de información */
+.btn-info {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+/* Estructura interna de la modal de info */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.info-item strong {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+}
