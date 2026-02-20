@@ -1,27 +1,24 @@
 <?php
-/**
- * Modelo de Productos
- */
 class Product {
-    private $db;
-    private $table = "productos";
+    private $conn;
+    private $table_name = "PRODUCTOS";
 
-    public function __construct($conn) {
-        $this->db = $conn;
+    public function __construct($db) {
+        $this->conn = $db;
     }
 
-    /**
-     * Obtener listado completo
-     */
     public function read() {
-        $sql = "SELECT * FROM {$this->table} ORDER BY nombre ASC";
-        
-        try {
-            $query = $this->db->prepare($sql);
-            $query->execute();
-            return $query;
-        } catch (PDOException $e) {
-            return null;
-        }
+        $query = "SELECT * FROM " . $this->table_name;
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function getComponents($id) {
+        $query = "SELECT * FROM PRODUCTO_COMPONENTES WHERE id_producto = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$id]);
+        return $stmt;
     }
 }
+?>
