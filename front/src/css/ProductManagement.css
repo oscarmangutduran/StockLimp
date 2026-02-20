@@ -254,3 +254,39 @@ tr:hover {
     display: block;
     margin: 0 auto;
 }
+
+/* ESTILOS DEL FOOTER */
+.footer-credits {
+  height: 130px;
+  background: var(--bg-light);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #ddd;
+  width: 100%;
+  z-index: 50;
+}
+
+.footer-credits p {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.social-icons a {
+  color: var(--primary-green);
+  font-size: 1.8rem;
+  transition: all 0.3s ease;
+}
+
+.social-icons a:hover {
+  transform: translateY(-5px);
+  color: var(--dark-blue);
+}
