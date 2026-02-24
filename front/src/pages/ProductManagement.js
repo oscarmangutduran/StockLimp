@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import * as XLSX from 'xlsx'; // Importación necesaria para el Excel
+import * as XLSX from 'xlsx'; 
 import '../css/ProductManagement.css';
 
 const ProductManagement = () => {
@@ -19,11 +19,11 @@ const ProductManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // Modal de info
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); 
     
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
-    const [components, setComponents] = useState([]); // Componentes del producto
+    const [components, setComponents] = useState([]); 
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -45,35 +45,30 @@ const ProductManagement = () => {
         e.preventDefault();
         try {
             const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=login`, loginData);
-            if (res.data.success) { 
+            if (res.data && res.data.success) { 
                 setUserData(res.data.user); 
                 setIsLoggedIn(true);
                 navigate('/productos'); 
-            } else { alert(res.data.message); }
+            } else { alert(res.data?.message || "Credenciales incorrectas"); }
         } catch (e) { alert("Error de conexión"); }
     };
 
-    // FUNCIÓN PARA EXPORTAR A EXCEL (Dinámica por columnas)
     const exportToExcel = () => {
         if (data.length === 0) return alert("No hay datos para exportar");
-
         const excelData = data.map(row => {
             const cleanRow = {};
             Object.keys(row).forEach(key => {
-                // Mapeo: cada columna de la app es una columna del excel
                 const friendlyName = key.replace(/_/g, ' ').toUpperCase();
                 cleanRow[friendlyName] = row[key];
             });
             return cleanRow;
         });
-
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, activeTab.toUpperCase());
         XLSX.writeFile(workbook, `StockLimp_${activeTab}.xlsx`);
     };
 
-    // FUNCIÓN PARA VER INFO (Componentes)
     const showInfo = async (row) => {
         setSelectedRow(row);
         setIsInfoModalOpen(true);
@@ -87,21 +82,40 @@ const ProductManagement = () => {
 
     const executeAction = async (action, payload) => {
         try {
-            const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, payload);
-            if (res.data.success) {
+            const cleanPayload = Object.keys(payload).reduce((acc, key) => {
+                let value = payload[key];
+                if (value === null || value === undefined) value = "";
+                if (key.toLowerCase().includes('fecha') && String(value).length > 10) {
+                    value = String(value).substring(0, 10);
+                }
+                acc[key] = value;
+                return acc;
+            }, {});
+
+            const res = await axios.post(
+                `http://localhost/StockLimp/back/index.php?resource=${activeTab}&action=${action}`, 
+                cleanPayload
+            );
+
+            if (res.data && res.data.success) {
                 setIsAddModalOpen(false); 
                 setIsEditModalOpen(false); 
                 setIsDeleteModalOpen(false);
                 loadData();
             } else {
-                alert("Error en la operación: " + (res.data.message || "Desconocido"));
+                alert(`Error: ${res.data?.message || "La base de datos rechazó los datos."}`);
             }
-        } catch (e) { alert("Error de red al ejecutar acción"); }
+        } catch (e) { 
+            alert("Error de conexión. Revisa que el servidor PHP esté corriendo."); 
+        }
     };
 
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
         if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
+        if (key.toLowerCase().includes('fecha') && String(value).length > 10) {
+            return value.substring(0, 10);
+        }
         if (key.toLowerCase().includes('precio') || key.toLowerCase().includes('total')) return `${parseFloat(value).toFixed(2)}€`;
         if (key.toLowerCase().includes('stock') || key.toLowerCase().includes('cantidad')) return Math.floor(value);
         return value;
@@ -110,6 +124,28 @@ const ProductManagement = () => {
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         const isToxicField = key === 'es_toxico';
+        
+        // Sincronizado con ENUM de la base de datos
+        const isStatusEdit = key.toLowerCase() === 'estado' && activeTab === 'pedidos' && isEditModalOpen;
+
+        if (isStatusEdit) {
+            return (
+                <div className="form-group" key={key}>
+                    <label>{key.replace('_', ' ').toUpperCase()}</label>
+                    <select value={value} onChange={onChange} disabled={isDisabled}>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="EN_PREPARACION">EN PREPARACIÓN</option>
+                        <option value="DESPACHADO">DESPACHADO</option>
+                        <option value="ENTREGADO">ENTREGADO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                </div>
+            );
+        }
+
+        let displayValue = value || '';
+        if (isDateField && displayValue.length > 10) displayValue = displayValue.substring(0, 10);
+
         return (
             <div className="form-group" key={key}>
                 <label>{key.replace('_', ' ').toUpperCase()}</label>
@@ -119,7 +155,7 @@ const ProductManagement = () => {
                         <option value="0">NO</option>
                     </select>
                 ) : (
-                    <input type={isDateField ? "date" : "text"} value={value || ''} disabled={isDisabled} onChange={onChange} />
+                    <input type={isDateField ? "date" : "text"} value={displayValue} disabled={isDisabled} onChange={onChange} />
                 )}
             </div>
         );
@@ -130,8 +166,8 @@ const ProductManagement = () => {
             <div className="login-container">
                 <form className="login-card" onSubmit={handleLogin}>
                     <h1 className="login-logo">STOCKLIMP</h1>
-                    <input type="text" placeholder="Email" onChange={e => setLoginData({...loginData, user: e.target.value})} />
-                    <input type="password" placeholder="Pass" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
+                    <input type="text" placeholder="Email" onChange={e => setLoginData({...loginData, user: e.target.value})} required />
+                    <input type="password" placeholder="Pass" onChange={e => setLoginData({...loginData, pass: e.target.value})} required />
                     <button type="submit" className="btn-login">Ingresar</button>
                 </form>
             </div>
@@ -155,20 +191,18 @@ const ProductManagement = () => {
             </aside>
 
             <main className="content">
-             <div className="header-actions">
-    <button className="btn-add" onClick={() => {
-        const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-        setNewRow(empty); 
-        setIsAddModalOpen(true);
-    }}>+ Nuevo</button>
-    
-    {/* Cambiamos la clase a btn-add para que sea idéntico */}
-    <button className="btn-add" onClick={exportToExcel}>
-        📊 Exportar
-    </button>
-    
-    <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
-</div>
+                <header className="content-header">
+                    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
+                    <div className="header-actions">
+                        <button className="btn-add" onClick={() => {
+                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                            setNewRow(empty); 
+                            setIsAddModalOpen(true);
+                        }}>+ Nuevo</button>
+                        <button className="btn-add" onClick={exportToExcel}>📊 Exportar</button>
+                        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
+                    </div>
+                </header>
 
                 <div className="table-section">
                     <table>
@@ -204,27 +238,7 @@ const ProductManagement = () => {
                 </footer>
             </main>
 
-            {/* MODAL INFO (Ficha Técnica) */}
-            {isInfoModalOpen && selectedRow && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Ficha Técnica: {selectedRow.nombre || 'Detalle'}</h3>
-                        <div className="comp-box">
-                            {activeTab === 'productos' ? (
-                                components.length > 0 ? (
-                                    components.map((c, i) => (
-                                        <p key={i}><strong>{c.nombre_componente}:</strong> {c.porcentaje}</p>
-                                    ))
-                                ) : <p>No hay componentes registrados.</p>
-                            ) : <p>Detalles generales del registro.</p>}
-                        </div>
-                        <button className="btn-save" onClick={() => setIsInfoModalOpen(false)}>Cerrar</button>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL EDITAR */}
-            {isEditModalOpen && (
+            {isEditModalOpen && selectedRow && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3>Editar Registro</h3>
@@ -239,7 +253,6 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL NUEVO */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -255,13 +268,11 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL ELIMINAR */}
-            {isDeleteModalOpen && (
+            {isDeleteModalOpen && selectedRow && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
                         <div className="icon-warning">⚠️</div>
                         <h3>¿Eliminar este registro?</h3>
-                        <p>Esta acción no se puede deshacer.</p>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>No, cancelar</button>
                             <button className="btn-danger" onClick={() => {

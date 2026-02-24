@@ -12,16 +12,17 @@ include_once './controllers/UserController.php';
 $database = new Database();
 $db = $database->getConnection();
 $resource = $_GET['resource'] ?? '';
+$action = $_GET['action'] ?? '';
 
-// LÓGICA DE LOGIN (POST)
+// --- 1. LÓGICA DE LOGIN ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $resource === 'login') {
     $data = json_decode(file_get_contents("php://input"), true);
     $userCtrl = new UserController($db);
-    echo json_encode($userCtrl->login($data['user'], $data['pass']));
+    echo json_encode($userCtrl->login($data['user'] ?? '', $data['pass'] ?? ''));
     exit;
 }
 
-// LÓGICA DE CONSULTAS (GET)
+// --- 2. LÓGICA DE LECTURA (GET) ---
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     switch ($resource) {
         case 'productos':
@@ -39,5 +40,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             break;
     }
+    exit;
+}
+
+// --- 3. LÓGICA DE ESCRITURA (POST para Create, Update, Delete) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($resource, ['productos', 'pedidos', 'centros_trabajo'])) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $table = strtoupper($resource);
+
+    try {
+        if ($action === 'create') {
+            // Eliminar el ID del payload para que MySQL lo genere solo (AUTO_INCREMENT)
+            $firstKey = array_key_first($data);
+            if (strpos($firstKey, 'id_') === 0) unset($data[$firstKey]);
+
+            $columns = implode(", ", array_keys($data));
+            $placeholders = implode(", ", array_fill(0, count($data), "?"));
+            
+            $stmt = $db->prepare("INSERT INTO $table ($columns) VALUES ($placeholders)");
+            $success = $stmt->execute(array_values($data));
+            echo json_encode(["success" => $success, "message" => $success ? "Creado" : "Error al insertar"]);
+
+        } elseif ($action === 'update') {
+            $idColumn = array_key_first($data);
+            $idValue = $data[$idColumn];
+            unset($data[$idColumn]); // Quitar ID del set
+
+            $sets = [];
+            foreach ($data as $key => $val) { $sets[] = "$key = ?"; }
+            $sql = "UPDATE $table SET " . implode(", ", $sets) . " WHERE $idColumn = ?";
+            
+            $stmt = $db->prepare($sql);
+            $values = array_values($data);
+            $values[] = $idValue; // Añadir ID para el WHERE
+            
+            $success = $stmt->execute($values);
+            echo json_encode(["success" => $success, "message" => $success ? "Actualizado" : "Error al actualizar"]);
+
+        } elseif ($action === 'delete') {
+            // En delete recibimos { id: value, column: name }
+            $id = $data['id'];
+            $column = $data['column'];
+            $stmt = $db->prepare("DELETE FROM $table WHERE $column = ?");
+            $success = $stmt->execute([$id]);
+            echo json_encode(["success" => $success, "message" => $success ? "Eliminado" : "Error al eliminar"]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(["success" => false, "message" => "Error SQL: " . $e->getMessage()]);
+    }
+    exit;
 }
 ?>
