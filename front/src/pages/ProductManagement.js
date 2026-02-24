@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import * as XLSX from 'xlsx'; // Importación necesaria para el Excel
 import '../css/ProductManagement.css';
 
 const ProductManagement = () => {
@@ -18,8 +19,11 @@ const ProductManagement = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); // Modal de info
+    
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
+    const [components, setComponents] = useState([]); // Componentes del producto
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -47,6 +51,38 @@ const ProductManagement = () => {
                 navigate('/productos'); 
             } else { alert(res.data.message); }
         } catch (e) { alert("Error de conexión"); }
+    };
+
+    // FUNCIÓN PARA EXPORTAR A EXCEL (Dinámica por columnas)
+    const exportToExcel = () => {
+        if (data.length === 0) return alert("No hay datos para exportar");
+
+        const excelData = data.map(row => {
+            const cleanRow = {};
+            Object.keys(row).forEach(key => {
+                // Mapeo: cada columna de la app es una columna del excel
+                const friendlyName = key.replace(/_/g, ' ').toUpperCase();
+                cleanRow[friendlyName] = row[key];
+            });
+            return cleanRow;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, activeTab.toUpperCase());
+        XLSX.writeFile(workbook, `StockLimp_${activeTab}.xlsx`);
+    };
+
+    // FUNCIÓN PARA VER INFO (Componentes)
+    const showInfo = async (row) => {
+        setSelectedRow(row);
+        setIsInfoModalOpen(true);
+        if (activeTab === 'productos') {
+            try {
+                const res = await axios.get(`http://localhost/StockLimp/back/index.php?resource=componentes&id_producto=${row.id_producto}`);
+                setComponents(res.data || []);
+            } catch (e) { setComponents([]); }
+        }
     };
 
     const executeAction = async (action, payload) => {
@@ -119,18 +155,20 @@ const ProductManagement = () => {
             </aside>
 
             <main className="content">
-                <header className="content-header">
-                    <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
-                    <div className="header-actions">
-                        <button className="btn-add" onClick={() => {
-                            // Crear un objeto vacío basado en las columnas de la tabla
-                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-                            setNewRow(empty); 
-                            setIsAddModalOpen(true);
-                        }}>+ Nuevo</button>
-                        <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
-                    </div>
-                </header>
+             <div className="header-actions">
+    <button className="btn-add" onClick={() => {
+        const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+        setNewRow(empty); 
+        setIsAddModalOpen(true);
+    }}>+ Nuevo</button>
+    
+    {/* Cambiamos la clase a btn-add para que sea idéntico */}
+    <button className="btn-add" onClick={exportToExcel}>
+        📊 Exportar
+    </button>
+    
+    <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
+</div>
 
                 <div className="table-section">
                     <table>
@@ -145,6 +183,7 @@ const ProductManagement = () => {
                                 <tr key={i}>
                                     {Object.entries(row).map(([k, v], j) => <td key={j}>{formatValue(k, v)}</td>)}
                                     <td className="actions-cell">
+                                        <button className="btn-info" onClick={() => showInfo(row)}>ℹ️</button>
                                         <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
                                         <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
                                     </td>
@@ -155,23 +194,34 @@ const ProductManagement = () => {
                 </div>
 
                 <footer className="footer-credits">
-        <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
-        <div className="social-icons">
-            <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer">
-                <i className="fab fa-linkedin"></i>
-            </a>
-            <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer">
-                <i className="fab fa-instagram"></i>
-            </a>
-            <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer">
-                <i className="fab fa-behance"></i>
-            </a>
-            <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer">
-                <i className="fab fa-youtube"></i>
-            </a>
-        </div>
-    </footer>
+                    <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
+                    <div className="social-icons">
+                        <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer"><i className="fab fa-linkedin"></i></a>
+                        <a href="https://www.instagram.com/oscarmangutdev/" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
+                        <a href="https://www.behance.net/oscarmangutdurn" target="_blank" rel="noreferrer"><i className="fab fa-behance"></i></a>
+                        <a href="https://www.youtube.com/@Oscarmangut" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+                    </div>
+                </footer>
             </main>
+
+            {/* MODAL INFO (Ficha Técnica) */}
+            {isInfoModalOpen && selectedRow && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Ficha Técnica: {selectedRow.nombre || 'Detalle'}</h3>
+                        <div className="comp-box">
+                            {activeTab === 'productos' ? (
+                                components.length > 0 ? (
+                                    components.map((c, i) => (
+                                        <p key={i}><strong>{c.nombre_componente}:</strong> {c.porcentaje}</p>
+                                    ))
+                                ) : <p>No hay componentes registrados.</p>
+                            ) : <p>Detalles generales del registro.</p>}
+                        </div>
+                        <button className="btn-save" onClick={() => setIsInfoModalOpen(false)}>Cerrar</button>
+                    </div>
+                </div>
+            )}
 
             {/* MODAL EDITAR */}
             {isEditModalOpen && (
@@ -189,7 +239,7 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL NUEVO (AÑADIR) - ¡RESTAURADO! */}
+            {/* MODAL NUEVO */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -205,7 +255,7 @@ const ProductManagement = () => {
                 </div>
             )}
 
-            {/* MODAL ELIMINAR - ¡RESTAURADO! */}
+            {/* MODAL ELIMINAR */}
             {isDeleteModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
