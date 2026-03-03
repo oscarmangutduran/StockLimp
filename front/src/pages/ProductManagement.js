@@ -4,31 +4,56 @@ import axios from 'axios';
 import * as XLSX from 'xlsx'; 
 import '../css/ProductManagement.css';
 
+// Componente de Icono Vectorial para la contraseña
+const EyeIcon = ({ open }) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {open ? (
+            <>
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </>
+        ) : (
+            <>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </>
+        )}
+    </svg>
+);
+
 const ProductManagement = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
+    // ESTADOS DE AUTENTICACIÓN
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userData, setUserData] = useState(null);
     const [loginData, setLoginData] = useState({ user: '', pass: '' });
-    
+    const [showPassword, setShowPassword] = useState(false);
+
+    // ESTADOS DE UI
     const activeTab = location.pathname.split('/')[1] || 'productos';
-    
     const [data, setData] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [showFooter, setShowFooter] = useState(true); 
+    
+    // ESTADOS DE MODALES
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    // eslint-disable-next-line no-unused-vars
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); 
     
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
+    // eslint-disable-next-line no-unused-vars
     const [components, setComponents] = useState([]); 
 
     useEffect(() => {
         if (isLoggedIn) {
             loadData();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname, isLoggedIn]);
 
     const loadData = async () => {
@@ -112,7 +137,7 @@ const ProductManagement = () => {
 
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
-        if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
+        if (key === 'es_toxico') return value === 1 || value === "1" ? "SÍ" : "NO";
         if (key.toLowerCase().includes('fecha') && String(value).length > 10) {
             return value.substring(0, 10);
         }
@@ -124,14 +149,12 @@ const ProductManagement = () => {
     const renderInput = (key, value, onChange, isDisabled = false) => {
         const isDateField = key.toLowerCase().includes('fecha');
         const isToxicField = key === 'es_toxico';
-        
-        // Sincronizado con ENUM de la base de datos
         const isStatusEdit = key.toLowerCase() === 'estado' && activeTab === 'pedidos' && isEditModalOpen;
 
         if (isStatusEdit) {
             return (
                 <div className="form-group" key={key}>
-                    <label>{key.replace('_', ' ').toUpperCase()}</label>
+                    <label>{key.replace(/_/g, ' ').toUpperCase()}</label>
                     <select value={value} onChange={onChange} disabled={isDisabled}>
                         <option value="PENDIENTE">PENDIENTE</option>
                         <option value="EN_PREPARACION">EN PREPARACIÓN</option>
@@ -148,7 +171,7 @@ const ProductManagement = () => {
 
         return (
             <div className="form-group" key={key}>
-                <label>{key.replace('_', ' ').toUpperCase()}</label>
+                <label>{key.replace(/_/g, ' ').toUpperCase()}</label>
                 {isToxicField ? (
                     <select value={value || '0'} onChange={onChange} disabled={isDisabled}>
                         <option value="1">SÍ</option>
@@ -161,19 +184,41 @@ const ProductManagement = () => {
         );
     };
 
+    // VISTA DE LOGIN
     if (!isLoggedIn) {
         return (
             <div className="login-container">
                 <form className="login-card" onSubmit={handleLogin}>
                     <h1 className="login-logo">STOCKLIMP</h1>
-                    <input type="text" placeholder="Email" onChange={e => setLoginData({...loginData, user: e.target.value})} required />
-                    <input type="password" placeholder="Pass" onChange={e => setLoginData({...loginData, pass: e.target.value})} required />
+                    <div className="login-input-group">
+                        <input 
+                            type="text" 
+                            placeholder="Email" 
+                            onChange={e => setLoginData({...loginData, user: e.target.value})} 
+                            required 
+                        />
+                    </div>
+                    <div className="login-input-group">
+                        <input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="Contraseña" 
+                            onChange={e => setLoginData({...loginData, pass: e.target.value})} 
+                            required 
+                        />
+                        <span 
+                            className="password-toggle-icon" 
+                            onClick={() => setShowPassword(!showPassword)}
+                        >
+                            <EyeIcon open={showPassword} />
+                        </span>
+                    </div>
                     <button type="submit" className="btn-login">Ingresar</button>
                 </form>
             </div>
         );
     }
 
+    // VISTA PRINCIPAL
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
@@ -208,7 +253,7 @@ const ProductManagement = () => {
                     <table>
                         <thead>
                             <tr>
-                                {data.length > 0 && Object.keys(data[0]).map(k => <th key={k}>{k.replace('_',' ').toUpperCase()}</th>)}
+                                {data.length > 0 && Object.keys(data[0]).map(k => <th key={k}>{k.replace(/_/g,' ').toUpperCase()}</th>)}
                                 <th>ACCIONES</th>
                             </tr>
                         </thead>
@@ -227,7 +272,15 @@ const ProductManagement = () => {
                     </table>
                 </div>
 
-                <footer className="footer-credits">
+                <button 
+                    className="btn-toggle-footer" 
+                    onClick={() => setShowFooter(!showFooter)}
+                    title={showFooter ? "Ocultar Footer" : "Mostrar Footer"}
+                >
+                    {showFooter ? "🔽" : "ℹ️"}
+                </button>
+
+                <footer className={`footer-credits ${!showFooter ? 'hidden' : ''}`}>
                     <p>Aplicación web desarrollada por: <strong>Oscar Mangut Durán</strong></p>
                     <div className="social-icons">
                         <a href="https://www.linkedin.com/in/oscar-mangut-dur%C3%A1n-775186177/" target="_blank" rel="noreferrer"><i className="fab fa-linkedin"></i></a>
@@ -238,6 +291,7 @@ const ProductManagement = () => {
                 </footer>
             </main>
 
+            {/* MODAL EDITAR */}
             {isEditModalOpen && selectedRow && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -253,6 +307,7 @@ const ProductManagement = () => {
                 </div>
             )}
 
+            {/* MODAL AÑADIR */}
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -268,14 +323,15 @@ const ProductManagement = () => {
                 </div>
             )}
 
+            {/* MODAL ELIMINAR */}
             {isDeleteModalOpen && selectedRow && (
                 <div className="modal-overlay">
                     <div className="modal-confirm">
-                        <div className="icon-warning">⚠️</div>
+                        <div style={{fontSize: '3rem', marginBottom: '1rem'}}>⚠️</div>
                         <h3>¿Eliminar este registro?</h3>
                         <div className="modal-btns">
                             <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>No, cancelar</button>
-                            <button className="btn-danger" onClick={() => {
+                            <button className="btn-delete" onClick={() => {
                                 const idKey = Object.keys(selectedRow)[0];
                                 executeAction('delete', { id: selectedRow[idKey], column: idKey });
                             }}>Sí, Eliminar</button>
