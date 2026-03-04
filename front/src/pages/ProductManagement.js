@@ -183,18 +183,22 @@ const ProductManagement = () => {
                                 <th>ACCIONES</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {data.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))).map((row, i) => (
-                                <tr key={i}>
-                                    {Object.entries(row).map(([k, v], j) => <td key={j}>{formatValue(k, v)}</td>)}
-                                    <td className="actions-cell">
-                                        <button className="btn-info" onClick={() => showInfo(row)}>ℹ️</button>
-                                        <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
-                                        <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
+                       <tbody>
+    {data.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase()))).map((row, i) => (
+        <tr key={i}>
+            {Object.entries(row).map(([k, v], j) => <td key={j}>{formatValue(k, v)}</td>)}
+            <td className="actions-cell">
+                {/* CONDICIONAL: Solo muestra el botón si el activeTab es 'productos' */}
+                {activeTab === 'productos' && (
+                    <button className="btn-info" onClick={() => showInfo(row)}>ℹ️</button>
+                )}
+                
+                <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
+                <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
+            </td>
+        </tr>
+    ))}
+</tbody>
                     </table>
                 </div>
 

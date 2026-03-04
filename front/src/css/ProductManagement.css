@@ -2,7 +2,7 @@
    1. VARIABLES Y CONFIGURACIÓN BASE
    ========================================================================== */
 :root {
-  --primary-green: #27ae60;
+  --primary-green: #759F9B;
   --dark-blue: #2c3e50;
   --sidebar-dark: #1a252f;
   --bg-light: #f4f7f6;
@@ -60,6 +60,8 @@ body,
   height: 100vh;
   overflow: hidden;
 }
+
+
 
 /* ==========================================================================
    3. BARRA LATERAL (SIDEBAR)
@@ -161,7 +163,7 @@ body,
 
 .btn-add:hover {
   transform: scale(1.05);
-  background: #219150;
+  background: #9BB7B4;
 }
 
 .search-input {
@@ -395,14 +397,22 @@ tr:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  
+  /* CORRECCIÓN: Usamos ../ para salir de la carpeta 'css' y entrar a 'img' */
+  background-image: url('../img/login.jpg'); 
+  
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  /* Dimensiones para cubrir toda la pantalla */
   width: 100vw;
-  background: linear-gradient(
-    135deg,
-    var(--dark-blue) 0%,
-    var(--primary-green) 100%
-  );
+  height: 100vh;
+  
+  /* Posicionamiento */
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 9999;
 }
 
