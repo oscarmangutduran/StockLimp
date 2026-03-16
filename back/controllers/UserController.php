@@ -6,21 +6,29 @@ class UserController {
         $this->db = $db;
     }
 
-    public function login($email, $password) {
-        $query = "SELECT id_user, nombre, email, password_hash FROM USERS WHERE email = :email LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
+    public function login($data) {
+        $email_recibido = $data['user'] ?? ''; // React envía 'user'
+        $pass_recibida = $data['pass'] ?? '';  // React envía 'pass'
 
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Credenciales que me has proporcionado
+        $mi_email = "oscar@stocklimp.com";
+        $mi_pass = "admin123";
 
-        // Comparación directa para la demo (en producción usar password_verify)
-        if ($user && $password === $user['password_hash']) {
-            unset($user['password_hash']);
-            return ["success" => true, "user" => $user];
+        if ($email_recibido === $mi_email && $pass_recibida === $mi_pass) {
+            echo json_encode([
+                "success" => true,
+                "user" => [
+                    "nombre" => "Oscar Mangut",
+                    "email" => $mi_email,
+                    "rol" => "Administrador"
+                ]
+            ]);
+        } else {
+            echo json_encode([
+                "success" => false, 
+                "message" => "Credenciales incorrectas"
+            ]);
         }
-
-        return ["success" => false, "message" => "Usuario o contraseña incorrectos"];
     }
 }
 ?>

@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $host = "localhost";
-    private $db_name = "StockLimp";
+    private $db_name = "stocklimp"; // Verifica que este nombre coincida con phpMyAdmin
     private $username = "root";
     private $password = "";
     public $conn;
@@ -9,11 +9,11 @@ class Database {
     public function getConnection() {
         $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
-            $this->conn->exec("set names utf8");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $exception) {
-            error_log("Error de conexión: " . $exception->getMessage());
+            $this->conn = new mysqli($this->host, $this->username, $this->password, $this->db_name);
+            $this->conn->set_charset("utf8");
+        } catch(Exception $e) {
+            echo json_encode(["success" => false, "message" => "Error de conexión: " . $e->getMessage()]);
+            exit;
         }
         return $this->conn;
     }
