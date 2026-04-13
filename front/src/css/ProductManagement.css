@@ -696,3 +696,10 @@ tr:hover {
         grid-template-columns: 1fr;
     }
 }
+
+.user-icon {
+    /* Esto convierte cualquier emoji o imagen oscura en blanco puro */
+    filter: brightness(0) invert(1); 
+    font-size: 1.5rem; /* Ajusta el tamaño si lo necesitas */
+    margin-right: 10px;
+}
