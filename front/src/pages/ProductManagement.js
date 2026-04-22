@@ -68,6 +68,7 @@ const ProductManagement = ({ userData, onLogout }) => {
         if (value === null || value === undefined) return '-';
         if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
         if (key.toLowerCase().includes('precio')) return `${parseFloat(value).toFixed(2)}€`;
+        if (key.toLowerCase().includes('fecha') && value) return String(value).substring(0, 10);
         return value;
     };
 
