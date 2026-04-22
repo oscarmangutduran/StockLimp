@@ -25,6 +25,8 @@ const ProductManagement = ({ userData, onLogout }) => {
     const [newRow, setNewRow] = useState({});
     const [components, setComponents] = useState([]); 
 
+    const isAdmin = userData?.rol === 'admin' || userData?.nombre === 'Oscar Mangut' || userData?.nombre === 'Admin Sistema';
+
     // 2. Función de carga que limpia el estado antes de pedir nuevos datos
     const loadData = useCallback(async () => {
         try {
@@ -155,11 +157,13 @@ const ProductManagement = ({ userData, onLogout }) => {
                     <h2>GESTIÓN DE {activeTab.toUpperCase().replace(/_/g, ' ')}</h2>
                     <div className="header-actions">
                         <button className="btn-excel" onClick={exportToExcel}>📥 Excel</button>
-                        <button className="btn-add" onClick={() => {
-                            const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-                            setNewRow(emptyRow);
-                            setIsAddModalOpen(true);
-                        }}>+ Nuevo</button>
+                        {isAdmin && (
+                            <button className="btn-add" onClick={() => {
+                                const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                                setNewRow(emptyRow);
+                                setIsAddModalOpen(true);
+                            }}>+ Nuevo</button>
+                        )}
                         <input className="search-input" type="text" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </header>
@@ -190,8 +194,12 @@ const ProductManagement = ({ userData, onLogout }) => {
                                         {activeTab === 'productos' && (
                                             <button className="btn-info" onClick={() => showInfo(row)}>ℹ️</button>
                                         )}
-                                        <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
-                                        <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
+                                        {isAdmin && (
+                                            <>
+                                                <button className="btn-edit" onClick={() => { setSelectedRow({...row}); setIsEditModalOpen(true); }}>✏️</button>
+                                                <button className="btn-delete" onClick={() => { setSelectedRow(row); setIsDeleteModalOpen(true); }}>🗑️</button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

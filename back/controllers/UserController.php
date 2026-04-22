@@ -7,22 +7,33 @@ class UserController {
     }
 
     public function login($data) {
-        $email_recibido = $data['user'] ?? ''; // React envía 'user'
-        $pass_recibida = $data['pass'] ?? '';  // React envía 'pass'
+        $user_recibido = $data['user'] ?? ''; // Puede ser nombre o email
+        $pass_recibida = $data['pass'] ?? '';
 
-        // Credenciales que me has proporcionado
-        $mi_email = "oscar@stocklimp.com";
-        $mi_pass = "admin123";
+        $query = "SELECT * FROM USERS WHERE email = :user OR nombre = :user LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':user', $user_recibido);
+        $stmt->execute();
 
-        if ($email_recibido === $mi_email && $pass_recibida === $mi_pass) {
-            echo json_encode([
-                "success" => true,
-                "user" => [
-                    "nombre" => "Oscar Mangut",
-                    "email" => $mi_email,
-                    "rol" => "Administrador"
-                ]
-            ]);
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Permite contraseña en texto plano o encriptada con hash
+            if ($pass_recibida === $row['password_hash'] || password_verify($pass_recibida, $row['password_hash'])) {
+                echo json_encode([
+                    "success" => true,
+                    "user" => [
+                        "nombre" => $row['nombre'],
+                        "email" => $row['email'],
+                        "rol" => isset($row['rol']) ? $row['rol'] : 'usuario'
+                    ]
+                ]);
+            } else {
+                echo json_encode([
+                    "success" => false, 
+                    "message" => "Credenciales incorrectas"
+                ]);
+            }
         } else {
             echo json_encode([
                 "success" => false, 

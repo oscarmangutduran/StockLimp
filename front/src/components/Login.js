@@ -35,7 +35,7 @@ const Login = ({ onLoginSuccess }) => {
             <form className="login-card" onSubmit={handleLogin}>
                 <h1 className="login-logo">STOCKLIMP</h1>
                 <div className="login-input-group">
-                    <input type="text" placeholder="Email" onChange={e => setLoginData({...loginData, user: e.target.value})} required />
+                    <input type="text" placeholder="Email o Usuario" onChange={e => setLoginData({...loginData, user: e.target.value})} required />
                 </div>
                 <div className="login-input-group">
                     <input type={showPassword ? "text" : "password"} placeholder="Contraseña" onChange={e => setLoginData({...loginData, pass: e.target.value})} required />
