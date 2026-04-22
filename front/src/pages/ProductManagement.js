@@ -102,8 +102,15 @@ const ProductManagement = ({ userData, onLogout }) => {
 
     return (
         <div className="dashboard-container">
+            {isMenuOpen && (
+                <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}></div>
+            )}
+            
+            <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? '✕' : '☰'}
+            </button>
+
             <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
-                <div className="sidebar-logo">STOCKLIMP</div>
                 <div className="user-info-top">
                     <span className="user-icon">👤</span>
                     <span className="user-name-text">{userData?.nombre || 'Admin'}</span>

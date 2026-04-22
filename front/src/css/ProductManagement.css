@@ -539,6 +539,7 @@ tr:hover {
         width: 280px !important;
         min-width: 280px !important;
         z-index: 1000;
+        padding-top: 70px; /* Margen para no pisar la 'x' */
         transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
