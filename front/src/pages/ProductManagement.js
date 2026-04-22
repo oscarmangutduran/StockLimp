@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import '../css/ProductManagement.css';
 
 const ProductManagement = ({ userData, onLogout }) => {
@@ -101,6 +102,30 @@ const ProductManagement = ({ userData, onLogout }) => {
         );
     };
 
+    const exportToExcel = () => {
+        const filteredData = data.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(searchTerm.toLowerCase())));
+        
+        if (filteredData.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        const formattedData = filteredData.map(row => {
+            const newRow = {};
+            Object.entries(row).forEach(([key, value]) => {
+                const formattedKey = key.replace(/_/g, ' ').toUpperCase();
+                newRow[formattedKey] = formatValue(key, value);
+            });
+            return newRow;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(formattedData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, activeTab.toUpperCase());
+
+        XLSX.writeFile(workbook, `${activeTab}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
     return (
         <div className="dashboard-container">
             {isMenuOpen && (
@@ -129,6 +154,7 @@ const ProductManagement = ({ userData, onLogout }) => {
                 <header className="content-header">
                     <h2>GESTIÓN DE {activeTab.toUpperCase().replace(/_/g, ' ')}</h2>
                     <div className="header-actions">
+                        <button className="btn-excel" onClick={exportToExcel}>📥 Excel</button>
                         <button className="btn-add" onClick={() => {
                             const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
                             setNewRow(emptyRow);
