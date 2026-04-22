@@ -118,6 +118,10 @@ body,
   cursor: pointer;
   margin-top: auto;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .btn-logout:hover {
