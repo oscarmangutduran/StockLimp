@@ -53,6 +53,44 @@ if ($method === 'GET') {
 } elseif ($method === 'POST') {
     $action = $_GET['action'] ?? '';
     
+    if ($action === 'create_pedido') {
+        $id_centro = $input['id_centro'];
+        $id_user = $input['id_user'];
+        $detalles = $input['detalles'];
+
+        // Insertar en PEDIDOS
+        $stmt = $conn->prepare("INSERT INTO pedidos (id_user, id_centro, estado) VALUES (?, ?, 'PENDIENTE')");
+        if ($stmt) {
+            $stmt->bind_param("ss", $id_user, $id_centro);
+            if ($stmt->execute()) {
+                $id_pedido = $conn->insert_id;
+                
+                // Insertar en DETALLE_PEDIDO
+                $stmt_det = $conn->prepare("INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad_solicitada, precio_total_linea) VALUES (?, ?, ?, ?)");
+                
+                foreach ($detalles as $det) {
+                    $id_prod = $det['id_producto'];
+                    $cant = $det['cantidad'];
+                    
+                    // Obtener precio actual
+                    $res_precio = $conn->query("SELECT precio_unidad FROM productos WHERE id_producto = " . intval($id_prod));
+                    $prod_row = $res_precio->fetch_assoc();
+                    $precio_total = $cant * floatval($prod_row['precio_unidad']);
+                    
+                    $stmt_det->bind_param("iidd", $id_pedido, $id_prod, $cant, $precio_total);
+                    $stmt_det->execute();
+                }
+                echo json_encode(["success" => true]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Error al crear pedido: " . $stmt->error]);
+            }
+            $stmt->close();
+        } else {
+            echo json_encode(["success" => false, "message" => "Error preparando pedido: " . $conn->error]);
+        }
+        exit;
+    }
+
     if ($action === 'create') {
         $id_field = ($resource === 'users') ? 'id_user' : (($resource === 'productos') ? 'id_producto' : (($resource === 'centros_trabajo') ? 'id_centro' : 'id_pedido'));
         

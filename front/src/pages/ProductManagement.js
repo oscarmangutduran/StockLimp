@@ -25,6 +25,11 @@ const ProductManagement = ({ userData, onLogout }) => {
     const [newRow, setNewRow] = useState({});
     const [components, setComponents] = useState([]); 
 
+    const [allProducts, setAllProducts] = useState([]);
+    const [allCentros, setAllCentros] = useState([]);
+    const [orderQuantities, setOrderQuantities] = useState({});
+    const [selectedCentro, setSelectedCentro] = useState("");
+
     const isAdmin = userData?.rol === 'admin' || userData?.nombre === 'Oscar Mangut' || userData?.nombre === 'Admin Sistema';
 
     // 2. Función de carga que limpia el estado antes de pedir nuevos datos
@@ -165,9 +170,24 @@ const ProductManagement = ({ userData, onLogout }) => {
                     <div className="header-actions">
                         <button className="btn-excel" onClick={exportToExcel}>📥 Excel</button>
                         {(isAdmin || activeTab === 'pedidos') && (
-                            <button className="btn-add" onClick={() => {
-                                const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-                                setNewRow(emptyRow);
+                            <button className="btn-add" onClick={async () => {
+                                if (activeTab === 'pedidos') {
+                                    try {
+                                        const [resProd, resCentros] = await Promise.all([
+                                            axios.get(`http://localhost/StockLimp/back/index.php?resource=productos`),
+                                            axios.get(`http://localhost/StockLimp/back/index.php?resource=centros_trabajo`)
+                                        ]);
+                                        setAllProducts(resProd.data || []);
+                                        setAllCentros(resCentros.data || []);
+                                        setOrderQuantities({});
+                                        setSelectedCentro(resCentros.data && resCentros.data.length > 0 ? resCentros.data[0].id_centro : "");
+                                    } catch (e) {
+                                        console.error("Error cargando dependencias para pedido", e);
+                                    }
+                                } else {
+                                    const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                                    setNewRow(emptyRow);
+                                }
                                 setIsAddModalOpen(true);
                             }}>+ Nuevo</button>
                         )}
@@ -246,14 +266,58 @@ const ProductManagement = ({ userData, onLogout }) => {
             {isAddModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Nuevo Registro</h3>
-                        <form onSubmit={(e) => { e.preventDefault(); executeAction('create', newRow); }}>
-                            {Object.keys(newRow).map((k, i) => renderInput(k, newRow[k], (e) => setNewRow({...newRow, [k]: e.target.value}), i === 0))}
-                            <div className="modal-btns">
-                                <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-save">Guardar</button>
-                            </div>
-                        </form>
+                        <h3>Nuevo {activeTab === 'pedidos' ? 'Pedido' : 'Registro'}</h3>
+                        {activeTab === 'pedidos' ? (
+                            <form onSubmit={(e) => { 
+                                e.preventDefault(); 
+                                const payload = {
+                                    id_centro: selectedCentro,
+                                    id_user: userData.id_user || 1,
+                                    detalles: Object.entries(orderQuantities).map(([id_prod, qty]) => ({
+                                        id_producto: id_prod,
+                                        cantidad: qty
+                                    })).filter(d => d.cantidad > 0)
+                                };
+                                if(payload.detalles.length === 0) {
+                                    alert("Debe añadir al menos un producto");
+                                    return;
+                                }
+                                executeAction('create_pedido', payload); 
+                            }}>
+                                <div className="form-group">
+                                    <label>Centro de Trabajo Destino</label>
+                                    <select value={selectedCentro} onChange={e => setSelectedCentro(e.target.value)} required style={{width: '100%', padding: '8px', marginBottom: '15px', borderRadius: '5px', border: '1px solid #ccc'}}>
+                                        <option value="">Seleccione un centro...</option>
+                                        {allCentros.map(c => <option key={c.id_centro} value={c.id_centro}>{c.nombre_centro}</option>)}
+                                    </select>
+                                </div>
+                                <h4 style={{marginBottom: '10px'}}>Productos Disponibles</h4>
+                                <div className="products-order-list" style={{maxHeight:'300px', overflowY:'auto', border: '1px solid #eee', borderRadius: '5px', padding: '10px'}}>
+                                    {allProducts.map(p => (
+                                        <div key={p.id_producto} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center', padding:'10px', background:'#f9f9f9', borderRadius:'5px'}}>
+                                            <span style={{flex: 1}}>{p.nombre} ({parseFloat(p.precio_unidad).toFixed(2)}€)</span>
+                                            <input type="number" min="0" placeholder="0" 
+                                                style={{width:'80px', padding:'5px', borderRadius: '5px', border: '1px solid #ccc'}}
+                                                value={orderQuantities[p.id_producto] || ''} 
+                                                onChange={e => setOrderQuantities({...orderQuantities, [p.id_producto]: parseInt(e.target.value) || 0})}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="modal-btns" style={{marginTop:'20px'}}>
+                                    <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
+                                    <button type="submit" className="btn-save">Crear Pedido</button>
+                                </div>
+                            </form>
+                        ) : (
+                            <form onSubmit={(e) => { e.preventDefault(); executeAction('create', newRow); }}>
+                                {Object.keys(newRow).map((k, i) => renderInput(k, newRow[k], (e) => setNewRow({...newRow, [k]: e.target.value}), i === 0))}
+                                <div className="modal-btns">
+                                    <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
+                                    <button type="submit" className="btn-save">Guardar</button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
             )}
