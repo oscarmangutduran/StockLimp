@@ -54,21 +54,89 @@ if ($method === 'GET') {
     $action = $_GET['action'] ?? '';
     
     if ($action === 'create') {
-        if ($resource === 'users') {
-            $stmt = $conn->prepare("INSERT INTO users (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("ssss", $input['nombre'], $input['email'], $input['password_hash'], $input['rol']);
-        } 
-        // ... añadir aquí el resto de casos (productos, etc) siguiendo el mismo patrón bind_param ...
+        $id_field = ($resource === 'users') ? 'id_user' : (($resource === 'productos') ? 'id_producto' : (($resource === 'centros_trabajo') ? 'id_centro' : 'id_pedido'));
         
-        if ($stmt->execute()) echo json_encode(["success" => true]);
-        else echo json_encode(["success" => false, "error" => $conn->error]);
+        $keys = [];
+        $placeholders = [];
+        $types = "";
+        $params = [];
+        
+        foreach ($input as $key => $val) {
+            // No insertamos el ID autoincremental ni fechas automáticas
+            if ($key === $id_field || strpos($key, 'fecha') !== false) continue;
+            
+            $keys[] = $key;
+            $placeholders[] = "?";
+            $types .= "s";
+            $params[] = $val;
+        }
+
+        $sql = "INSERT INTO $resource (" . implode(", ", $keys) . ") VALUES (" . implode(", ", $placeholders) . ")";
+        $stmt = $conn->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Error al crear: " . $stmt->error]);
+            }
+            $stmt->close();
+        } else {
+            echo json_encode(["success" => false, "message" => "Error preparando query: " . $conn->error]);
+        }
+    }
+
+    if ($action === 'update') {
+        $id_field = ($resource === 'users') ? 'id_user' : (($resource === 'productos') ? 'id_producto' : (($resource === 'centros_trabajo') ? 'id_centro' : 'id_pedido'));
+        $id_val = $input[$id_field];
+        
+        $sets = [];
+        $types = "";
+        $params = [];
+        
+        foreach ($input as $key => $val) {
+            if ($key === $id_field || strpos($key, 'fecha') !== false) continue;
+            $sets[] = "$key = ?";
+            $types .= "s";
+            $params[] = $val;
+        }
+        
+        // Añadimos el id al final para el WHERE
+        $types .= "s";
+        $params[] = $id_val;
+
+        $sql = "UPDATE $resource SET " . implode(", ", $sets) . " WHERE $id_field = ?";
+        $stmt = $conn->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Error al actualizar: " . $stmt->error]);
+            }
+            $stmt->close();
+        } else {
+            echo json_encode(["success" => false, "message" => "Error preparando query: " . $conn->error]);
+        }
     }
 
     if ($action === 'delete') {
-        $id_field = ($resource === 'users') ? 'id_user' : 'id_' . substr($resource, 0, -1);
+        $id_field = ($resource === 'users') ? 'id_user' : (($resource === 'productos') ? 'id_producto' : (($resource === 'centros_trabajo') ? 'id_centro' : 'id_pedido'));
         $id_val = $input[$id_field];
-        $sql = "DELETE FROM $resource WHERE $id_field = $id_val";
-        if ($conn->query($sql)) echo json_encode(["success" => true]);
+        
+        $sql = "DELETE FROM $resource WHERE $id_field = ?";
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("s", $id_val);
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Error al eliminar: " . $stmt->error]);
+            }
+            $stmt->close();
+        }
     }
 }
 $conn->close();

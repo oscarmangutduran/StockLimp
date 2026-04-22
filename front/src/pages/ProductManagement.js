@@ -164,7 +164,7 @@ const ProductManagement = ({ userData, onLogout }) => {
                     <h2>GESTIÓN DE {activeTab.toUpperCase().replace(/_/g, ' ')}</h2>
                     <div className="header-actions">
                         <button className="btn-excel" onClick={exportToExcel}>📥 Excel</button>
-                        {isAdmin && (
+                        {(isAdmin || activeTab === 'pedidos') && (
                             <button className="btn-add" onClick={() => {
                                 const emptyRow = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
                                 setNewRow(emptyRow);
@@ -239,6 +239,21 @@ const ProductManagement = ({ userData, onLogout }) => {
                             </div>
                         )}
                         <button className="btn-save" onClick={() => setIsInfoModalOpen(false)}>Cerrar</button>
+                    </div>
+                </div>
+            )}
+
+            {isAddModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Nuevo Registro</h3>
+                        <form onSubmit={(e) => { e.preventDefault(); executeAction('create', newRow); }}>
+                            {Object.keys(newRow).map((k, i) => renderInput(k, newRow[k], (e) => setNewRow({...newRow, [k]: e.target.value}), i === 0))}
+                            <div className="modal-btns">
+                                <button type="button" className="btn-cancel" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
+                                <button type="submit" className="btn-save">Guardar</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
