@@ -79,7 +79,7 @@ body,
 .user-info-top {
   padding: 15px;
   background: rgba(0, 0, 0, 0.1);
-  color: var(--primary-green);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;

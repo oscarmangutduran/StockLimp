@@ -92,7 +92,7 @@ const ProductManagement = ({ userData, onLogout }) => {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <div className="user-info-top">👤 {userData?.nombre}</div>
+                <div className="user-info-top"><span className="user-icon">👤</span> {userData?.nombre}</div>
                 <nav className="sidebar-nav">
                     <button className={activeTab === 'productos' ? 'active' : ''} onClick={() => navigate('/productos')}>📦 Productos</button>
                     <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => navigate('/pedidos')}>🛒 Pedidos</button>
