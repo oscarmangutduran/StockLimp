@@ -18,6 +18,8 @@ const ProductManagement = ({ userData, onLogout }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false); 
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     
     const [selectedRow, setSelectedRow] = useState(null);
     const [newRow, setNewRow] = useState({});
@@ -73,30 +75,61 @@ const ProductManagement = ({ userData, onLogout }) => {
                 setIsDeleteModalOpen(false);
                 setOrderQuantities({}); 
                 loadData();
-            } else { alert("Error: " + (res.data.message || "Operación fallida")); }
-        } catch (e) { alert("Error de conexión"); }
+            } else { 
+                let msg = res.data.message || "Operación fallida";
+                if (msg.includes("Duplicate entry") && msg.includes("sku")) {
+                    msg = "El SKU introducido ya existe. Por favor, utiliza un SKU diferente.";
+                }
+                setErrorMessage(msg);
+                setIsErrorModalOpen(true);
+            }
+        } catch (e) { 
+            setErrorMessage("Error de conexión con el servidor");
+            setIsErrorModalOpen(true);
+        }
     };
 
-    const renderInput = (k, v, onChange, disabled = false) => (
-        <div className="form-group" key={k}>
-            <label>{k.replace(/_/g, ' ').toUpperCase()}</label>
-            <input 
-                type={k.toLowerCase().includes('fecha') ? "date" : "text"} 
-                value={v || ''} 
-                disabled={disabled} 
-                onChange={onChange} 
-            />
-        </div>
-    );
+    const renderInput = (k, v, onChange, disabled = false) => {
+        if (activeTab === 'pedidos' && k === 'ESTADO') {
+            return (
+                <div className="form-group" key={k}>
+                    <label>ESTADO</label>
+                    <select value={v || ''} disabled={disabled} onChange={onChange}>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="EN_PREPARACION">EN PREPARACIÓN</option>
+                        <option value="DESPACHADO">DESPACHADO</option>
+                        <option value="ENTREGADO">ENTREGADO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                </div>
+            );
+        }
+        return (
+            <div className="form-group" key={k}>
+                <label>{k.replace(/_/g, ' ').toUpperCase()}</label>
+                <input 
+                    type={k.toLowerCase().includes('fecha') ? "date" : "text"} 
+                    value={v || ''} 
+                    disabled={disabled} 
+                    onChange={onChange} 
+                />
+            </div>
+        );
+    };
 
     return (
         <div className="dashboard-container">
-            <aside className="sidebar">
+            <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? '✕' : '☰'}
+            </button>
+            {isMenuOpen && <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}></div>}
+
+            <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
                 <div className="user-info-top"><span className="user-icon">👤</span> {userData?.nombre}</div>
                 <nav className="sidebar-nav">
-                    <button className={activeTab === 'productos' ? 'active' : ''} onClick={() => navigate('/productos')}>📦 Productos</button>
-                    <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => navigate('/pedidos')}>🛒 Pedidos</button>
-                    <button className={activeTab === 'centros_trabajo' ? 'active' : ''} onClick={() => navigate('/centros_trabajo')}>🏢 Centros</button>
+                    {isAdmin && <button className={activeTab === 'productos' ? 'active' : ''} onClick={() => { navigate('/productos'); setIsMenuOpen(false); }}>📦 Productos</button>}
+                    <button className={activeTab === 'pedidos' ? 'active' : ''} onClick={() => { navigate('/pedidos'); setIsMenuOpen(false); }}>🛒 Pedidos</button>
+                    {isAdmin && <button className={activeTab === 'centros_trabajo' ? 'active' : ''} onClick={() => { navigate('/centros_trabajo'); setIsMenuOpen(false); }}>🏢 Centros</button>}
                 </nav>
                 <button className="btn-logout" onClick={onLogout}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px' }}>
@@ -112,12 +145,14 @@ const ProductManagement = ({ userData, onLogout }) => {
                 <header className="content-header">
                     <h2>GESTIÓN DE {activeTab.toUpperCase()}</h2>
                     <div className="header-actions">
-                        <button className="btn-excel" onClick={exportToExcel}>📥 Excel Detallado</button>
-                        <button className="btn-add" onClick={() => {
-                            const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
-                            setNewRow(empty);
-                            setIsAddModalOpen(true);
-                        }}>+ Nuevo</button>
+                        {isAdmin && <button className="btn-excel" onClick={exportToExcel}>📥 Excel Detallado</button>}
+                        {(isAdmin || activeTab === 'pedidos') && (
+                            <button className="btn-add" onClick={() => {
+                                const empty = data.length > 0 ? Object.keys(data[0]).reduce((a,k)=>({...a,[k]:""}),{}) : {};
+                                setNewRow(empty);
+                                setIsAddModalOpen(true);
+                            }}>+ Nuevo</button>
+                        )}
                         <input className="search-input" placeholder="Buscar..." onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </header>
@@ -230,6 +265,19 @@ const ProductManagement = ({ userData, onLogout }) => {
                                 executeAction('delete', { id: selectedRow[idKey], column: idKey });
                             }}>Eliminar</button>
                             <button className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL ERROR */}
+            {isErrorModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsErrorModalOpen(false)}>
+                    <div className="modal-confirm" onClick={e => e.stopPropagation()} style={{ borderLeft: '5px solid #e74c3c' }}>
+                        <h3 style={{ color: '#e74c3c' }}>⚠️ Error</h3>
+                        <p style={{ margin: '20px 0', fontSize: '1.1rem', color: '#2c3e50' }}>{errorMessage}</p>
+                        <div className="modal-btns" style={{ justifyContent: 'center' }}>
+                            <button className="btn-save" style={{ background: '#e74c3c' }} onClick={() => setIsErrorModalOpen(false)}>Entendido</button>
                         </div>
                     </div>
                 </div>

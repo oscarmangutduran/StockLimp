@@ -24,7 +24,7 @@ function App() {
         <Route path="/" element={
           !isLoggedIn ? 
           <Login onLoginSuccess={handleLoginSuccess} /> : 
-          <Navigate to="/productos" replace />
+          <Navigate to={(userData?.rol === 'admin' || userData?.nombre === 'Oscar Mangut') ? "/productos" : "/pedidos"} replace />
         } />
 
         {/* Rutas de Gestión */}
@@ -37,7 +37,7 @@ function App() {
         ))}
 
         {/* Redirección por defecto */}
-        <Route path="*" element={<Navigate to={isLoggedIn ? "/productos" : "/"} replace />} />
+        <Route path="*" element={<Navigate to={isLoggedIn ? ((userData?.rol === 'admin' || userData?.nombre === 'Oscar Mangut') ? "/productos" : "/pedidos") : "/"} replace />} />
       </Routes>
     </Router>
   );

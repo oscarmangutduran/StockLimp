@@ -99,20 +99,34 @@ if ($method === 'GET') {
 // --- CRUD ACCIONES ---
 if ($method === 'POST') {
     if ($action === 'update') {
+        if ($resource === 'pedidos') {
+            $id_pedido = $conn->real_escape_string($input['ID']);
+            $estado = $conn->real_escape_string($input['ESTADO']);
+            $sql = "UPDATE pedidos SET estado = '$estado' WHERE id_pedido = '$id_pedido'";
+            $res = $conn->query($sql);
+            echo json_encode(["success" => $res, "message" => $conn->error]);
+            exit;
+        }
+        
         $id_col = array_key_first($input);
         $id_val = $input[$id_col];
         unset($input[$id_col]);
         $sets = [];
-        foreach ($input as $k => $v) { $sets[] = "$k = '" . $conn->real_escape_string($v) . "'"; }
-        $sql = "UPDATE $resource SET " . implode(", ", $sets) . " WHERE $id_col = '$id_val'";
-        echo json_encode(["success" => $conn->query($sql)]);
+        foreach ($input as $k => $v) { $sets[] = "`$k` = '" . $conn->real_escape_string($v) . "'"; }
+        $sql = "UPDATE $resource SET " . implode(", ", $sets) . " WHERE `$id_col` = '$id_val'";
+        $res = $conn->query($sql);
+        echo json_encode(["success" => $res, "message" => $conn->error]);
     } elseif ($action === 'delete') {
         $id = $conn->real_escape_string($input['id']);
         $col = $conn->real_escape_string($input['column']);
+        if ($resource === 'pedidos' && $col === 'ID') {
+            $col = 'id_pedido';
+        }
         $conn->query("SET FOREIGN_KEY_CHECKS = 0");
-        $res = $conn->query("DELETE FROM $resource WHERE $col = '$id'");
+        $res = $conn->query("DELETE FROM $resource WHERE `$col` = '$id'");
+        $err = $conn->error;
         $conn->query("SET FOREIGN_KEY_CHECKS = 1");
-        echo json_encode(["success" => $res]);
+        echo json_encode(["success" => $res, "message" => $err]);
     } elseif ($action === 'create') {
         $cols = implode(", ", array_keys($input));
         $vals = "'" . implode("', '", array_map([$conn, 'real_escape_string'], array_values($input))) . "'";
