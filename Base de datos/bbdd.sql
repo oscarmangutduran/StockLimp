@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS USERS (
     id_user INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
+    rol ENUM('admin', 'operario') DEFAULT 'operario',
     password_hash VARCHAR(255) NOT NULL,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -76,10 +77,10 @@ USE StockLimp;
 
 -- 1. DATOS PARA USUARIOS (USERS)
 -- Contraseña por defecto: admin123
-INSERT INTO USERS (nombre, email, password_hash) VALUES 
-('Oscar Mangut', 'oscar@stocklimp.com', 'admin123'),
-('Admin Sistema', 'admin@stocklimp.com', 'admin123'),
-('Operario Almacén', 'almacen@stocklimp.com', 'admin123');
+INSERT INTO USERS (nombre, email, rol, password_hash) VALUES 
+('Oscar Mangut', 'oscar@stocklimp.com', 'admin', 'admin123'),
+('Admin Sistema', 'admin@stocklimp.com', 'admin', 'admin123'),
+('Operario Almacén', 'almacen@stocklimp.com', 'operario', 'admin123');
 
 -- 2. DATOS PARA CENTROS DE TRABAJO (CENTROS_TRABAJO)
 INSERT INTO CENTROS_TRABAJO (nombre_centro, direccion, contacto, telefono) VALUES 

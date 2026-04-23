@@ -19,14 +19,19 @@ const Login = ({ onLoginSuccess }) => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=login`, loginData);
+            // Se envía a la URL absoluta para evitar confusiones de proxy
+            const res = await axios.post(`http://localhost/StockLimp/back/index.php?resource=login`, loginData, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
             if (res.data && res.data.success) {
                 onLoginSuccess(res.data.user);
             } else {
                 alert(res.data?.message || "Credenciales incorrectas");
             }
-        } catch (e) {
-            alert("Error de conexión con el servidor PHP");
+        } catch (err) {
+            console.error("Error detallado:", err.response || err);
+            alert("No se pudo conectar con el servidor. Revisa si Apache y MySQL están activos en XAMPP.");
         }
     };
 
@@ -35,10 +40,22 @@ const Login = ({ onLoginSuccess }) => {
             <form className="login-card" onSubmit={handleLogin}>
                 <h1 className="login-logo">STOCKLIMP</h1>
                 <div className="login-input-group">
-                    <input type="text" placeholder="Email o Usuario" onChange={e => setLoginData({...loginData, user: e.target.value})} required />
+                    <input 
+                        type="text" 
+                        placeholder="Email o Usuario" 
+                        autoComplete="username"
+                        onChange={e => setLoginData({...loginData, user: e.target.value})} 
+                        required 
+                    />
                 </div>
                 <div className="login-input-group">
-                    <input type={showPassword ? "text" : "password"} placeholder="Contraseña" onChange={e => setLoginData({...loginData, pass: e.target.value})} required />
+                    <input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Contraseña" 
+                        autoComplete="current-password"
+                        onChange={e => setLoginData({...loginData, pass: e.target.value})} 
+                        required 
+                    />
                     <span className="password-toggle-icon" onClick={() => setShowPassword(!showPassword)}>
                         <EyeIcon open={showPassword} />
                     </span>

@@ -20,34 +20,23 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. Ruta de Login */}
+        {/* Login */}
         <Route path="/" element={
           !isLoggedIn ? 
           <Login onLoginSuccess={handleLoginSuccess} /> : 
           <Navigate to="/productos" replace />
         } />
 
-        {/* 2. Rutas de Gestión: Todas cargan ProductManagement */}
-        {/* Es fundamental que existan estas tres para que la URL cambie arriba */}
-        <Route path="/productos" element={
-          isLoggedIn ? 
-          <ProductManagement userData={userData} onLogout={handleLogout} /> : 
-          <Navigate to="/" replace />
-        } />
+        {/* Rutas de Gestión */}
+        {['/productos', '/pedidos', '/centros_trabajo', '/users'].map(path => (
+          <Route key={path} path={path} element={
+            isLoggedIn ? 
+            <ProductManagement userData={userData} onLogout={handleLogout} /> : 
+            <Navigate to="/" replace />
+          } />
+        ))}
 
-        <Route path="/pedidos" element={
-          isLoggedIn ? 
-          <ProductManagement userData={userData} onLogout={handleLogout} /> : 
-          <Navigate to="/" replace />
-        } />
-
-        <Route path="/centros_trabajo" element={
-          isLoggedIn ? 
-          <ProductManagement userData={userData} onLogout={handleLogout} /> : 
-          <Navigate to="/" replace />
-        } />
-
-        {/* 3. Redirección por defecto para rutas no existentes */}
+        {/* Redirección por defecto */}
         <Route path="*" element={<Navigate to={isLoggedIn ? "/productos" : "/"} replace />} />
       </Routes>
     </Router>
