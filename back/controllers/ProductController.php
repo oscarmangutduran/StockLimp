@@ -1,53 +1,69 @@
 <?php
+require_once 'models/Product.php';
+
 class ProductController {
-    private $db;
+    private $productModel;
 
     public function __construct($db) {
-        $this->db = $db;
+        $this->productModel = new Product($db);
     }
 
-    public function getAll($table) {
-        $result = $this->db->query("SELECT * FROM $table");
-        if ($result) {
-            echo json_encode($result->fetch_all(MYSQLI_ASSOC));
-        } else {
-            echo json_encode([]);
-        }
-    }
+    public function handleRequest($method, $action, $data) {
+        $resource = $_GET['resource'] ?? 'productos';
 
-    public function getComponents($id) {
-        if (!$id) { echo json_encode([]); return; }
-        // Según tu captura, la tabla es 'producto_componentes'
-        $sql = "SELECT * FROM producto_componentes WHERE id_producto = " . intval($id);
-        $result = $this->db->query($sql);
-        echo json_encode($result ? $result->fetch_all(MYSQLI_ASSOC) : []);
-    }
-
-    public function handleAction($table, $action, $data) {
-        if ($action === 'create') {
-            $keys = implode(", ", array_keys($data));
-            $values = "'" . implode("', '", array_values($data)) . "'";
-            $sql = "INSERT INTO $table ($keys) VALUES ($values)";
-        } 
-        elseif ($action === 'update') {
-            $idKey = array_keys($data)[0]; 
-            $idVal = $data[$idKey];
-            unset($data[$idKey]);
-            $pairs = [];
-            foreach ($data as $k => $v) { $pairs[] = "$k = '$v'"; }
-            $sql = "UPDATE $table SET " . implode(", ", $pairs) . " WHERE $idKey = '$idVal'";
-        } 
-        elseif ($action === 'delete') {
-            $id = $data['id'];
-            $col = $data['column'];
-            $sql = "DELETE FROM $table WHERE $col = '$id'";
+        if ($method === 'GET') {
+            switch ($resource) {
+                case 'productos':
+                    echo json_encode($this->productModel->readAll());
+                    break;
+                case 'pedidos':
+                    echo json_encode($this->productModel->readAllOrders());
+                    break;
+                case 'centros_trabajo':
+                    echo json_encode($this->productModel->readAllCenters());
+                    break;
+                default:
+                    echo json_encode([]);
+                    break;
+            }
+            exit;
         }
 
-        if ($this->db->query($sql)) {
-            echo json_encode(["success" => true]);
-        } else {
-            echo json_encode(["success" => false, "message" => $this->db->error]);
+        if ($method === 'POST') {
+            switch ($action) {
+                case 'create':
+                    $success = ($resource === 'productos') 
+                        ? $this->productModel->createProduct($data) 
+                        : $this->productModel->createCenter($data);
+                    echo json_encode(["success" => $success]);
+                    break;
+
+                case 'update':
+                    if ($resource === 'productos') {
+                        $success = $this->productModel->updateProduct($data);
+                    } elseif ($resource === 'pedidos') {
+                        $success = $this->productModel->updateOrder($data);
+                    } else {
+                        $success = $this->productModel->updateCenter($data);
+                    }
+                    echo json_encode(["success" => $success]);
+                    break;
+
+                case 'create_pedido_multiple':
+                    $success = $this->productModel->createMultipleOrder($data);
+                    echo json_encode(["success" => $success]);
+                    break;
+
+                case 'delete':
+                    $success = $this->productModel->deleteRecord($resource, $data['id'] ?? null, $data['column'] ?? '');
+                    echo json_encode(["success" => $success]);
+                    break;
+
+                default:
+                    echo json_encode(["success" => false, "message" => "Acción POST denegada."]);
+                    break;
+            }
+            exit;
         }
     }
 }
-?>

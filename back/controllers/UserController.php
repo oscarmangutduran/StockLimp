@@ -1,45 +1,34 @@
 <?php
+require_once 'models/User.php';
+
 class UserController {
-    private $db;
+    private $userModel;
 
     public function __construct($db) {
-        $this->db = $db;
+        $this->userModel = new User($db);
     }
 
-    public function login($data) {
-        $user_recibido = $data['user'] ?? ''; // Puede ser nombre o email
-        $pass_recibida = $data['pass'] ?? '';
-
-        $query = "SELECT * FROM USERS WHERE email = :user OR nombre = :user LIMIT 1";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':user', $user_recibido);
-        $stmt->execute();
-
-        if ($stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    public function handleRequest($method, $action, $data) {
+        if ($method === 'POST' && $action === 'login') {
             
-            // Permite contraseña en texto plano o encriptada con hash
-            if ($pass_recibida === $row['password_hash'] || password_verify($pass_recibida, $row['password_hash'])) {
-                echo json_encode([
-                    "success" => true,
-                    "user" => [
-                        "nombre" => $row['nombre'],
-                        "email" => $row['email'],
-                        "rol" => isset($row['rol']) ? $row['rol'] : 'usuario'
-                    ]
-                ]);
-            } else {
-                echo json_encode([
-                    "success" => false, 
-                    "message" => "Credenciales incorrectas"
-                ]);
+            // Blindaje de claves: Buscamos cualquier variante que envíe React
+            $email = $data['email'] ?? $data['user'] ?? $data['username'] ?? '';
+            $password = $data['password'] ?? $data['pass'] ?? '';
+
+            // Si las variables llegan vacías, escribimos un log interno en Apache
+            if (empty($email) || empty($password)) {
+                error_log("UserController Error: Las variables de Login llegaron vacías al controlador.");
             }
-        } else {
-            echo json_encode([
-                "success" => false, 
-                "message" => "Credenciales incorrectas"
-            ]);
+
+            // Llamamos al modelo híbrido
+            $user = $this->userModel->login($email, $password);
+
+            if ($user) {
+                echo json_encode(["success" => true, "user" => $user]);
+            } else {
+                echo json_encode(["success" => false, "message" => "El usuario o la clave no coinciden."]);
+            }
+            exit;
         }
     }
 }
-?>
