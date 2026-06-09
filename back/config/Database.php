@@ -1,7 +1,7 @@
 <?php
 class Database {
-    private $host = "127.0.0.1";
-    private $db_name = "stocklimp";
+    private $host = "localhost";
+    private $db_name = "stocklimp"; // Coincide exactamente con el volcado SQL
     private $username = "root";
     private $password = "";
     public $conn;
@@ -10,15 +10,14 @@ class Database {
         $this->conn = null;
         try {
             $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4", 
-                $this->username, 
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8",
+                $this->username,
                 $this->password
             );
+            // Configurar PDO para lanzar excepciones en caso de errores en las sentencias SQL
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         } catch(PDOException $exception) {
-            echo json_encode(["success" => false, "message" => "Fallo crítico en conexión local: " . $exception->getMessage()]);
+            echo json_encode(["success" => false, "message" => "Error en la conexión a la base de datos: " . $exception->getMessage()]);
             exit;
         }
         return $this->conn;

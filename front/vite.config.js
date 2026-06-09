@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    // Esto le indica a Vite que busque estas extensiones en orden si no las pones en tus imports
+    // Esto le indica a Vite que autocomplete estas extensiones cuando no las pongamos
     extensions: ['.js', '.jsx', '.json']
   }
 })

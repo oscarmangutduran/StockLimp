@@ -1,38 +1,38 @@
-<?php
-require_once 'models/Product.php';
+    <?php
+require_once 'models/Center.php';
 
-class ProductController {
-    private $productModel;
+class CenterController {
+    private $centerModel;
 
     public function __construct($db) {
-        $this->productModel = new Product($db);
+        $this->centerModel = new Center($db);
     }
 
     public function handleRequest($method, $action, $data) {
         if ($method === 'GET') {
-            echo json_encode($this->productModel->readAll());
+            echo json_encode($this->centerModel->readAllCenters());
             exit;
         }
 
         if ($method === 'POST') {
             switch ($action) {
                 case 'create':
-                    $res = $this->productModel->create($data);
+                    $res = $this->centerModel->createCenter($data);
                     echo json_encode(["success" => $res]);
                     break;
                 case 'update':
-                    $res = $this->productModel->update($data);
+                    $res = $this->centerModel->updateCenter($data);
                     echo json_encode(["success" => $res]);
                     break;
                 case 'delete':
                     $id = $data['id'] ?? null;
-                    $column = $data['column'] ?? 'id_producto';
-                    $res = $this->productModel->deleteRecord($id, $column);
+                    $column = $data['column'] ?? 'id_centro';
+                    $res = $this->centerModel->deleteRecord($id, $column);
                     echo json_encode(["success" => $res]);
                     break;
                 default:
                     http_response_code(400);
-                    echo json_encode(["success" => false, "message" => "Acción POST de productos inválida"]);
+                    echo json_encode(["success" => false, "message" => "Acción POST de centros inválida"]);
                     break;
             }
             exit;
