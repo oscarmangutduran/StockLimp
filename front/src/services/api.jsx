@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Creamos la instancia centralizada de Axios apuntando al index de tu XAMPP
+// Creamos la instancia centralizada de Axios apuntando al servidor de desarrollo de Laravel
 const api = axios.create({
-    baseURL: 'http://localhost/StockLimp/back/index.php',
+    baseURL: 'http://127.0.0.1:8000/api',
     headers: {
         'Content-Type': 'application/json'
     }
@@ -13,8 +13,8 @@ const api = axios.create({
  */
 export const authService = {
     login: async (email, password) => {
-        // Realiza la petición POST directa al controlador híbrido PHP
-        return api.post('?resource=usuarios&action=login', { email, password });
+        // Enrutamiento limpio hacia el UserController de Laravel
+        return api.post('/usuarios/login', { email, password });
     }
 };
 
@@ -23,16 +23,18 @@ export const authService = {
  */
 export const productService = {
     getAll: async () => {
-        return api.get('?resource=productos');
+        return api.get('/productos');
     },
     create: async (productData) => {
-        return api.post('?resource=productos&action=create', productData);
+        return api.post('/productos', productData);
     },
     update: async (productData) => {
-        return api.post('?resource=productos&action=update', productData);
+        // Laravel recibe el body con el id_producto y actualiza usando Eloquent
+        return api.post('/productos/update', productData);
     },
     delete: async (id_producto) => {
-        return api.post('?resource=productos&action=delete', { id: id_producto, column: 'id_producto' });
+        // Mantenemos la estructura de enviar un objeto con { id } para no alterar la lógica visual de tus botones
+        return api.post('/productos/delete', { id: id_producto });
     }
 };
 
@@ -41,13 +43,13 @@ export const productService = {
  */
 export const orderService = {
     getAll: async () => {
-        return api.get('?resource=pedidos');
+        return api.get('/pedidos');
     },
     createMultiple: async (id_user, productsArray) => {
-        return api.post('?resource=pedidos&action=create_pedido_multiple', { id_user, productos: productsArray });
+        return api.post('/pedidos/multiple', { id_user, productos: productsArray });
     },
     updateStatus: async (id_pedido, newStatus, originalDate) => {
-        return api.post('?resource=pedidos&action=update', { id_pedido, estado: newStatus, fecha_pedido: originalDate });
+        return api.post('/pedidos/update', { id_pedido, estado: newStatus, fecha_pedido: originalDate });
     }
 };
 
@@ -56,16 +58,16 @@ export const orderService = {
  */
 export const centerService = {
     getAll: async () => {
-        return api.get('?resource=centros_trabajo');
+        return api.get('/centros_trabajo');
     },
     create: async (centerData) => {
-        return api.post('?resource=centros_trabajo&action=create', centerData);
+        return api.post('/centros_trabajo', centerData);
     },
     update: async (centerData) => {
-        return api.post('?resource=centros_trabajo&action=update', centerData);
+        return api.post('/centros_trabajo/update', centerData);
     },
     delete: async (id_centro) => {
-        return api.post('?resource=centros_trabajo&action=delete', { id: id_centro, column: 'id_centro' });
+        return api.post('/centros_trabajo/delete', { id: id_centro });
     }
 };
 
