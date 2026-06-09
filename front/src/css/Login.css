@@ -1,0 +1,94 @@
+/* Contenedor principal a pantalla completa */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f3f4f6;
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+}
+
+/* Tarjeta central del formulario */
+.login-card {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* Logotipo / Título principal */
+.login-logo {
+    color: #2563eb;
+    margin-bottom: 28px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+/* Grupos de inputs */
+.login-input-group {
+    margin-bottom: 18px;
+    position: relative;
+    text-align: left;
+}
+
+/* Inputs de texto y password */
+.login-input {
+    width: 100%;
+    padding: 12px 40px 12px 14px; /* Espacio extra a la derecha para que el ojo no pise el texto */
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    background-color: #ffffff;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Icono del ojo interactivo */
+.password-toggle-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-icon:hover {
+    color: #4b5563;
+}
+
+/* Botón de acceso */
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    background-color: #1d4ed8;
+}
