@@ -25,6 +25,7 @@ const ProductManagement = () => {
         if (isLoggedIn) {
             loadData();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.pathname, isLoggedIn]);
 
     const loadData = async () => {
@@ -45,8 +46,13 @@ const ProductManagement = () => {
                 setUserData(res.data.user); 
                 setIsLoggedIn(true);
                 navigate('/productos'); 
-            } else { alert(res.data.message); }
-        } catch (e) { alert("Error de conexión"); }
+            } else { 
+                alert(res.data.message || "Email o contraseña incorrectos."); 
+            }
+        } catch (err) { 
+            const errorMsg = err.response?.data?.message || "Error de conexión al servidor.";
+            alert(errorMsg); 
+        }
     };
 
     const executeAction = async (action, payload) => {
@@ -65,7 +71,7 @@ const ProductManagement = () => {
 
     const formatValue = (key, value) => {
         if (value === null || value === undefined) return '-';
-        if (key === 'es_toxico') return value == 1 ? "SÍ" : "NO";
+        if (key === 'es_toxico') return Number(value) === 1 ? "SÍ" : "NO";
         if (key.toLowerCase().includes('precio') || key.toLowerCase().includes('total')) return `${parseFloat(value).toFixed(2)}€`;
         if (key.toLowerCase().includes('stock') || key.toLowerCase().includes('cantidad')) return Math.floor(value);
         return value;

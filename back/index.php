@@ -22,7 +22,8 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // Carga de dependencias
 require_once 'config/Database.php';
-require_once 'controllers/ProductController.php';
+require_once 'controllers/UserController.php';
+require_once 'controllers/GenericController.php';
 
 // Conexión principal
 $db = (new Database())->getConnection();
@@ -33,8 +34,15 @@ $resource = $_GET['resource'] ?? null;
 
 // Routing de la API
 switch ($resource) {
+    case 'login':
+        $api = new UserController($db);
+        $api->handleRequest($method);
+        break;
+
     case 'productos':
-        $api = new ProductController($db);
+    case 'pedidos':
+    case 'centros_trabajo':
+        $api = new GenericController($db, $resource);
         $api->handleRequest($method);
         break;
 
