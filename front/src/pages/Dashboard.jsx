@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import CenterManagement from './CenterManagement';
-// Dejamos preparadas las importaciones para los siguientes pasos:
-// import ProductManagement from './ProductManagement';
-// import OrderManagement from './OrderManagement';
+import ProductManagement from './ProductManagement';
+import OrderManagement from './OrderManagement';
 import '../css/Dashboard.css';
 
 const Dashboard = ({ user, onLogout }) => {
@@ -14,21 +13,9 @@ const Dashboard = ({ user, onLogout }) => {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'productos':
-                // Provisional hasta crear el archivo:
-                return (
-                    <div style={{ padding: '24px' }}>
-                        <h2>Gestión de Productos</h2>
-                        <p>Contenido de inventario en desarrollo...</p>
-                    </div>
-                );
+                return <ProductManagement user={user} />;
             case 'pedidos':
-                // Provisional hasta crear el archivo:
-                return (
-                    <div style={{ padding: '24px' }}>
-                        <h2>Gestión de Pedidos</h2>
-                        <p>Contenido de pedidos múltiples en desarrollo...</p>
-                    </div>
-                );
+                return <OrderManagement user={user} />;
             case 'centros_trabajo':
                 return <CenterManagement user={user} />;
             default:

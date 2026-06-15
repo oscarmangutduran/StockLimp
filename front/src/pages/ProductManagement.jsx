@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { productService } from '../services/api';
 import Modal from '../components/Modal';
 import '../css/ProductManagement.css';
 
@@ -17,12 +17,10 @@ const ProductManagement = ({ user }) => {
         stock_actual: ''
     });
 
-    const API_URL = 'http://localhost/StockLimp/back/index.php';
-
     // Obtener catálogo completo de productos
     const loadProducts = async () => {
         try {
-            const res = await axios.get(`${API_URL}?resource=productos`);
+            const res = await productService.getAll();
             if (Array.isArray(res.data)) {
                 setProducts(res.data);
             }
@@ -74,7 +72,9 @@ const ProductManagement = ({ user }) => {
         }
 
         try {
-            const res = await axios.post(`${API_URL}?resource=productos&action=${action}`, payload);
+            const res = currentProduct
+                ? await productService.update(payload)
+                : await productService.create(payload);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
                 loadProducts(); // Recarga limpia del catálogo
@@ -91,8 +91,7 @@ const ProductManagement = ({ user }) => {
         if (!window.confirm("¿Estás completamente seguro de eliminar este producto? Podría afectar al histórico de pedidos.")) return;
 
         try {
-            const payload = { id: id, column: 'id_producto' };
-            const res = await axios.post(`${API_URL}?resource=productos&action=delete`, payload);
+            const res = await productService.delete(id);
             if (res.data && res.data.success) {
                 loadProducts();
             } else {

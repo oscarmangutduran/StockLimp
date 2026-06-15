@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { authService } from '../services/api';
 import '../css/Login.css'; 
 
 // Subcomponente interno para renderizar dinámicamente el SVG del ojo
@@ -26,16 +26,8 @@ const Login = ({ onLoginSuccess }) => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            // Mapeamos las propiedades locales para el payload que procesará el UserController de PHP
-            const payload = {
-                email: loginData.user,
-                password: loginData.pass
-            };
-
-            // Petición POST directa hacia el enrutador maestro del backend en XAMPP
-            const res = await axios.post('http://localhost/StockLimp/back/index.php?resource=usuarios&action=login', payload, {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            // Petición POST directa hacia Laravel usando el servicio centralizado
+            const res = await authService.login(loginData.user, loginData.pass);
             
             if (res.data && res.data.success) {
                 // Si el backend responde éxito, inyectamos los datos del usuario hacia el estado global

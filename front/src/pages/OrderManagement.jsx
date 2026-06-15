@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { orderService, productService } from '../services/api';
 import Modal from '../components/Modal';
 import '../css/OrderManagement.css';
 
@@ -11,12 +11,10 @@ const OrderManagement = ({ user }) => {
     // Array de productos que el usuario va añadiendo al pedido actual
     const [selectedItems, setSelectedItems] = useState([{ id_producto: '', cantidad: 1 }]);
 
-    const API_URL = 'http://localhost/StockLimp/back/index.php';
-
     // Cargar historial de pedidos
     const loadOrders = async () => {
         try {
-            const res = await axios.get(`${API_URL}?resource=pedidos`);
+            const res = await orderService.getAll();
             if (Array.isArray(res.data)) {
                 setOrders(res.data);
             }
@@ -28,7 +26,7 @@ const OrderManagement = ({ user }) => {
     // Cargar catálogo de productos para el formulario de selección rápida
     const loadProductsCatalog = async () => {
         try {
-            const res = await axios.get(`${API_URL}?resource=productos`);
+            const res = await productService.getAll();
             if (Array.isArray(res.data)) {
                 setProductsList(res.data);
             }
@@ -77,13 +75,8 @@ const OrderManagement = ({ user }) => {
             return;
         }
 
-        const payload = {
-            id_user: user?.id_user,
-            productos: cleanProducts
-        };
-
         try {
-            const res = await axios.post(`${API_URL}?resource=pedidos&action=create_pedido_multiple`, payload);
+            const res = await orderService.createMultiple(user?.id_user, cleanProducts);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
                 loadOrders(); // Recarga síncrona
@@ -98,12 +91,7 @@ const OrderManagement = ({ user }) => {
     // Cambiar el estado de un pedido (Exclusivo Administrador)
     const handleStatusChange = async (id_pedido, newStatus, originalDate) => {
         try {
-            const payload = {
-                id_pedido: id_pedido,
-                estado: newStatus,
-                fecha_pedido: originalDate // Mantenemos la fecha original
-            };
-            const res = await axios.post(`${API_URL}?resource=pedidos&action=update`, payload);
+            const res = await orderService.updateStatus(id_pedido, newStatus, originalDate);
             if (res.data && res.data.success) {
                 loadOrders();
             } else {

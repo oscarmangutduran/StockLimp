@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { centerService } from '../services/api';
 import Modal from '../components/Modal';
 import '../css/CenterManagement.css';
 
@@ -9,13 +9,10 @@ const CenterManagement = ({ user }) => {
     const [currentCenter, setCurrentCenter] = useState(null); // null = Crear, objeto = Editar
     const [formData, setFormData] = useState({ nombre: '', direccion: '', ciudad: '' });
 
-    // Endpoint base unificado del Backend
-    const API_URL = 'http://localhost/StockLimp/back/index.php';
-
     // Cargar los centros de trabajo desde la base de datos
     const loadCenters = async () => {
         try {
-            const res = await axios.get(`${API_URL}?resource=centros_trabajo`);
+            const res = await centerService.getAll();
             if (Array.isArray(res.data)) {
                 setCenters(res.data);
             }
@@ -57,7 +54,9 @@ const CenterManagement = ({ user }) => {
             : formData;
 
         try {
-            const res = await axios.post(`${API_URL}?resource=centros_trabajo&action=${action}`, payload);
+            const res = currentCenter 
+                ? await centerService.update(payload) 
+                : await centerService.create(payload);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
                 loadCenters(); // Refrescar la tabla automáticamente
@@ -74,8 +73,7 @@ const CenterManagement = ({ user }) => {
         if (!window.confirm("¿Seguro que deseas eliminar este centro de trabajo de forma permanente?")) return;
 
         try {
-            const payload = { id: id, column: 'id_centro' };
-            const res = await axios.post(`${API_URL}?resource=centros_trabajo&action=delete`, payload);
+            const res = await centerService.delete(id);
             if (res.data && res.data.success) {
                 loadCenters();
             } else {

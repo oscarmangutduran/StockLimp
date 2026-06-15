@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Creamos la instancia centralizada de Axios apuntando al servidor de desarrollo de Laravel
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api',
+    baseURL: 'http://localhost/StockLimp/back/public/index.php/api',
     headers: {
         'Content-Type': 'application/json'
     }
