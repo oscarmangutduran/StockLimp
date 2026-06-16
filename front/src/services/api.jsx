@@ -1,75 +1,39 @@
 import axios from 'axios';
 
-// Creamos la instancia centralizada de Axios apuntando al servidor de desarrollo de Laravel
+// Instancia centralizada de Axios apuntando al puerto nativo de Laravel
 const api = axios.create({
-    baseURL: 'http://localhost/StockLimp/back/public/index.php/api',
+    baseURL: 'http://127.0.0.1:8000/api',
     headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
     }
 });
 
-/**
- * Servicio centralizado para Autenticación de Usuarios
- */
+// 1. Servicio de Autenticación
 export const authService = {
-    login: async (email, password) => {
-        // Enrutamiento limpio hacia el UserController de Laravel
-        return api.post('/usuarios/login', { email, password });
-    }
+    login: (email, password) => api.post('/usuarios/login', { email, password }),
 };
 
-/**
- * Servicio centralizado para Gestión del Almacén (Productos)
- */
+// 2. Servicio de Almacén (Productos)
 export const productService = {
-    getAll: async () => {
-        return api.get('/productos');
-    },
-    create: async (productData) => {
-        return api.post('/productos', productData);
-    },
-    update: async (productData) => {
-        // Laravel recibe el body con el id_producto y actualiza usando Eloquent
-        return api.post('/productos/update', productData);
-    },
-    delete: async (id_producto) => {
-        // Mantenemos la estructura de enviar un objeto con { id } para no alterar la lógica visual de tus botones
-        return api.post('/productos/delete', { id: id_producto });
-    }
+    getAll: () => api.get('/productos'),
+    create: (data) => api.post('/productos', data),
+    update: (data) => api.post('/productos/update', data),
+    delete: (id) => api.post('/productos/delete', { id }),
 };
 
-/**
- * Servicio centralizado para Logística y Suministros (Pedidos)
- */
+// 3. Servicio de Suministros y Logística (Pedidos)
 export const orderService = {
-    getAll: async () => {
-        return api.get('/pedidos');
-    },
-    createMultiple: async (id_user, productsArray) => {
-        return api.post('/pedidos/multiple', { id_user, productos: productsArray });
-    },
-    updateStatus: async (id_pedido, newStatus, originalDate) => {
-        return api.post('/pedidos/update', { id_pedido, estado: newStatus, fecha_pedido: originalDate });
-    }
+    getAll: () => api.get('/pedidos'),
+    createMultiple: (id_user, productos) => api.post('/pedidos/multiple', { id_user, productos }),
+    updateStatus: (id_pedido, estado, fecha_pedido) => api.post('/pedidos/update', { id_pedido, estado, fecha_pedido }),
 };
 
-/**
- * Servicio centralizado para Infraestructura (Centros de Trabajo)
- */
+// 4. Servicio de Infraestructura (Centros de Trabajo) 👈 ¡AQUÍ ESTÁ EL QUE FALTABA!
 export const centerService = {
-    getAll: async () => {
-        return api.get('/centros_trabajo');
-    },
-    create: async (centerData) => {
-        return api.post('/centros_trabajo', centerData);
-    },
-    update: async (centerData) => {
-        return api.post('/centros_trabajo/update', centerData);
-    },
-    delete: async (id_centro) => {
-        return api.post('/centros_trabajo/delete', { id: id_centro });
-    }
+    getAll: () => api.get('/centros_trabajo'),
+    create: (data) => api.post('/centros_trabajo', data),
+    update: (data) => api.post('/centros_trabajo/update', data),
+    delete: (id) => api.post('/centros_trabajo/delete', { id }),
 };
 
-// Exportamos la instancia base por si en algún componente necesitas hacer una petición personalizada
 export default api;

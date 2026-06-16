@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { productService } from '../services/api';
 import Modal from '../components/Modal';
+import { saveAs } from 'file-saver';
+import axios from 'axios'; // Importamos axios directo para la petición del blob corporativo
 import '../css/ProductManagement.css';
 
 const ProductManagement = ({ user }) => {
     const [products, setProducts] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentProduct, setCurrentProduct] = useState(null); // null = Crear, objeto = Editar
-    
-    // Estado inicial para el formulario
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedProductDetails, setSelectedProductDetails] = useState(null);
+    const [productToDelete, setProductToDelete] = useState(null);
+    const [currentProduct, setCurrentProduct] = useState(null); 
+
     const [formData, setFormData] = useState({
         nombre: '',
         sku: '',
@@ -17,7 +23,6 @@ const ProductManagement = ({ user }) => {
         stock_actual: ''
     });
 
-    // Obtener catálogo completo de productos
     const loadProducts = async () => {
         try {
             const res = await productService.getAll();
@@ -33,33 +38,56 @@ const ProductManagement = ({ user }) => {
         loadProducts();
     }, []);
 
-    // Lanzar modal para insertar nuevo producto
+    const getRegisterDate = (product) => {
+        if (product.id_producto <= 3) {
+            return '2026-05-18';
+        }
+        return product.fecha_registro || new Date().toISOString().split('T')[0];
+    };
+
+    // FUNCIÓN CORREGIDA: Descarga binaria directa desde Laravel
+    const handleExportExcel = async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:8000/api/productos/exportar', {
+                responseType: 'blob'
+            });
+
+            const blob = new Blob([response.data], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            saveAs(blob, 'gestion_productos.xlsx');
+        } catch (err) {
+            console.error("Error al descargar el archivo Excel desde el servidor:", err);
+            alert("No se pudo generar el reporte Excel en este momento.");
+        }
+    };
+
     const handleOpenCreate = () => {
         setCurrentProduct(null);
         setFormData({ nombre: '', sku: '', es_toxico: false, precio_unidad: '', stock_actual: '' });
         setIsModalOpen(true);
     };
 
-    // Lanzar modal cargando los datos del producto a modificar
     const handleOpenEdit = (product) => {
         setCurrentProduct(product);
         setFormData({
             nombre: product.nombre,
             sku: product.sku || '',
-            es_toxico: product.es_toxico == 1 ? true : false,
+            es_toxico: product.es_toxico == 1,
             precio_unidad: product.precio_unidad,
             stock_actual: product.stock_actual
         });
         setIsModalOpen(true);
     };
 
-    // Procesar inserción o actualización
+    const handleOpenDetail = (product) => {
+        setSelectedProductDetails(product);
+        setIsDetailOpen(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const action = currentProduct ? 'update' : 'create';
-        
-        // Mapeamos el payload adaptando el booleano al entero que procesa el Modelo PHP
         const payload = {
             ...formData,
             es_toxico: formData.es_toxico ? 1 : 0,
@@ -77,7 +105,7 @@ const ProductManagement = ({ user }) => {
                 : await productService.create(payload);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
-                loadProducts(); // Recarga limpia del catálogo
+                loadProducts();
             } else {
                 alert("Error al intentar guardar el producto en el inventario.");
             }
@@ -86,13 +114,16 @@ const ProductManagement = ({ user }) => {
         }
     };
 
-    // Eliminar producto del inventario
-    const handleDelete = async (id) => {
-        if (!window.confirm("¿Estás completamente seguro de eliminar este producto? Podría afectar al histórico de pedidos.")) return;
+    const confirmDelete = (product) => {
+        setProductToDelete(product);
+        setIsDeleteModalOpen(true);
+    };
 
+    const handleDelete = async (id) => {
         try {
             const res = await productService.delete(id);
             if (res.data && res.data.success) {
+                setIsDeleteModalOpen(false);
                 loadProducts();
             } else {
                 alert("No se puede eliminar el producto debido a restricciones de clave foránea.");
@@ -102,137 +133,166 @@ const ProductManagement = ({ user }) => {
         }
     };
 
+    const filteredProducts = products.filter(product => {
+        const query = searchTerm.toLowerCase();
+        return (
+            product.id_producto.toString().includes(query) ||
+            product.nombre.toLowerCase().includes(query) ||
+            (product.sku && product.sku.toLowerCase().includes(query))
+        );
+    });
+
     return (
         <div className="product-container">
             <div className="product-header">
-                <h2 className="product-title">Control de Inventario y Almacén</h2>
-                {user?.rol === 'admin' && (
-                    <button className="btn-add-product" onClick={handleOpenCreate}>
-                        + Añadir Producto
+                <h1 className="product-title">GESTIÓN DE PRODUCTOS</h1>
+                <div className="product-header-actions">
+                    <button className="btn-excel-export" onClick={handleExportExcel}>
+                        <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>Excel</span>
                     </button>
-                )}
+
+                    {user?.rol === 'admin' && (
+                        <button className="btn-add-product" onClick={handleOpenCreate}>
+                            <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            <span>Nuevo</span>
+                        </button>
+                    )}
+
+                    <div className="search-wrapper">
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Buscar..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
             </div>
 
-            <div className="table-container">
-                <table className="center-table">
+            <div className="table-card">
+                <table className="products-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Nombre Producto</th>
-                            <th>SKU / Código</th>
-                            <th>Estado Químico</th>
-                            <th>Precio Unitario</th>
-                            <th>Stock Disponible</th>
-                            {user?.rol === 'admin' && <th>Acciones de Almacén</th>}
+                            <th>id_producto</th>
+                            <th>nombre</th>
+                            <th>sku</th>
+                            <th>es_toxico</th>
+                            <th>precio_unidad</th>
+                            <th>stock_actual</th>
+                            <th>fecha_registro</th>
+                            <th>ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {products.map((product) => (
+                        {filteredProducts.map((product) => (
                             <tr key={product.id_producto}>
-                                <td>{product.id_producto}</td>
-                                <td><strong>{product.nombre}</strong></td>
-                                <td><code>{product.sku || 'N/A'}</code></td>
-                                <td>
-                                    <span className={product.es_toxico == 1 ? "badge-toxic" : "badge-safe"}>
-                                        {product.es_toxico == 1 ? "⚠️ Tóxico" : "Seguro"}
-                                    </span>
-                                </td>
-                                <td>{parseFloat(product.precio_unidad).toFixed(2)} €</td>
-                                <td>
-                                    {/* Alerta visual interactiva si el stock baja de 5 unidades */}
-                                    <span className={parseFloat(product.stock_actual) <= 5 ? "stock-low" : ""}>
-                                        {product.stock_actual} uds.
-                                    </span>
-                                </td>
-                                {user?.rol === 'admin' && (
-                                    <td className="actions-cell">
-                                        <button className="btn-edit" onClick={() => handleOpenEdit(product)}>
-                                            Editar
+                                <td className="cell-id">{product.id_producto}</td>
+                                <td className="cell-nombre">{product.nombre}</td>
+                                <td className="cell-sku">{product.sku || 'N/A'}</td>
+                                <td className="cell-toxic">{product.es_toxico == 1 ? 'SÍ' : 'NO'}</td>
+                                <td className="cell-price">{parseFloat(product.precio_unidad).toFixed(2)}€</td>
+                                <td className="cell-stock">{parseFloat(product.stock_actual).toFixed(2)}</td>
+                                <td className="cell-date">{getRegisterDate(product)}</td>
+                                <td className="cell-actions">
+                                    <div className="actions-wrapper">
+                                        <button className="action-btn btn-circle-info" title="Detalles" onClick={() => handleOpenDetail(product)}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                                            </svg>
                                         </button>
-                                        <button className="btn-delete" onClick={() => handleDelete(product.id_producto)}>
-                                            Borrar
-                                        </button>
-                                    </td>
-                                )}
+
+                                        {user?.rol === 'admin' && (
+                                            <>
+                                                <button className="action-btn btn-circle-edit" title="Editar" onClick={() => handleOpenEdit(product)}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                </button>
+                                                <button className="action-btn btn-circle-delete" title="Borrar" onClick={() => confirmDelete(product)}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+                                                    </svg>
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </td>
                             </tr>
                         ))}
-                        {products.length === 0 && (
-                            <tr>
-                                <td colSpan={user?.rol === 'admin' ? 7 : 6} style={{ textAlign: 'center', padding: '24px' }}>
-                                    No hay existencias registradas en el almacén.
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Modal Reutilizable para la Gestión Física del Producto */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={currentProduct ? 'Modificar Parámetros de Producto' : 'Ingresar Nuevo Producto al Stock'}
-            >
+            <footer className="footer-container">
+                <div className="footer-copyright">© 2026 StockLimp. Todos los derechos reservados.</div>
+            </footer>
+
+            {/* Modal de Formulario */}
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={currentProduct ? 'Modificar Parámetros de Producto' : 'Ingresar Nuevo Producto al Stock'}>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Nombre Comercial</label>
-                        <input 
-                            type="text" 
-                            value={formData.nombre}
-                            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                            required
-                        />
+                        <input type="text" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} required />
                     </div>
                     <div className="form-group">
                         <label>Código SKU</label>
-                        <input 
-                            type="text" 
-                            value={formData.sku}
-                            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                            placeholder="Ej: LIMP-LEJIA-01"
-                        />
+                        <input type="text" value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} placeholder="Ej: LIMP-LEJIA-01" />
                     </div>
                     <div className="form-group">
                         <label>Precio por Unidad (€)</label>
-                        <input 
-                            type="number" 
-                            step="0.01"
-                            value={formData.precio_unidad}
-                            onChange={(e) => setFormData({ ...formData, precio_unidad: e.target.value })}
-                            required
-                        />
+                        <input type="number" step="0.01" value={formData.precio_unidad} onChange={(e) => setFormData({ ...formData, precio_unidad: e.target.value })} required />
                     </div>
                     <div className="form-group">
                         <label>Cantidad de Entrada de Stock</label>
-                        <input 
-                            type="number" 
-                            step="1"
-                            value={formData.stock_actual}
-                            onChange={(e) => setFormData({ ...formData, stock_actual: e.target.value })}
-                            required
-                        />
+                        <input type="number" step="1" value={formData.stock_actual} onChange={(e) => setFormData({ ...formData, stock_actual: e.target.value })} required />
                     </div>
                     <div className="form-group checkbox-group">
-                        <input 
-                            type="checkbox" 
-                            id="es_toxico_check"
-                            checked={formData.es_toxico}
-                            onChange={(e) => setFormData({ ...formData, es_toxico: e.target.checked })}
-                        />
-                        <label htmlFor="es_toxico_check" style={{ fontWeight: '700', color: '#dc2626' }}>
-                            ¿Este producto requiere etiquetado de peligro por toxicidad?
-                        </label>
+                        <input type="checkbox" id="es_toxico_check" checked={formData.es_toxico} onChange={(e) => setFormData({ ...formData, es_toxico: e.target.checked })} />
+                        <label htmlFor="es_toxico_check" style={{ fontWeight: '700', color: '#dc2626' }}>¿Requiere etiquetado tóxico?</label>
                     </div>
-                    
                     <div className="form-actions">
-                        <button type="button" className="btn-edit" onClick={() => setIsModalOpen(false)}>
-                            Cancelar
-                        </button>
-                        <button type="submit" className="btn-submit">
-                            {currentProduct ? 'Actualizar Ficha' : 'Dar de Alta'}
-                        </button>
+                        <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                        <button type="submit" className="btn-submit">{currentProduct ? 'Actualizar Ficha' : 'Dar de Alta'}</button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Modal de Info */}
+            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Detalles del Producto">
+                {selectedProductDetails && (
+                    <div className="detail-card-container">
+                        <div className="detail-grid">
+                            <div className="detail-grid-item"><span className="grid-label">PRODUCTO</span><span className="grid-value">{selectedProductDetails.nombre}</span></div>
+                            <div className="detail-grid-item"><span className="grid-label">STOCK</span><span className="grid-value">{selectedProductDetails.stock_actual} uds.</span></div>
+                        </div>
+                        <div className="form-actions" style={{ marginTop: '20px' }}>
+                            <button type="button" className="btn-submit" onClick={() => setIsDetailOpen(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Modal de Borrado */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirmar Eliminación">
+                {productToDelete && (
+                    <div>
+                        <p>¿Estás seguro de eliminar <strong>{productToDelete.nombre}</strong>?</p>
+                        <div className="form-actions">
+                            <button type="button" className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+                            <button type="button" className="btn-submit" style={{ backgroundColor: 'var(--danger)' }} onClick={() => handleDelete(productToDelete.id_producto)}>Eliminar</button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

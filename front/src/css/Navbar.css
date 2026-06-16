@@ -1,94 +1,156 @@
-/* Contenedor principal de la barra de navegación */
-.navbar {
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background-color: var(--sidebar-bg);
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff;
-    padding: 0 24px;
-    height: 70px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border-bottom: 1px solid #e5e7eb;
-    font-family: system-ui, -apple-system, sans-serif;
+    position: sticky;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    font-family: var(--sans);
+    user-select: none;
+    z-index: 100;
 }
 
-/* Sección izquierda: Marca o logotipo */
-.navbar-brand {
-    font-size: 22px;
-    font-weight: 800;
-    color: #2563eb;
-    letter-spacing: 1px;
-}
-
-/* Sección central: Menú de pestañas de navegación */
-.navbar-menu {
+/* Profile Section */
+.sidebar-profile {
+    padding: 28px 24px;
     display: flex;
-    gap: 8px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Botones de las pestañas */
-.navbar-item {
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.avatar-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.profile-name {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-item-wrapper {
+    width: 100%;
+}
+
+.sidebar-item {
+    width: 100%;
     background: none;
     border: none;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #4b5563;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.navbar-item:hover {
-    background-color: #f3f4f6;
-    color: #111827;
-}
-
-/* Clase de estado activo para saber en qué pestaña estamos */
-.navbar-item.active {
-    background-color: #ebf8ff;
-    color: #2563eb;
-}
-
-/* Sección derecha: Perfil de usuario y logout */
-.navbar-user {
+    padding: 12px 24px;
     display: flex;
     align-items: center;
-    gap: 16px;
-}
-
-.user-info {
-    font-size: 14px;
-    color: #374151;
-    text-align: right;
-}
-
-.user-name {
-    font-weight: 600;
-    display: block;
-}
-
-.user-rol {
-    font-size: 12px;
-    color: #6b7280;
-    text-transform: uppercase;
-}
-
-/* Botón de salida */
-.btn-logout {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border: none;
-    padding: 8px 14px;
-    font-size: 14px;
-    font-weight: 700;
-    border-radius: 6px;
+    gap: 12px;
     cursor: pointer;
+    color: #94a3b8;
+    text-align: left;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+.sidebar-item:hover {
+    background-color: var(--sidebar-hover);
+    color: #ffffff;
+}
+
+.sidebar-item.active {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Icons */
+.menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    transition: color 0.2s ease;
+}
+
+.sidebar-item:hover .menu-icon {
+    color: #ffffff;
+}
+
+/* Active colors matching the screenshot */
+.sidebar-item.active .icon-productos {
+    color: #f97316; /* Orange */
+}
+
+.sidebar-item.active .icon-pedidos {
+    color: #60a5fa; /* Blue/Grey */
+}
+
+.sidebar-item.active .icon-centros {
+    color: #38bdf8; /* Light Blue */
+}
+
+.menu-label {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar Footer / Logout Button */
+.sidebar-footer {
+    width: 100%;
+    margin-top: auto;
+}
+
+.btn-logout {
+    width: 100%;
+    background-color: #ef4444; /* Rojo vibrante */
+    color: #ffffff;
+    border: none;
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     transition: background-color 0.2s ease;
+    box-sizing: border-box;
+    letter-spacing: -0.01em;
 }
 
 .btn-logout:hover {
-    background-color: #fca5a5;
+    background-color: #dc2626;
+}
+
+.logout-icon {
+    transition: transform 0.2s ease;
+}
+
+.btn-logout:hover .logout-icon {
+    transform: translateX(-2px);
 }

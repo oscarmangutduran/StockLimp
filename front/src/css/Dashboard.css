@@ -1,23 +1,30 @@
 /* Contenedor estructural del panel principal */
 .dashboard-layout {
     min-height: 100vh;
-    background-color: #f3f4f6; /* Gris claro de fondo de la app */
+    background-color: #f8fafc;
     display: flex;
-    flex-direction: column;
-    font-family: system-ui, -apple-system, sans-serif;
+    flex-direction: row;
+    width: 100vw;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
-/* Área de contenido dinámico debajo de la Navbar */
+/* Área de contenido dinámico a la derecha del sidebar */
 .dashboard-content {
     flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    background-color: #f8fafc;
 }
 
 /* Animación de transición suave al cambiar de pestaña */
 .tab-fade-in {
     animation: tabEffect 0.25s ease-out;
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
 }
 
 @keyframes tabEffect {
@@ -29,4 +36,4 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
+}

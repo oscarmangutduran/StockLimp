@@ -1,24 +1,25 @@
 import React from 'react';
+import '../css/Modal.css';
 
 const Modal = ({ isOpen, onClose, title, children }) => {
     // Si el modal está cerrado, no renderizamos absolutamente nada en el DOM
     if (!isOpen) return null;
 
     return (
-        <div style={styles.overlay} onClick={onClose}>
+        <div className="modal-overlay" onClick={onClose}>
             {/* El stopPropagation evita que el modal se cierre al hacer clic dentro del formulario */}
-            <div style={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                 
                 {/* Cabecera del Modal */}
-                <div style={styles.header}>
-                    <h3 style={styles.title}>{title}</h3>
-                    <button style={styles.closeButton} onClick={onClose}>
+                <div className="modal-header">
+                    <h3 className="modal-title">{title}</h3>
+                    <button className="modal-close-btn" onClick={onClose}>
                         &times;
                     </button>
                 </div>
 
                 {/* Cuerpo dinámico (Aquí se inyectarán los formularios de productos, pedidos, etc.) */}
-                <div style={styles.body}>
+                <div className="modal-body">
                     {children}
                 </div>
 
@@ -26,7 +27,5 @@ const Modal = ({ isOpen, onClose, title, children }) => {
         </div>
     );
 };
-
-
 
 export default Modal;
