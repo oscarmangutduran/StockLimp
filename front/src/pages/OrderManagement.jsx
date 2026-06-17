@@ -249,7 +249,7 @@ const OrderManagement = ({ user }) => {
                                 </td>
                                 <td className="cell-actions">
                                     <div className="actions-wrapper">
-                                        {activeUser?.rol === 'admin' && (
+                                        {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
                                             <>
                                                 <button 
                                                     className="action-btn btn-circle-edit" 

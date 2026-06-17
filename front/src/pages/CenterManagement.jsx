@@ -186,7 +186,7 @@ const CenterManagement = ({ user }) => {
                     </button>
 
                     {/* Botón Nuevo (Solo Admins) */}
-                    {activeUser?.rol === 'admin' && (
+                    {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
                         <button className="btn-add-center" onClick={handleOpenCreate}>
                             <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -234,7 +234,7 @@ const CenterManagement = ({ user }) => {
                                     <div className="actions-wrapper">
 
                                         {/* Botón Editar (Solo Admins) */}
-                                        {activeUser?.rol === 'admin' && (
+                                        {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
                                             <button
                                                 className="action-btn btn-circle-edit"
                                                 title="Editar"
@@ -248,7 +248,7 @@ const CenterManagement = ({ user }) => {
                                         )}
 
                                         {/* Botón Borrar (Solo Admins) */}
-                                        {activeUser?.rol === 'admin' && (
+                                        {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
                                             <button
                                                 className="action-btn btn-circle-delete"
                                                 title="Borrar"

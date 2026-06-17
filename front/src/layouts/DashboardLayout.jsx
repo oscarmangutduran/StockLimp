@@ -24,6 +24,8 @@ const DashboardLayout = () => {
         activeTab = 'pedidos';
     } else if (location.pathname.includes('/centros')) {
         activeTab = 'centros_trabajo';
+    } else if (location.pathname.includes('/control')) {
+        activeTab = 'control_panel';
     }
 
     // Cambiar la ruta en lugar de usar solo estado interno
@@ -34,6 +36,8 @@ const DashboardLayout = () => {
             navigate('/dashboard/pedidos');
         } else if (tab === 'centros_trabajo') {
             navigate('/dashboard/centros');
+        } else if (tab === 'control_panel') {
+            navigate('/dashboard/control');
         }
     };
 

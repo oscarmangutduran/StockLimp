@@ -43,4 +43,23 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    public function index()
+    {
+        return response()->json(User::all(), 200);
+    }
+
+    public function updateRole(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+            'rol' => 'required|in:super_admin,admin,usuario',
+        ]);
+
+        $user = User::find($request->id_user);
+        $user->rol = $request->rol;
+        $user->save();
+
+        return response()->json(['success' => true, 'user' => $user], 200);
+    }
 }

@@ -4,6 +4,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import ProductManagement from './pages/ProductManagement';
 import OrderManagement from './pages/OrderManagement';
 import CenterManagement from './pages/CenterManagement';
+import ControlPanel from './pages/ControlPanel';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="productos" element={<ProductManagement />} />
           <Route path="pedidos" element={<OrderManagement />} />
           <Route path="centros" element={<CenterManagement />} />
+          <Route path="control" element={<ControlPanel />} />
         </Route>
       </Routes>
     </Router>

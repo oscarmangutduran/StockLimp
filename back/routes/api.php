@@ -27,4 +27,10 @@ Route::get('/pedidos/exportar', [OrderController::class, 'exportarExcel']);
 Route::get('/centros_trabajo', [CenterController::class, 'index']);
 Route::post('/centros_trabajo', [CenterController::class, 'store']);
 Route::post('/centros_trabajo/update', [CenterController::class, 'update']);
-Route::post('/centros_trabajo/delete', [CenterController::class, 'destroy']);
+Route::post('/centros_trabajo/delete', [CenterController::class, 'destroy']);
+
+// Endpoints de usuarios (Super Admin)
+Route::get('/usuarios', [UserController::class, 'index']);
+Route::post('/usuarios/update-role', [UserController::class, 'updateRole']);
+
+
