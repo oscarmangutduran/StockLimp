@@ -304,6 +304,9 @@ const OrderManagement = ({ user }) => {
                         <option value={6}>6</option>
                         <option value={9}>9</option>
                     </select>
+                    <span className="pagination-info">
+                        ({currentRecords.length} registros)
+                    </span>
                 </div>
 
                 {totalPages > 1 && (

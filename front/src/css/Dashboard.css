@@ -121,4 +121,11 @@
     cursor: not-allowed;
     background-color: #f1f5f9;
     color: #94a3b8;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #64748b;
+    margin-left: 8px;
+    font-weight: 500;
 }
