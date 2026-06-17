@@ -6,7 +6,12 @@ import { saveAs } from 'file-saver';
 import '../css/CenterManagement.css';
 
 const CenterManagement = ({ user }) => {
+    const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [centers, setCenters] = useState([]);
+    const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
+    const showAlert = (message, title = 'Atención') => {
+        setAlertModal({ isOpen: true, title, message });
+    };
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -113,7 +118,7 @@ const CenterManagement = ({ user }) => {
                 setIsModalOpen(false);
                 loadCenters(); // Refrescar la tabla automáticamente
             } else {
-                alert("Ocurrió un error en el servidor al guardar el centro.");
+                showAlert("Ocurrió un error en el servidor al guardar el centro.", "Error de Servidor");
             }
         } catch (err) {
             console.error("Error en la petición:", err);
@@ -134,7 +139,7 @@ const CenterManagement = ({ user }) => {
                 setIsDeleteModalOpen(false);
                 loadCenters();
             } else {
-                alert("No se pudo eliminar el registro. Comprueba la integridad referencial.");
+                showAlert("No se pudo eliminar el registro. Comprueba la integridad referencial.", "Error de Eliminación");
             }
         } catch (err) {
             console.error("Error al eliminar centro:", err);
@@ -170,7 +175,7 @@ const CenterManagement = ({ user }) => {
                     </button>
 
                     {/* Botón Nuevo (Solo Admins) */}
-                    {user?.rol === 'admin' && (
+                    {activeUser?.rol === 'admin' && (
                         <button className="btn-add-center" onClick={handleOpenCreate}>
                             <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -198,12 +203,12 @@ const CenterManagement = ({ user }) => {
                 <table className="centers-table">
                     <thead>
                         <tr>
-                            <th>id_centro</th>
-                            <th>nombre</th>
-                            <th>direccion</th>
-                            <th>ciudad</th>
-                            <th>fecha_registro</th>
-                            <th>ACCIONES</th>
+                            <th>ID Centro</th>
+                            <th>Nombre</th>
+                            <th>Dirección</th>
+                            <th>Ciudad</th>
+                            <th>Fecha de registro</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -218,7 +223,7 @@ const CenterManagement = ({ user }) => {
                                     <div className="actions-wrapper">
 
                                         {/* Botón Editar (Solo Admins) */}
-                                        {user?.rol === 'admin' && (
+                                        {activeUser?.rol === 'admin' && (
                                             <button
                                                 className="action-btn btn-circle-edit"
                                                 title="Editar"
@@ -232,7 +237,7 @@ const CenterManagement = ({ user }) => {
                                         )}
 
                                         {/* Botón Borrar (Solo Admins) */}
-                                        {user?.rol === 'admin' && (
+                                        {activeUser?.rol === 'admin' && (
                                             <button
                                                 className="action-btn btn-circle-delete"
                                                 title="Borrar"
@@ -433,6 +438,20 @@ const CenterManagement = ({ user }) => {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Modal de Alerta */}
+            <Modal isOpen={alertModal.isOpen} onClose={() => setAlertModal({ ...alertModal, isOpen: false })} title={alertModal.title}>
+                <div style={{ textAlign: 'left', padding: '10px 0' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
+                        {alertModal.message}
+                    </p>
+                    <div className="form-actions" style={{ marginTop: '24px' }}>
+                        <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

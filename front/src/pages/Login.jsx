@@ -1,83 +1,105 @@
-import React, { useState } from 'react';
-import { authService } from '../services/api';
-import '../css/Login.css'; 
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import '../css/Login.css';
 
-// Subcomponente interno para renderizar dinámicamente el SVG del ojo
-const EyeIcon = ({ open }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {open ? (
-            <>
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-            </>
-        ) : (
-            <>
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </>
-        )}
-    </svg>
-);
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-const Login = ({ onLoginSuccess }) => {
-    const [loginData, setLoginData] = useState({ user: '', pass: '' });
-    const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            // Petición POST directa hacia Laravel usando el servicio centralizado
-            const res = await authService.login(loginData.user, loginData.pass);
+  // 2. Función que se ejecuta al pulsar el botón de "Ingresar"
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Evita que la página se recargue por defecto
+    setError('');
+    setLoading(true);
+
+    // 🚀 Aquí es donde incluyes tu bloque de Axios apuntando al nuevo Laravel 11
+    axios.post('http://127.0.0.1:8000/api/usuarios/login', {
+        email: email,       // Enviamos el email del estado
+        password: password  // Enviamos la contraseña del estado
+    })
+    .then(response => {
+        setLoading(false);
+        
+        if (response.data.success) {
+            // Guardamos los datos del usuario o el rol en el LocalStorage para saber que está logueado
+            localStorage.setItem('user', JSON.stringify(response.data.user));
             
-            if (res.data && res.data.success) {
-                // Si el backend responde éxito, inyectamos los datos del usuario hacia el estado global
-                onLoginSuccess(res.data.user);
-            } else {
-                alert(res.data?.message || "Credenciales incorrectas");
-            }
-        } catch (err) {
-            console.error("Error detallado en la conexión:", err.response || err);
-            alert("No se pudo conectar con el servidor. Revisa si Apache y MySQL están activos en XAMPP.");
+            console.log("Bienvenido ", response.data.user.name);
+            
+            // Redirigimos automáticamente a la pestaña de productos dentro del Dashboard
+            navigate('/dashboard/productos');
         }
-    };
+    })
+    .catch(err => {
+        setLoading(false);
+        // Si Laravel devuelve un error 401 (Credenciales incorrectas), lo pintamos en la pantalla
+        if (err.response && err.response.data) {
+            setError(err.response.data.message);
+        } else {
+            setError('Error de conexión con el servidor.');
+        }
+    });
+  };
 
-    return (
-        <div className="login-container">
-            <form className="login-card" onSubmit={handleLogin}>
-                <h1 className="login-logo">STOCKLIMP</h1>
-                
-                {/* Input de Identificación */}
-                <div className="login-input-group">
-                    <input 
-                        type="text" 
-                        className="login-input"
-                        placeholder="Email o Usuario" 
-                        autoComplete="username"
-                        onChange={e => setLoginData({...loginData, user: e.target.value})} 
-                        required 
-                    />
-                </div>
-                
-                {/* Input de Contraseña */}
-                <div className="login-input-group">
-                    <input 
-                        type={showPassword ? "text" : "password"} 
-                        className="login-input"
-                        placeholder="Contraseña" 
-                        autoComplete="current-password"
-                        onChange={e => setLoginData({...loginData, pass: e.target.value})} 
-                        required 
-                    />
-                    {/* Botón interactivo para alternar el tipo de input */}
-                    <span className="password-toggle-icon" onClick={() => setShowPassword(!showPassword)}>
-                        <EyeIcon open={showPassword} />
-                    </span>
-                </div>
-                
-                <button type="submit" className="btn-login">Ingresar</button>
-            </form>
-        </div>
-    );
-};
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <h2 className="login-logo">STOCKLIMP</h2>
+        
+        {error && <div className="error-alert">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-input-group">
+            <input 
+              type="email" 
+              className="login-input"
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="pepe@stocklimp.com"
+              required 
+            />
+          </div>
+
+          <div className="login-input-group">
+            <input 
+              type={showPassword ? "text" : "password"} 
+              className="login-input"
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              placeholder="••••••••"
+              required 
+            />
+            <span 
+              className="password-toggle-icon"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </span>
+          </div>
+
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? 'Comprobando...' : 'Ingresar'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default Login;

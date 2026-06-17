@@ -1,38 +1,64 @@
-/* Contenedor principal a pantalla completa */
+/* Contenedor principal con fondo responsivo y centrado */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f3f4f6;
-    font-family: system-ui, -apple-system, sans-serif;
+    width: 100vw;
+    background-color: #f1f5f9; /* Fondo gris suave por si la imagen tarda en cargar */
+    background-image: url('/cleaning_worker_bg.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 50% auto; /* El trabajador de limpieza ocupa el 50% izquierdo */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .login-container {
+        background-image: none; /* En pantallas pequeñas se oculta el trabajador */
+        background-color: #f8fafc;
+    }
 }
 
 /* Tarjeta central del formulario */
 .login-card {
     background-color: #ffffff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 48px 40px;
+    border-radius: 20px; /* Bordes muy redondeados como el mockup */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     width: 100%;
-    max-width: 360px;
+    max-width: 420px;
     text-align: center;
     box-sizing: border-box;
+    z-index: 10;
+    margin-left: 20%; /* Mueve el card a la derecha para no solaparse con el trabajador */
+}
+
+@media (max-width: 900px) {
+    .login-card {
+        margin-left: 0;
+        padding: 36px 24px;
+        max-width: 360px;
+    }
 }
 
 /* Logotipo / Título principal */
 .login-logo {
-    color: #2563eb;
-    margin-bottom: 28px;
-    font-size: 32px;
+    color: #5e8c89; /* Tono verde/grisáceo corporativo */
+    margin-top: 0;
+    margin-bottom: 32px;
+    font-size: 34px;
     font-weight: 800;
     letter-spacing: 1.5px;
+    font-family: 'Inter', sans-serif;
 }
 
 /* Grupos de inputs */
 .login-input-group {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     position: relative;
     text-align: left;
 }
@@ -40,30 +66,36 @@
 /* Inputs de texto y password */
 .login-input {
     width: 100%;
-    padding: 12px 40px 12px 14px; /* Espacio extra a la derecha para que el ojo no pise el texto */
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: 16px 48px 16px 20px; /* Alto y espacioso */
+    border: 1.5px solid transparent;
+    border-radius: 12px; /* Redondeado del mockup */
+    font-size: 15px;
     color: #1f2937;
-    background-color: #ffffff;
+    background-color: #ebf1fa; /* Color celeste grisáceo del mockup */
     outline: none;
     box-sizing: border-box;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
+.login-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Input enfocado con borde negro como en el mockup */
 .login-input:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: #111827; /* Borde oscuro */
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.04);
 }
 
 /* Icono del ojo interactivo */
 .password-toggle-icon {
     position: absolute;
-    right: 14px;
+    right: 18px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    color: #9ca3af;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,24 +103,43 @@
 }
 
 .password-toggle-icon:hover {
-    color: #4b5563;
+    color: #111827;
 }
 
 /* Botón de acceso */
 .btn-login {
     width: 100%;
-    padding: 12px;
-    background-color: #2563eb;
+    padding: 16px;
+    background-color: #769f9b; /* Color verde mate del mockup */
     color: #ffffff;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
     margin-top: 10px;
 }
 
 .btn-login:hover {
-    background-color: #1d4ed8;
+    background-color: #5e8c89; /* Tono más oscuro corporativo */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(94, 140, 137, 0.15);
 }
+
+.btn-login:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Alerta de error estilizada */
+.error-alert {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    text-align: left;
+}

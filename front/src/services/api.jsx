@@ -26,6 +26,7 @@ export const orderService = {
     getAll: () => api.get('/pedidos'),
     createMultiple: (id_user, productos) => api.post('/pedidos/multiple', { id_user, productos }),
     updateStatus: (id_pedido, estado, fecha_pedido) => api.post('/pedidos/update', { id_pedido, estado, fecha_pedido }),
+    delete: (id) => api.post('/pedidos/delete', { id_pedido: id }),
 };
 
 // 4. Servicio de Infraestructura (Centros de Trabajo) 👈 ¡AQUÍ ESTÁ EL QUE FALTABA!

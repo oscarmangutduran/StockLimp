@@ -9,12 +9,12 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'usuarios'; // Tu tabla real
+    protected $table = 'users'; // Tu tabla real
     protected $primaryKey = 'id_user'; // Tu clave real
 
     protected $guarded = [];
 
     protected $hidden = [
-        'password',
+        'password_hash',
     ];
 }

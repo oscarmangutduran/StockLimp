@@ -43,4 +43,9 @@ class ProductController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Producto eliminado'], 200);
     }
+
+    public function exportarExcel()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductExport, 'productos.xlsx');
+    }
 }

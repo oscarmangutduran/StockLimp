@@ -6,7 +6,12 @@ import axios from 'axios'; // Importamos axios directo para la petición del blo
 import '../css/ProductManagement.css';
 
 const ProductManagement = ({ user }) => {
+    const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [products, setProducts] = useState([]);
+    const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
+    const showAlert = (message, title = 'Atención') => {
+        setAlertModal({ isOpen: true, title, message });
+    };
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -59,7 +64,7 @@ const ProductManagement = ({ user }) => {
             saveAs(blob, 'gestion_productos.xlsx');
         } catch (err) {
             console.error("Error al descargar el archivo Excel desde el servidor:", err);
-            alert("No se pudo generar el reporte Excel en este momento.");
+            showAlert("No se pudo generar el reporte Excel en este momento.", "Error de Exportación");
         }
     };
 
@@ -107,7 +112,7 @@ const ProductManagement = ({ user }) => {
                 setIsModalOpen(false);
                 loadProducts();
             } else {
-                alert("Error al intentar guardar el producto en el inventario.");
+                showAlert("Error al intentar guardar el producto en el inventario.", "Error de Registro");
             }
         } catch (err) {
             console.error("Error en la solicitud de productos:", err);
@@ -126,7 +131,7 @@ const ProductManagement = ({ user }) => {
                 setIsDeleteModalOpen(false);
                 loadProducts();
             } else {
-                alert("No se puede eliminar el producto debido a restricciones de clave foránea.");
+                showAlert("No se puede eliminar el producto debido a restricciones de clave foránea.", "Error de Eliminación");
             }
         } catch (err) {
             console.error("Error al eliminar producto:", err);
@@ -156,7 +161,7 @@ const ProductManagement = ({ user }) => {
                         <span>Excel</span>
                     </button>
 
-                    {user?.rol === 'admin' && (
+                    {activeUser?.rol === 'admin' && (
                         <button className="btn-add-product" onClick={handleOpenCreate}>
                             <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -182,14 +187,14 @@ const ProductManagement = ({ user }) => {
                 <table className="products-table">
                     <thead>
                         <tr>
-                            <th>id_producto</th>
-                            <th>nombre</th>
-                            <th>sku</th>
-                            <th>es_toxico</th>
-                            <th>precio_unidad</th>
-                            <th>stock_actual</th>
-                            <th>fecha_registro</th>
-                            <th>ACCIONES</th>
+                            <th>ID Producto</th>
+                            <th>Nombre</th>
+                            <th>SKU</th>
+                            <th>¿Tóxico?</th>
+                            <th>Precio Unidad</th>
+                            <th>Stock Actual</th>
+                            <th>Fecha de registro</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -210,7 +215,7 @@ const ProductManagement = ({ user }) => {
                                             </svg>
                                         </button>
 
-                                        {user?.rol === 'admin' && (
+                                        {activeUser?.rol === 'admin' && (
                                             <>
                                                 <button className="action-btn btn-circle-edit" title="Editar" onClick={() => handleOpenEdit(product)}>
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -293,6 +298,20 @@ const ProductManagement = ({ user }) => {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Modal de Alerta */}
+            <Modal isOpen={alertModal.isOpen} onClose={() => setAlertModal({ ...alertModal, isOpen: false })} title={alertModal.title}>
+                <div style={{ textAlign: 'left', padding: '10px 0' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
+                        {alertModal.message}
+                    </p>
+                    <div className="form-actions" style={{ marginTop: '24px' }}>
+                        <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

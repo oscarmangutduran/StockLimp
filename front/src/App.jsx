@@ -1,31 +1,29 @@
-import React, { useState } from 'react';
-import Login from './pages/Login.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import DashboardLayout from './layouts/DashboardLayout';
+import ProductManagement from './pages/ProductManagement';
+import OrderManagement from './pages/OrderManagement';
+import CenterManagement from './pages/CenterManagement';
 
 function App() {
-  // Estado global para almacenar los datos del usuario autenticado (id_user, nombre, rol)
-  const [user, setUser] = useState(null);
-
-  // Función que se ejecuta tras un login exitoso desde el componente Login
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-  };
-
-  // Función para destruir la sesión local y regresar al formulario de acceso
-  const handleLogout = () => {
-    setUser(null);
-  };
-
   return (
-    <>
-      {!user ? (
-        // Si el estado 'user' es null, forzamos la vista de autenticación
-        <Login onLoginSuccess={handleLoginSuccess} />
-      ) : (
-        // Si el usuario ya existe en el estado, cargamos el panel de control central
-        <Dashboard user={user} onLogout={handleLogout} />
-      )}
-    </>
+    // 1. El Router envuelve absolutamente TODO lo que dependa de rutas
+    <Router>
+      <Routes>
+        {/* 2. Ahora Login está DENTRO del contexto, por lo que useNavigate() funcionará perfectamente */}
+        <Route path="/" element={<Login />} />
+
+        {/* Rutas protegidas del Dashboard */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          {/* Si entran a /dashboard a secas, redirige directamente a productos */}
+          <Route index element={<Navigate to="productos" replace />} />
+          
+          <Route path="productos" element={<ProductManagement />} />
+          <Route path="pedidos" element={<OrderManagement />} />
+          <Route path="centros" element={<CenterManagement />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 

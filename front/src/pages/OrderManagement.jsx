@@ -6,13 +6,69 @@ import axios from 'axios'; // Importamos axios directo para la petición del blo
 import '../css/OrderManagement.css';
 
 const OrderManagement = ({ user }) => {
+    const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [orders, setOrders] = useState([]);
+    const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
+    const showAlert = (message, title = 'Atención') => {
+        setAlertModal({ isOpen: true, title, message });
+    };
     const [productsList, setProductsList] = useState([]); 
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
     const [selectedItems, setSelectedItems] = useState([{ id_producto: '', cantidad: 1 }]);
+
+    // Estados para edición y eliminación de pedidos
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [orderToEdit, setOrderToEdit] = useState(null);
+    const [editStatus, setEditStatus] = useState('');
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [orderToDelete, setOrderToDelete] = useState(null);
+
+    const handleOpenEditModal = (order) => {
+        setOrderToEdit(order);
+        setEditStatus(order.estado);
+        setIsEditModalOpen(true);
+    };
+
+    const confirmDeleteOrder = (order) => {
+        setOrderToDelete(order);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeleteOrder = async () => {
+        if (!orderToDelete) return;
+        try {
+            const res = await orderService.delete(orderToDelete.id_pedido);
+            if (res.data && res.data.success) {
+                setIsDeleteModalOpen(false);
+                loadOrders();
+            } else {
+                showAlert("No se pudo eliminar el pedido.", "Error");
+            }
+        } catch (err) {
+            console.error("Error al eliminar pedido:", err);
+            showAlert("Ocurrió un error al intentar eliminar el pedido.", "Error");
+        }
+    };
+
+    const handleSaveStatus = async (e) => {
+        e.preventDefault();
+        if (!orderToEdit) return;
+        try {
+            const res = await orderService.updateStatus(orderToEdit.id_pedido, editStatus);
+            if (res.data && res.data.success) {
+                setIsEditModalOpen(false);
+                loadOrders();
+            } else {
+                showAlert("No se pudo actualizar el estado.", "Error");
+            }
+        } catch (err) {
+            console.error("Error al actualizar estado del pedido:", err);
+            showAlert("Ocurrió un error al intentar actualizar el estado.", "Error");
+        }
+    };
 
     const loadOrders = async () => {
         try {
@@ -65,7 +121,7 @@ const OrderManagement = ({ user }) => {
             saveAs(blob, 'gestion_pedidos.xlsx');
         } catch (err) {
             console.error("Error al descargar el Excel de pedidos desde Laravel:", err);
-            alert("No se pudo generar el listado Excel en este momento.");
+            showAlert("No se pudo generar el listado Excel en este momento.", "Error de Exportación");
         }
     };
 
@@ -92,17 +148,17 @@ const OrderManagement = ({ user }) => {
         e.preventDefault();
         const cleanProducts = selectedItems.filter(item => item.id_producto !== '');
         if (cleanProducts.length === 0) {
-            alert("Debes seleccionar al menos un producto válido.");
+            showAlert("Debes seleccionar al menos un producto válido.", "Validación de Pedido");
             return;
         }
 
         try {
-            const res = await orderService.createMultiple(user?.id_user, cleanProducts);
+            const res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
                 loadOrders();
             } else {
-                alert("Error al procesar la inserción transaccional en el servidor.");
+                showAlert("Error al procesar la inserción transaccional en el servidor.", "Error de Envío");
             }
         } catch (err) {
             console.error("Error al crear el pedido múltiple:", err);
@@ -115,7 +171,7 @@ const OrderManagement = ({ user }) => {
             if (res.data && res.data.success) {
                 loadOrders();
             } else {
-                alert("No se pudo actualizar el estado del pedido.");
+                showAlert("No se pudo actualizar el estado del pedido.", "Error de Actualización");
             }
         } catch (err) {
             console.error("Error al actualizar estado del pedido:", err);
@@ -165,11 +221,11 @@ const OrderManagement = ({ user }) => {
                 <table className="orders-table">
                     <thead>
                         <tr>
-                            <th>id_pedido</th>
-                            <th>operario</th>
-                            <th>fecha_pedido</th>
-                            <th>estado</th>
-                            <th>ACCIONES</th>
+                            <th>ID Pedido</th>
+                            <th>Operario</th>
+                            <th>Fecha de pedido</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -183,14 +239,31 @@ const OrderManagement = ({ user }) => {
                                 </td>
                                 <td className="cell-actions">
                                     <div className="actions-wrapper">
-                                        {user?.rol === 'admin' && (
-                                            <div className="select-status-wrapper">
-                                                <select className="select-status-sleek" value={order.estado} onChange={(e) => handleStatusChange(order.id_pedido, e.target.value, order.fecha_pedido)}>
-                                                    <option value="PENDIENTE">Pendiente</option>
-                                                    <option value="COMPLETADO">Completado</option>
-                                                    <option value="CANCELADO">Cancelado</option>
-                                                </select>
-                                            </div>
+                                        {activeUser?.rol === 'admin' && (
+                                            <>
+                                                <button 
+                                                    className="action-btn btn-circle-edit" 
+                                                    title="Editar" 
+                                                    onClick={() => handleOpenEditModal(order)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                </button>
+                                                <button 
+                                                    className="action-btn btn-circle-delete" 
+                                                    title="Borrar" 
+                                                    onClick={() => confirmDeleteOrder(order)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="3 6 5 6 21 6" />
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                        <line x1="10" y1="11" x2="10" y2="17" />
+                                                        <line x1="14" y1="11" x2="14" y2="17" />
+                                                    </svg>
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </td>
@@ -227,6 +300,70 @@ const OrderManagement = ({ user }) => {
                         <button type="submit" className="btn-submit" style={{ backgroundColor: '#10b981' }}>Enviar Solicitud</button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Modal de Alerta */}
+            <Modal isOpen={alertModal.isOpen} onClose={() => setAlertModal({ ...alertModal, isOpen: false })} title={alertModal.title}>
+                <div style={{ textAlign: 'left', padding: '10px 0' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
+                        {alertModal.message}
+                    </p>
+                    <div className="form-actions" style={{ marginTop: '24px' }}>
+                        <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal de Edición de Pedido (Cambio de Estado) */}
+            <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Modificar Estado de Pedido">
+                {orderToEdit && (
+                    <form onSubmit={handleSaveStatus}>
+                        <div className="form-group" style={{ textAlign: 'left' }}>
+                            <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', color: 'var(--text-h)' }}>Estado del Pedido</label>
+                            <select 
+                                className="select-product-dropdown" 
+                                value={editStatus} 
+                                onChange={(e) => setEditStatus(e.target.value)} 
+                                required
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }}
+                            >
+                                <option value="PENDIENTE">PENDIENTE</option>
+                                <option value="EN_PREPARACION">EN_PREPARACION</option>
+                                <option value="DESPACHADO">DESPACHADO</option>
+                                <option value="ENTREGADO">ENTREGADO</option>
+                                <option value="CANCELADO">CANCELADO</option>
+                            </select>
+                        </div>
+                        <div className="form-actions" style={{ marginTop: '24px' }}>
+                            <button type="button" className="btn-cancel" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
+                            <button type="submit" className="btn-submit">Actualizar Estado</button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
+
+            {/* Modal de Borrado de Pedido */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirmar Eliminación de Pedido">
+                {orderToDelete && (
+                    <div>
+                        <p style={{ marginBottom: '20px', fontSize: '14px', lineHeight: '1.6', textAlign: 'left', color: 'var(--text)' }}>
+                            ¿Estás seguro de eliminar el pedido <strong>#{orderToDelete.id_pedido}</strong>? Esta acción es irreversible y eliminará todos los registros asociados a este pedido.
+                        </p>
+                        <div className="form-actions">
+                            <button type="button" className="btn-cancel" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+                            <button 
+                                type="button" 
+                                className="btn-submit" 
+                                style={{ backgroundColor: 'var(--danger)' }} 
+                                onClick={handleDeleteOrder}
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

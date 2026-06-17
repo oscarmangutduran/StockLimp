@@ -17,8 +17,12 @@ class UserController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        // Tu SQL usa hashes de Bcrypt ($2y$10$...), así que Hash::check funcionará a la perfección
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        $isBcrypt = str_starts_with($user->password_hash, '$2y$');
+        $passwordMatches = $isBcrypt 
+            ? Hash::check($credentials['password'], $user->password_hash) 
+            : ($credentials['password'] === $user->password_hash);
+
+        if (!$user || !$passwordMatches) {
             return response()->json([
                 'success' => false,
                 'message' => 'Las credenciales no coinciden con nuestros registros.'
@@ -30,8 +34,11 @@ class UserController extends Controller
             'message' => 'Login correcto',
             'user' => [
                 'id' => $user->id_user,
+                'id_user' => $user->id_user,
+                'nombre' => $user->nombre,
                 'name' => $user->nombre,
                 'email' => $user->email,
+                'rol' => $user->rol,
                 'role' => $user->rol
             ]
         ]);
