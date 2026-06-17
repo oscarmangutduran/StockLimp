@@ -46,6 +46,10 @@ class ProductController extends Controller
 
     public function exportarExcel()
     {
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductExport, 'productos.xlsx');
+        $raw = \Maatwebsite\Excel\Facades\Excel::raw(new \App\Exports\ProductExport, \Maatwebsite\Excel\Excel::XLSX);
+        return response($raw, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="productos.xlsx"',
+        ]);
     }
 }

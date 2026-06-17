@@ -63,7 +63,11 @@ class OrderController extends Controller
 
     public function exportarExcel()
     {
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\OrderExport, 'pedidos.xlsx');
+        $raw = \Maatwebsite\Excel\Facades\Excel::raw(new \App\Exports\OrderExport, \Maatwebsite\Excel\Excel::XLSX);
+        return response($raw, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="pedidos.xlsx"',
+        ]);
     }
 
     public function destroy(Request $request)
