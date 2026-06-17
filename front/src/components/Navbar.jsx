@@ -12,7 +12,7 @@ const Navbar = ({ activeTab, setActiveTab, user, onLogout }) => {
                     </svg>
                 </div>
                 <span className="profile-name">
-                    {user?.rol === 'admin' ? 'Admin Sistema' : user?.nombre || 'Usuario'}
+                    {user?.nombre || user?.name || 'Usuario'}
                 </span>
             </div>
 
