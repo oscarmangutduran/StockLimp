@@ -1,12 +1,12 @@
 .user-register-container {
-    padding: 32px 40px;
+    padding: 20px 30px;
     font-family: var(--sans);
     background-color: var(--bg);
-    min-height: 100vh;
+    min-height: calc(100vh - 40px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 /* Cabecera */
@@ -17,20 +17,20 @@
 }
 
 .user-register-title {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text-h);
     text-transform: uppercase;
 }
 
-/* Tarjeta del Formulario */
+/* Tarjeta del Formulario (Vista Admin) */
 .register-card {
     background-color: #ffffff;
     border-radius: 12px;
     border: 1px solid var(--border);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    max-width: 580px;
+    max-width: 520px;
     width: 100%;
     margin: 0 auto;
     overflow: hidden;
@@ -40,12 +40,12 @@
 .register-card-header {
     background-color: var(--accent);
     color: #ffffff;
-    padding: 18px 24px;
-    font-size: 16px;
+    padding: 14px 20px;
+    font-size: 15px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     font-family: var(--mono);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -57,20 +57,20 @@
 
 /* Formulario Interno */
 .register-form {
-    padding: 30px 36px;
+    padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .form-group label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #475569;
     text-transform: uppercase;
@@ -79,11 +79,11 @@
 
 .form-group input,
 .form-group select {
-    height: 42px;
-    padding: 0 16px;
-    border-radius: 8px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 6px;
     border: 1px solid var(--border);
-    font-size: 14px;
+    font-size: 13px;
     font-family: var(--sans);
     color: var(--text);
     background-color: #ffffff;
@@ -113,7 +113,7 @@
 }
 
 .error-message {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #ef4444;
     margin-top: 2px;
@@ -121,7 +121,7 @@
 
 /* Botón y Acciones */
 .register-actions {
-    margin-top: 10px;
+    margin-top: 6px;
     display: flex;
     justify-content: flex-end;
 }
@@ -131,11 +131,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 42px;
-    padding: 0 24px;
-    font-size: 14px;
+    height: 36px;
+    padding: 0 20px;
+    font-size: 13px;
     font-weight: 700;
-    border-radius: 21px;
+    border-radius: 18px;
     border: none;
     cursor: pointer;
     color: #ffffff;
@@ -155,6 +155,165 @@
     color: #94a3b8;
     box-shadow: none;
     cursor: not-allowed;
+}
+
+/* Tarjeta de Lista Pendientes (Vista Super Admin) */
+.pending-table-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: auto;
+}
+
+.pending-card-header {
+    background-color: var(--accent);
+    color: #ffffff;
+    padding: 18px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pending-header-icon {
+    stroke-width: 2.5;
+}
+
+.pending-table-wrapper {
+    overflow-x: auto;
+}
+
+.pending-empty {
+    text-align: center;
+    padding: 48px;
+    color: #64748b;
+    font-size: 15px;
+    font-style: italic;
+    background-color: #fafafb;
+}
+
+/* Tabla de Aprobaciones */
+.pending-users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.pending-users-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    border-bottom: 2px solid var(--border);
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.pending-users-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    color: #334155;
+    vertical-align: middle;
+}
+
+.pending-users-table tr:hover {
+    background-color: rgba(94, 140, 137, 0.02);
+}
+
+.pending-users-table tr:last-child td {
+    border-bottom: none;
+}
+
+.pending-cell-id {
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.pending-cell-name {
+    font-weight: 500;
+    color: var(--text-h);
+}
+
+.pending-cell-email {
+    color: #475569;
+}
+
+.pending-cell-date {
+    color: #64748b;
+    font-size: 13px;
+    font-family: var(--mono);
+}
+
+/* Badges de rol */
+.pending-role-badge {
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    display: inline-block;
+}
+
+.badge-role-super_admin {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border-color: #fee2e2;
+}
+
+.badge-role-admin {
+    background-color: #fffbeb;
+    color: #d97706;
+    border-color: #fef3c7;
+}
+
+.badge-role-usuario {
+    background-color: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+/* Botón de Aprobación */
+.btn-approve-alta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 14px;
+    border: 1px solid #10b981;
+    cursor: pointer;
+    color: #ffffff;
+    background-color: #10b981;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn-approve-alta:hover:not(:disabled) {
+    background-color: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.btn-approve-alta:disabled {
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* Loader */

@@ -69,7 +69,7 @@ const Navbar = ({ activeTab, setActiveTab, user, onLogout }) => {
                         <span className="menu-label">Centros</span>
                     </button>
                 </li>
-                {user?.rol === 'admin' && (
+                {(user?.rol === 'admin' || user?.rol === 'super_admin') && (
                     <li className="menu-item-wrapper">
                         <button 
                             className={`sidebar-item ${activeTab === 'dar_de_alta' ? 'active' : ''}`}
