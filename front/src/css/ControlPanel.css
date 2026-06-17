@@ -261,3 +261,64 @@
 .btn-icon {
     stroke-width: 2.5;
 }
+
+/* Badges de Estado */
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: var(--sans);
+    display: inline-block;
+}
+
+.badge-status-pendiente {
+    background-color: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #ffedd5;
+}
+
+.badge-status-activo {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #dcfce7;
+}
+
+/* Contenedor de acciones de estado */
+.status-actions-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Botón de Aprobación */
+.btn-approve-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 13px;
+    border: 1px solid #10b981;
+    cursor: pointer;
+    color: #ffffff;
+    background-color: #10b981;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn-approve-user:hover:not(:disabled) {
+    background-color: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
+}
+
+.btn-approve-user:disabled {
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}

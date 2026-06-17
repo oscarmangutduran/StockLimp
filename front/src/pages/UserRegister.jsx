@@ -7,8 +7,8 @@ import '../css/UserRegister.css';
 const UserRegister = () => {
     const activeUser = JSON.parse(localStorage.getItem('user'));
 
-    // Si no es admin ni super_admin, redirigir
-    if (!activeUser || (activeUser.rol !== 'admin' && activeUser.rol !== 'super_admin')) {
+    // Si no es admin, redirigir
+    if (!activeUser || activeUser.rol !== 'admin') {
         return <Navigate to="/dashboard/productos" replace />;
     }
 

@@ -33,5 +33,6 @@ Route::post('/centros_trabajo/delete', [CenterController::class, 'destroy']);
 Route::get('/usuarios', [UserController::class, 'index']);
 Route::post('/usuarios', [UserController::class, 'store']);
 Route::post('/usuarios/update-role', [UserController::class, 'updateRole']);
+Route::post('/usuarios/aprobar', [UserController::class, 'aprobar']);
 
 

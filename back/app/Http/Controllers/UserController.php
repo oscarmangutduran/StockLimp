@@ -29,6 +29,13 @@ class UserController extends Controller
             ], 401);
         }
 
+        if ($user->estado === 'pendiente') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu cuenta está pendiente de aprobación por el Super Administrador.'
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Login correcto',
@@ -77,6 +84,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password_hash' => \Illuminate\Support\Facades\Hash::make($request->password),
             'rol' => $request->rol,
+            'estado' => 'pendiente',
             'fecha_creacion' => now(),
         ]);
 
@@ -85,5 +93,22 @@ class UserController extends Controller
             'message' => 'Usuario creado correctamente.',
             'user' => $user
         ], 201);
+    }
+
+    public function aprobar(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+        ]);
+
+        $user = User::find($request->id_user);
+        $user->estado = 'activo';
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario aprobado correctamente.',
+            'user' => $user
+        ], 200);
     }
 }

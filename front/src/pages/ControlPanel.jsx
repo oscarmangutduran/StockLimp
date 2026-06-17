@@ -124,6 +124,26 @@ const ControlPanel = () => {
         }
     };
 
+    const handleApproveUser = async (userId) => {
+        setLoading(true);
+        try {
+            await userService.approve(userId);
+            // Actualizar localmente el estado del usuario a activo
+            setUsers(prevUsers => prevUsers.map(u => {
+                if (u.id_user === userId) {
+                    return { ...u, estado: 'activo' };
+                }
+                return u;
+            }));
+            showAlert("Usuario aprobado correctamente.", "Éxito");
+        } catch (err) {
+            console.error("Error al aprobar usuario:", err);
+            showAlert("Ocurrió un error al intentar aprobar al usuario.", "Error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         return dateStr.split(' ')[0]; // Retorna solo YYYY-MM-DD
@@ -252,6 +272,7 @@ const ControlPanel = () => {
                             <th>Nombre Completo</th>
                             <th>Correo Electrónico</th>
                             <th>Rol Asignado</th>
+                            <th>Estado</th>
                             <th>Fecha de Registro</th>
                         </tr>
                     </thead>
@@ -273,6 +294,26 @@ const ControlPanel = () => {
                                             <option value="admin">Administrador</option>
                                             <option value="usuario">Usuario</option>
                                         </select>
+                                    </td>
+                                    <td className="cell-estado-actions">
+                                        {u.estado === 'pendiente' ? (
+                                            <div className="status-actions-container">
+                                                <span className="badge-status badge-status-pendiente">Pendiente</span>
+                                                <button 
+                                                    className="btn-approve-user"
+                                                    onClick={() => handleApproveUser(u.id_user)}
+                                                    title="Aprobar Usuario"
+                                                    disabled={loading}
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                    <span>Aceptar</span>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="badge-status badge-status-activo">Activo</span>
+                                        )}
                                     </td>
                                     <td className="cell-date">{formatDate(u.fecha_creacion)}</td>
                                 </tr>
