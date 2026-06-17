@@ -62,4 +62,28 @@ class UserController extends Controller
 
         return response()->json(['success' => true, 'user' => $user], 200);
     }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:4',
+            'rol' => 'required|in:super_admin,admin,usuario',
+        ]);
+
+        $user = User::create([
+            'nombre' => $request->nombre,
+            'email' => $request->email,
+            'password_hash' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'rol' => $request->rol,
+            'fecha_creacion' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario creado correctamente.',
+            'user' => $user
+        ], 201);
+    }
 }

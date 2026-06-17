@@ -29,8 +29,9 @@ Route::post('/centros_trabajo', [CenterController::class, 'store']);
 Route::post('/centros_trabajo/update', [CenterController::class, 'update']);
 Route::post('/centros_trabajo/delete', [CenterController::class, 'destroy']);
 
-// Endpoints de usuarios (Super Admin)
+// Endpoints de usuarios (Super Admin y Admin)
 Route::get('/usuarios', [UserController::class, 'index']);
+Route::post('/usuarios', [UserController::class, 'store']);
 Route::post('/usuarios/update-role', [UserController::class, 'updateRole']);
 
 

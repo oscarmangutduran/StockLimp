@@ -37,10 +37,11 @@ export const centerService = {
     delete: (id) => api.post('/centros_trabajo/delete', { id }),
 };
 
-// 5. Servicio de Usuarios (Super Administrador)
+// 5. Servicio de Usuarios (Super Administrador y Admin)
 export const userService = {
     getAll: () => api.get('/usuarios'),
     updateRole: (id_user, rol) => api.post('/usuarios/update-role', { id_user, rol }),
+    create: (data) => api.post('/usuarios', data),
 };
 
 export default api;

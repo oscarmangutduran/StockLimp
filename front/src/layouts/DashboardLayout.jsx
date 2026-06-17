@@ -24,6 +24,8 @@ const DashboardLayout = () => {
         activeTab = 'pedidos';
     } else if (location.pathname.includes('/centros')) {
         activeTab = 'centros_trabajo';
+    } else if (location.pathname.includes('/alta')) {
+        activeTab = 'dar_de_alta';
     } else if (location.pathname.includes('/control')) {
         activeTab = 'control_panel';
     }
@@ -36,6 +38,8 @@ const DashboardLayout = () => {
             navigate('/dashboard/pedidos');
         } else if (tab === 'centros_trabajo') {
             navigate('/dashboard/centros');
+        } else if (tab === 'dar_de_alta') {
+            navigate('/dashboard/alta');
         } else if (tab === 'control_panel') {
             navigate('/dashboard/control');
         }

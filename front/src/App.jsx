@@ -5,6 +5,7 @@ import ProductManagement from './pages/ProductManagement';
 import OrderManagement from './pages/OrderManagement';
 import CenterManagement from './pages/CenterManagement';
 import ControlPanel from './pages/ControlPanel';
+import UserRegister from './pages/UserRegister';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="pedidos" element={<OrderManagement />} />
           <Route path="centros" element={<CenterManagement />} />
           <Route path="control" element={<ControlPanel />} />
+          <Route path="alta" element={<UserRegister />} />
         </Route>
       </Routes>
     </Router>

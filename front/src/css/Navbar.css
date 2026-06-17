@@ -117,6 +117,10 @@
     color: #f87171; /* Soft Coral Red */
 }
 
+.sidebar-item.active .icon-alta {
+    color: #a78bfa; /* Lavender/Purple */
+}
+
 .menu-label {
     font-size: 14px;
     font-weight: 500;
