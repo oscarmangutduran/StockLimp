@@ -11,6 +11,7 @@ class User extends Authenticatable
 
     protected $table = 'users'; // Tu tabla real
     protected $primaryKey = 'id_user'; // Tu clave real
+    public $timestamps = false;
 
     protected $guarded = [];
 

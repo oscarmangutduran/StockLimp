@@ -13,6 +13,7 @@ const ControlPanel = () => {
     }
 
     const [users, setUsers] = useState([]);
+    const [pendingChanges, setPendingChanges] = useState({});
     const [stats, setStats] = useState({
         usersCount: 0,
         productsCount: 0,
@@ -59,34 +60,67 @@ const ControlPanel = () => {
         loadData();
     }, []);
 
-    const handleRoleChange = async (userId, newRole) => {
-        try {
-            // Evitar que el Super Administrador se despromueva a sí mismo accidentalmente si es el único
-            if (userId === activeUser.id_user && newRole !== 'super_admin') {
-                const superAdmins = users.filter(u => u.rol === 'super_admin');
-                if (superAdmins.length <= 1) {
-                    showAlert("No puedes quitarte el rol de Super Administrador porque eres el único en el sistema.", "Acción Bloqueada");
-                    return;
-                }
-            }
+    const handleRoleChange = (userId, newRole) => {
+        setPendingChanges(prev => ({
+            ...prev,
+            [userId]: newRole
+        }));
+    };
 
-            const res = await userService.updateRole(userId, newRole);
-            if (res.data && res.data.success) {
-                // Si cambiamos nuestro propio rol, actualizar localStorage
-                if (userId === activeUser.id_user) {
-                    const updatedUser = { ...activeUser, rol: newRole, role: newRole };
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-                    // Recargar página para aplicar cambios de seguridad
-                    window.location.reload();
-                } else {
-                    loadData();
-                }
-            } else {
-                showAlert("No se pudo actualizar el rol del usuario.", "Error");
+    const handleSaveChanges = async () => {
+        const changesKeys = Object.keys(pendingChanges);
+        if (changesKeys.length === 0) return;
+
+        // Validar si el Super Administrador se despromueve a sí mismo y queda 0 super admins
+        let finalSuperAdminsCount = users.filter(u => u.rol === 'super_admin').length;
+        changesKeys.forEach(userId => {
+            const origUser = users.find(u => u.id_user === Number(userId));
+            const newRole = pendingChanges[userId];
+            if (origUser.rol === 'super_admin' && newRole !== 'super_admin') {
+                finalSuperAdminsCount--;
+            } else if (origUser.rol !== 'super_admin' && newRole === 'super_admin') {
+                finalSuperAdminsCount++;
             }
+        });
+
+        if (finalSuperAdminsCount === 0) {
+            showAlert("No puedes guardar los cambios porque el sistema debe tener al menos un Super Administrador activo.", "Acción Bloqueada");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // Enviar todos los cambios en paralelo al servidor
+            const promises = changesKeys.map(userId => 
+                userService.updateRole(Number(userId), pendingChanges[userId])
+            );
+
+            await Promise.all(promises);
+
+            // Si cambiamos nuestro propio rol, y ya no es super_admin, se detectará al recargar o actualizar
+            const myNewRole = pendingChanges[activeUser.id_user];
+            if (myNewRole && myNewRole !== activeUser.rol) {
+                const updatedUser = { ...activeUser, rol: myNewRole, role: myNewRole };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                window.location.reload();
+                return;
+            }
+            // Actualizar el estado local de usuarios con los cambios guardados
+            setUsers(prevUsers => prevUsers.map(u => {
+                if (pendingChanges[u.id_user] !== undefined) {
+                    return { ...u, rol: pendingChanges[u.id_user] };
+                }
+                return u;
+            }));
+
+            setPendingChanges({});
+            showAlert("Los cambios se han guardado correctamente.", "Éxito");
+            loadData();
         } catch (err) {
-            console.error("Error al actualizar rol:", err);
-            showAlert("Ocurrió un error en el servidor al intentar cambiar el rol.", "Error");
+            console.error("Error al guardar cambios de roles:", err);
+            showAlert("Ocurrió un error al intentar guardar los cambios de roles en el servidor.", "Error");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -122,6 +156,18 @@ const ControlPanel = () => {
             <div className="control-panel-header">
                 <h1 className="control-panel-title">PANEL DE CONTROL</h1>
                 <div className="control-panel-header-actions">
+                    <button 
+                        className="btn-save-roles" 
+                        onClick={handleSaveChanges} 
+                        disabled={loading || Object.keys(pendingChanges).length === 0}
+                    >
+                        <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        <span>Guardar Cambios</span>
+                    </button>
                     <div className="search-wrapper">
                         <input
                             type="text"
@@ -210,25 +256,28 @@ const ControlPanel = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentRecords.map((u) => (
-                            <tr key={u.id_user}>
-                                <td className="cell-id"># {u.id_user}</td>
-                                <td className="cell-nombre">{u.nombre}</td>
-                                <td className="cell-email">{u.email}</td>
-                                <td className="cell-role-select">
-                                    <select
-                                        value={u.rol}
-                                        onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
-                                        className={`role-select badge-role-${u.rol}`}
-                                    >
-                                        <option value="super_admin">Super Administrador</option>
-                                        <option value="admin">Administrador</option>
-                                        <option value="usuario">Usuario</option>
-                                    </select>
-                                </td>
-                                <td className="cell-date">{formatDate(u.fecha_creacion)}</td>
-                            </tr>
-                        ))}
+                        {currentRecords.map((u) => {
+                            const currentRole = pendingChanges[u.id_user] !== undefined ? pendingChanges[u.id_user] : u.rol;
+                            return (
+                                <tr key={u.id_user}>
+                                    <td className="cell-id"># {u.id_user}</td>
+                                    <td className="cell-nombre">{u.nombre}</td>
+                                    <td className="cell-email">{u.email}</td>
+                                    <td className="cell-role-select">
+                                        <select
+                                            value={currentRole}
+                                            onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
+                                            className={`role-select badge-role-${currentRole}`}
+                                        >
+                                            <option value="super_admin">Super Administrador</option>
+                                            <option value="admin">Administrador</option>
+                                            <option value="usuario">Usuario</option>
+                                        </select>
+                                    </td>
+                                    <td className="cell-date">{formatDate(u.fecha_creacion)}</td>
+                                </tr>
+                            );
+                        })}
                         {currentRecords.length === 0 && (
                             <tr>
                                 <td colSpan="5" className="table-empty">

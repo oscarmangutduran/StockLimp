@@ -225,3 +225,39 @@
     color: #64748b;
     font-style: italic;
 }
+
+/* Botón Guardar Cambios */
+.btn-save-roles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    color: #ffffff;
+    background-color: var(--success);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.btn-save-roles:hover:not(:disabled) {
+    background-color: var(--success-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.btn-save-roles:disabled {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.btn-icon {
+    stroke-width: 2.5;
+}
