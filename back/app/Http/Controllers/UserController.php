@@ -17,8 +17,7 @@ class UserController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        // En desarrollo local, si no usas contraseñas encriptadas con Hash en la BD, 
-        // puedes usar temporalmente: if (!$user || $user->password !== $credentials['password'])
+        // Tu SQL usa hashes de Bcrypt ($2y$10$...), así que Hash::check funcionará a la perfección
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
@@ -30,10 +29,10 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Login correcto',
             'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
+                'id' => $user->id_user,
+                'name' => $user->nombre,
                 'email' => $user->email,
-                'role' => $user->role ?? 'admin'
+                'role' => $user->rol
             ]
         ]);
     }
