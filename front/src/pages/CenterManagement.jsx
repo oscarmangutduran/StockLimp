@@ -8,6 +8,8 @@ import '../css/CenterManagement.css';
 const CenterManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [centers, setCenters] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
     const showAlert = (message, title = 'Atención') => {
         setAlertModal({ isOpen: true, title, message });
@@ -157,6 +159,15 @@ const CenterManagement = ({ user }) => {
         );
     });
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, recordsPerPage]);
+
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = filteredCenters.slice(indexOfFirstRecord, indexOfLastRecord);
+    const totalPages = Math.ceil(filteredCenters.length / recordsPerPage);
+
     return (
         <div className="center-container">
             {/* Cabecera estilizada */}
@@ -212,7 +223,7 @@ const CenterManagement = ({ user }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredCenters.map((center) => (
+                        {currentRecords.map((center) => (
                             <tr key={center.id_centro}>
                                 <td className="cell-id">{center.id_centro}</td>
                                 <td className="cell-nombre">{center.nombre}</td>
@@ -255,7 +266,7 @@ const CenterManagement = ({ user }) => {
                                 </td>
                             </tr>
                         ))}
-                        {filteredCenters.length === 0 && (
+                        {currentRecords.length === 0 && (
                             <tr>
                                 <td colSpan={6} className="table-empty">
                                     No se encontraron centros de trabajo registrados.
@@ -264,6 +275,51 @@ const CenterManagement = ({ user }) => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Contenedor de la Paginación */}
+            <div className="pagination-container">
+                <div className="pagination-limit-selector">
+                    <label htmlFor="limit-select">Registros por página:</label>
+                    <select 
+                        id="limit-select" 
+                        value={recordsPerPage} 
+                        onChange={(e) => setRecordsPerPage(Number(e.target.value))}
+                        className="limit-dropdown"
+                    >
+                        <option value={3}>3</option>
+                        <option value={6}>6</option>
+                        <option value={9}>9</option>
+                    </select>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-pages">
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Anterior
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Footer de la página */}

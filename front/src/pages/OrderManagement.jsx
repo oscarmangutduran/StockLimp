@@ -8,6 +8,8 @@ import '../css/OrderManagement.css';
 const OrderManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [orders, setOrders] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
     const showAlert = (message, title = 'Atención') => {
         setAlertModal({ isOpen: true, title, message });
@@ -192,6 +194,15 @@ const OrderManagement = ({ user }) => {
         );
     });
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, recordsPerPage]);
+
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = filteredOrders.slice(indexOfFirstRecord, indexOfLastRecord);
+    const totalPages = Math.ceil(filteredOrders.length / recordsPerPage);
+
     return (
         <div className="order-container">
             <div className="order-header">
@@ -216,7 +227,6 @@ const OrderManagement = ({ user }) => {
                     </div>
                 </div>
             </div>
-
             <div className="table-card">
                 <table className="orders-table">
                     <thead>
@@ -229,7 +239,7 @@ const OrderManagement = ({ user }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredOrders.map((order) => (
+                        {currentRecords.map((order) => (
                             <tr key={order.id_pedido}>
                                 <td className="cell-id"># {order.id_pedido}</td>
                                 <td className="cell-operario">{order.operario}</td>
@@ -269,8 +279,60 @@ const OrderManagement = ({ user }) => {
                                 </td>
                             </tr>
                         ))}
+                        {currentRecords.length === 0 && (
+                            <tr>
+                                <td colSpan="5" className="table-empty">
+                                    No se encontraron pedidos registrados.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Contenedor de la Paginación */}
+            <div className="pagination-container">
+                <div className="pagination-limit-selector">
+                    <label htmlFor="limit-select">Registros por página:</label>
+                    <select 
+                        id="limit-select" 
+                        value={recordsPerPage} 
+                        onChange={(e) => setRecordsPerPage(Number(e.target.value))}
+                        className="limit-dropdown"
+                    >
+                        <option value={3}>3</option>
+                        <option value={6}>6</option>
+                        <option value={9}>9</option>
+                    </select>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-pages">
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Anterior
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
             </div>
 
             <footer className="footer-container">

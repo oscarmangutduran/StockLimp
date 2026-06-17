@@ -8,6 +8,8 @@ import '../css/ProductManagement.css';
 const ProductManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
     const [products, setProducts] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
     const showAlert = (message, title = 'Atención') => {
         setAlertModal({ isOpen: true, title, message });
@@ -147,6 +149,15 @@ const ProductManagement = ({ user }) => {
         );
     });
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, recordsPerPage]);
+
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = filteredProducts.slice(indexOfFirstRecord, indexOfLastRecord);
+    const totalPages = Math.ceil(filteredProducts.length / recordsPerPage);
+
     return (
         <div className="product-container">
             <div className="product-header">
@@ -198,7 +209,7 @@ const ProductManagement = ({ user }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredProducts.map((product) => (
+                        {currentRecords.map((product) => (
                             <tr key={product.id_producto}>
                                 <td className="cell-id">{product.id_producto}</td>
                                 <td className="cell-nombre">{product.nombre}</td>
@@ -234,8 +245,60 @@ const ProductManagement = ({ user }) => {
                                 </td>
                             </tr>
                         ))}
+                        {currentRecords.length === 0 && (
+                            <tr>
+                                <td colSpan="8" className="table-empty">
+                                    No se encontraron productos en el inventario.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Contenedor de la Paginación */}
+            <div className="pagination-container">
+                <div className="pagination-limit-selector">
+                    <label htmlFor="limit-select">Registros por página:</label>
+                    <select 
+                        id="limit-select" 
+                        value={recordsPerPage} 
+                        onChange={(e) => setRecordsPerPage(Number(e.target.value))}
+                        className="limit-dropdown"
+                    >
+                        <option value={3}>3</option>
+                        <option value={6}>6</option>
+                        <option value={9}>9</option>
+                    </select>
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-pages">
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Anterior
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button 
+                            className="pagination-btn" 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                )}
             </div>
 
             <footer className="footer-container">
