@@ -21,12 +21,19 @@ class UserController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Las credenciales no coinciden con nuestros registros.'
+            ], 401);
+        }
+
         $isBcrypt = str_starts_with($user->password_hash, '$2y$');
         $passwordMatches = $isBcrypt 
             ? Hash::check($credentials['password'], $user->password_hash) 
             : ($credentials['password'] === $user->password_hash);
 
-        if (!$user || !$passwordMatches) {
+        if (!$passwordMatches) {
             return response()->json([
                 'success' => false,
                 'message' => 'Las credenciales no coinciden con nuestros registros.'

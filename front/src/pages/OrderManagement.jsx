@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { orderService, productService } from '../services/api';
 import Modal from '../components/Modal';
 import { saveAs } from 'file-saver';
@@ -7,14 +8,22 @@ import '../css/OrderManagement.css';
 
 const OrderManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
-    const [orders, setOrders] = useState([]);
+
+    // Intentar leer del contexto centralizado
+    const context = useOutletContext();
+    const ordersFromContext = context?.orders;
+    const productsFromContext = context?.products;
+    const loadOrdersFromContext = context?.loadOrders;
+    const loadProductsFromContext = context?.loadProducts;
+
+    const [orders, setOrders] = useState(ordersFromContext || []);
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
     const showAlert = (message, title = 'Atención') => {
         setAlertModal({ isOpen: true, title, message });
     };
-    const [productsList, setProductsList] = useState([]); 
+    const [productsList, setProductsList] = useState(productsFromContext || []); 
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -27,6 +36,55 @@ const OrderManagement = ({ user }) => {
     const [editStatus, setEditStatus] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [orderToDelete, setOrderToDelete] = useState(null);
+
+    // Sincronizar el estado local si el contexto cambia
+    useEffect(() => {
+        if (ordersFromContext) {
+            setOrders(ordersFromContext);
+        }
+    }, [ordersFromContext]);
+
+    useEffect(() => {
+        if (productsFromContext) {
+            setProductsList(productsFromContext);
+        }
+    }, [productsFromContext]);
+
+    const loadOrders = async () => {
+        if (loadOrdersFromContext) {
+            await loadOrdersFromContext();
+        } else {
+            try {
+                const res = await orderService.getAll();
+                if (Array.isArray(res.data)) {
+                    setOrders(res.data);
+                }
+            } catch (err) {
+                console.error("Error al cargar pedidos:", err);
+            }
+        }
+    };
+
+    const loadProductsCatalog = async () => {
+        if (loadProductsFromContext) {
+            await loadProductsFromContext();
+        } else {
+            try {
+                const res = await productService.getAll();
+                if (Array.isArray(res.data)) {
+                    setProductsList(res.data);
+                }
+            } catch (err) {
+                console.error("Error al cargar catálogo:", err);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!ordersFromContext || !productsFromContext) {
+            Promise.all([loadOrders(), loadProductsCatalog()]);
+        }
+    }, []);
 
     const handleOpenEditModal = (order) => {
         setOrderToEdit(order);
@@ -71,33 +129,6 @@ const OrderManagement = ({ user }) => {
             showAlert("Ocurrió un error al intentar actualizar el estado.", "Error");
         }
     };
-
-    const loadOrders = async () => {
-        try {
-            const res = await orderService.getAll();
-            if (Array.isArray(res.data)) {
-                setOrders(res.data);
-            }
-        } catch (err) {
-            console.error("Error al cargar pedidos:", err);
-        }
-    };
-
-    const loadProductsCatalog = async () => {
-        try {
-            const res = await productService.getAll();
-            if (Array.isArray(res.data)) {
-                setProductsList(res.data);
-            }
-        } catch (err) {
-            console.error("Error al cargar catálogo:", err);
-        }
-    };
-
-    useEffect(() => {
-        loadOrders();
-        loadProductsCatalog();
-    }, []);
 
     const formatDateTime = (dateStr) => {
         if (!dateStr) return 'N/A';

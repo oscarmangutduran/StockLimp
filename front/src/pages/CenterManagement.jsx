@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { centerService } from '../services/api';
 import Modal from '../components/Modal';
 import * as XLSX from 'xlsx';
@@ -7,7 +8,13 @@ import '../css/CenterManagement.css';
 
 const CenterManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
-    const [centers, setCenters] = useState([]);
+
+    // Intentar leer del contexto centralizado
+    const context = useOutletContext();
+    const centersFromContext = context?.centers;
+    const loadCentersFromContext = context?.loadCenters;
+
+    const [centers, setCenters] = useState(centersFromContext || []);
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
@@ -23,20 +30,33 @@ const CenterManagement = ({ user }) => {
     const [currentCenter, setCurrentCenter] = useState(null); // null = Crear, objeto = Editar
     const [formData, setFormData] = useState({ nombre: '', direccion: '', ciudad: '' });
 
+    // Sincronizar el estado local si el contexto cambia
+    useEffect(() => {
+        if (centersFromContext) {
+            setCenters(centersFromContext);
+        }
+    }, [centersFromContext]);
+
     // Cargar los centros de trabajo desde la base de datos
     const loadCenters = async () => {
-        try {
-            const res = await centerService.getAll();
-            if (Array.isArray(res.data)) {
-                setCenters(res.data);
+        if (loadCentersFromContext) {
+            await loadCentersFromContext();
+        } else {
+            try {
+                const res = await centerService.getAll();
+                if (Array.isArray(res.data)) {
+                    setCenters(res.data);
+                }
+            } catch (err) {
+                console.error("Error al cargar centros de trabajo:", err);
             }
-        } catch (err) {
-            console.error("Error al cargar centros de trabajo:", err);
         }
     };
 
     useEffect(() => {
-        loadCenters();
+        if (!centersFromContext) {
+            loadCenters();
+        }
     }, []);
 
     // Helper para formatear fecha

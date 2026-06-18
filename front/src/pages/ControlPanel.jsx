@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useOutletContext } from 'react-router-dom';
 import { userService, productService, orderService, centerService } from '../services/api';
 import Modal from '../components/Modal';
 import '../css/ControlPanel.css';
@@ -12,13 +12,21 @@ const ControlPanel = () => {
         return <Navigate to="/dashboard/productos" replace />;
     }
 
-    const [users, setUsers] = useState([]);
+    // Intentar leer del contexto centralizado
+    const context = useOutletContext();
+    const usersFromContext = context?.users;
+    const productsFromContext = context?.products;
+    const ordersFromContext = context?.orders;
+    const centersFromContext = context?.centers;
+    const loadAllDataFromContext = context?.loadAllData;
+
+    const [users, setUsers] = useState(usersFromContext || []);
     const [pendingChanges, setPendingChanges] = useState({});
     const [stats, setStats] = useState({
-        usersCount: 0,
-        productsCount: 0,
-        ordersCount: 0,
-        centersCount: 0
+        usersCount: usersFromContext ? usersFromContext.length : 0,
+        productsCount: productsFromContext ? productsFromContext.length : 0,
+        ordersCount: ordersFromContext ? ordersFromContext.length : 0,
+        centersCount: centersFromContext ? centersFromContext.length : 0
     });
     
     const [currentPage, setCurrentPage] = useState(1);
@@ -40,33 +48,54 @@ const ControlPanel = () => {
         setAlertModal({ isOpen: true, title, message });
     };
 
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const usersRes = await userService.getAll();
-            const productsRes = await productService.getAll();
-            const ordersRes = await orderService.getAll();
-            const centersRes = await centerService.getAll();
+    // Sincronizar el estado local si el contexto cambia
+    useEffect(() => {
+        if (usersFromContext) {
+            setUsers(usersFromContext);
+            setStats({
+                usersCount: usersFromContext.length,
+                productsCount: productsFromContext ? productsFromContext.length : 0,
+                ordersCount: ordersFromContext ? ordersFromContext.length : 0,
+                centersCount: centersFromContext ? centersFromContext.length : 0
+            });
+        }
+    }, [usersFromContext, productsFromContext, ordersFromContext, centersFromContext]);
 
-            if (Array.isArray(usersRes.data)) {
-                setUsers(usersRes.data);
-                setStats({
-                    usersCount: usersRes.data.length,
-                    productsCount: Array.isArray(productsRes.data) ? productsRes.data.length : 0,
-                    ordersCount: Array.isArray(ordersRes.data) ? ordersRes.data.length : 0,
-                    centersCount: Array.isArray(centersRes.data) ? centersRes.data.length : 0
-                });
+    const loadData = async () => {
+        if (loadAllDataFromContext) {
+            await loadAllDataFromContext();
+        } else {
+            setLoading(true);
+            try {
+                const [usersRes, productsRes, ordersRes, centersRes] = await Promise.all([
+                    userService.getAll(),
+                    productService.getAll(),
+                    orderService.getAll(),
+                    centerService.getAll()
+                ]);
+
+                if (Array.isArray(usersRes.data)) {
+                    setUsers(usersRes.data);
+                    setStats({
+                        usersCount: usersRes.data.length,
+                        productsCount: Array.isArray(productsRes.data) ? productsRes.data.length : 0,
+                        ordersCount: Array.isArray(ordersRes.data) ? ordersRes.data.length : 0,
+                        centersCount: Array.isArray(centersRes.data) ? centersRes.data.length : 0
+                    });
+                }
+            } catch (err) {
+                console.error("Error al cargar datos del panel:", err);
+                showAlert("Ocurrió un error al cargar la información del panel.", "Error de Conexión");
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            console.error("Error al cargar datos del panel:", err);
-            showAlert("Ocurrió un error al cargar la información del panel.", "Error de Conexión");
-        } finally {
-            setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadData();
+        if (!usersFromContext) {
+            loadData();
+        }
     }, []);
 
     const handleRoleChange = (userId, newRole) => {

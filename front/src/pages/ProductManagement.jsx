@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { productService } from '../services/api';
 import Modal from '../components/Modal';
 import { saveAs } from 'file-saver';
@@ -7,7 +8,13 @@ import '../css/ProductManagement.css';
 
 const ProductManagement = ({ user }) => {
     const activeUser = user || JSON.parse(localStorage.getItem('user'));
-    const [products, setProducts] = useState([]);
+    
+    // Intentar leer del contexto centralizado
+    const context = useOutletContext();
+    const productsFromContext = context?.products;
+    const loadProductsFromContext = context?.loadProducts;
+
+    const [products, setProducts] = useState(productsFromContext || []);
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(6);
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
@@ -22,6 +29,34 @@ const ProductManagement = ({ user }) => {
     const [productToDelete, setProductToDelete] = useState(null);
     const [currentProduct, setCurrentProduct] = useState(null); 
 
+    // Sincronizar el estado local si el contexto cambia
+    useEffect(() => {
+        if (productsFromContext) {
+            setProducts(productsFromContext);
+        }
+    }, [productsFromContext]);
+
+    const loadProducts = async () => {
+        if (loadProductsFromContext) {
+            await loadProductsFromContext();
+        } else {
+            try {
+                const res = await productService.getAll();
+                if (Array.isArray(res.data)) {
+                    setProducts(res.data);
+                }
+            } catch (err) {
+                console.error("Error al cargar productos:", err);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!productsFromContext) {
+            loadProducts();
+        }
+    }, []);
+
     const [formData, setFormData] = useState({
         nombre: '',
         sku: '',
@@ -29,21 +64,6 @@ const ProductManagement = ({ user }) => {
         precio_unidad: '',
         stock_actual: ''
     });
-
-    const loadProducts = async () => {
-        try {
-            const res = await productService.getAll();
-            if (Array.isArray(res.data)) {
-                setProducts(res.data);
-            }
-        } catch (err) {
-            console.error("Error al cargar productos:", err);
-        }
-    };
-
-    useEffect(() => {
-        loadProducts();
-    }, []);
 
     const getRegisterDate = (product) => {
         if (product.id_producto <= 3) {

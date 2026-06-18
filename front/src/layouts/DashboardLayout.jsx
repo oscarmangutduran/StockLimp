@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { userService, productService, orderService, centerService } from '../services/api';
 import '../css/Dashboard.css';
 
 const DashboardLayout = () => {
@@ -12,6 +13,77 @@ const DashboardLayout = () => {
         const stored = localStorage.getItem('user');
         return stored ? JSON.parse(stored) : null;
     });
+
+    // Estados centralizados para almacenar en caché
+    const [products, setProducts] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [centers, setCenters] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const loadProducts = async () => {
+        try {
+            const res = await productService.getAll();
+            if (Array.isArray(res.data)) setProducts(res.data);
+        } catch (err) {
+            console.error("Error al cargar productos en layout:", err);
+        }
+    };
+
+    const loadOrders = async () => {
+        try {
+            const res = await orderService.getAll();
+            if (Array.isArray(res.data)) setOrders(res.data);
+        } catch (err) {
+            console.error("Error al cargar pedidos en layout:", err);
+        }
+    };
+
+    const loadCenters = async () => {
+        try {
+            const res = await centerService.getAll();
+            if (Array.isArray(res.data)) setCenters(res.data);
+        } catch (err) {
+            console.error("Error al cargar centros en layout:", err);
+        }
+    };
+
+    const loadUsers = async () => {
+        try {
+            const res = await userService.getAll();
+            if (Array.isArray(res.data)) setUsers(res.data);
+        } catch (err) {
+            console.error("Error al cargar usuarios en layout:", err);
+        }
+    };
+
+    const loadAllData = async () => {
+        if (!user) return;
+        setLoading(true);
+        try {
+            const promises = [];
+            
+            // Siempre cargar productos y pedidos
+            promises.push(loadProducts());
+            promises.push(loadOrders());
+            
+            // Cargar centros y usuarios sólo si es admin o super_admin
+            if (user.rol === 'admin' || user.rol === 'super_admin') {
+                promises.push(loadCenters());
+                promises.push(loadUsers());
+            }
+            
+            await Promise.all(promises);
+        } catch (err) {
+            console.error("Error al precargar datos:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAllData();
+    }, [user]);
 
     // Redirigir a login si no hay sesión iniciada
     if (!user) {
@@ -66,7 +138,18 @@ const DashboardLayout = () => {
             <div className="dashboard-content">
                 <div className="tab-fade-in" key={location.pathname}>
                     {/* Renderiza las subrutas hijas de /dashboard */}
-                    <Outlet />
+                    <Outlet context={{
+                        products,
+                        orders,
+                        centers,
+                        users,
+                        loading,
+                        loadProducts,
+                        loadOrders,
+                        loadCenters,
+                        loadUsers,
+                        loadAllData
+                    }} />
                 </div>
             </div>
         </div>
