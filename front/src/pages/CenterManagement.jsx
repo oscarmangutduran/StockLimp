@@ -247,7 +247,25 @@ const CenterManagement = ({ user }) => {
                             <tr key={center.id_centro}>
                                 <td className="cell-id">{center.id_centro}</td>
                                 <td className="cell-nombre">{center.nombre}</td>
-                                <td className="cell-direccion">{center.direccion || 'N/A'}</td>
+                                <td className="cell-direccion">
+                                    {center.direccion ? (
+                                        <a 
+                                            href={`https://maps.google.com/?q=${encodeURIComponent(center.direccion + (center.ciudad ? ', ' + center.ciudad : ''))}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="address-map-link"
+                                            title="Abrir ubicación en mapas"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', flexShrink: 0 }}>
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                <circle cx="12" cy="10" r="3" />
+                                            </svg>
+                                            <span>{center.direccion}</span>
+                                        </a>
+                                    ) : (
+                                        'N/A'
+                                    )}
+                                </td>
                                 <td className="cell-ciudad">{center.ciudad || 'N/A'}</td>
                                 <td className="cell-date">{formatDate(center.fecha_registro)}</td>
                                 <td className="cell-actions">
@@ -464,7 +482,25 @@ const CenterManagement = ({ user }) => {
 
                             <div className="detail-grid-item full-width">
                                 <span className="grid-label">DIRECCIÓN POSTAL</span>
-                                <span className="grid-value">{selectedCenterDetails.direccion || 'N/A'}</span>
+                                <span className="grid-value">
+                                    {selectedCenterDetails.direccion ? (
+                                        <a 
+                                            href={`https://maps.google.com/?q=${encodeURIComponent(selectedCenterDetails.direccion + (selectedCenterDetails.ciudad ? ', ' + selectedCenterDetails.ciudad : ''))}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="address-map-link"
+                                            title="Abrir ubicación en mapas"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', flexShrink: 0 }}>
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                <circle cx="12" cy="10" r="3" />
+                                            </svg>
+                                            {selectedCenterDetails.direccion}
+                                        </a>
+                                    ) : (
+                                        'N/A'
+                                    )}
+                                </span>
                             </div>
 
                             <div className="detail-grid-item full-width">
