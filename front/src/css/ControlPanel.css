@@ -322,3 +322,40 @@
     color: #94a3b8;
     cursor: not-allowed;
 }
+
+/* Botón de Rechazo en la tabla de usuarios */
+.btn-reject-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 13px;
+    border: 1px solid #ef4444;
+    cursor: pointer;
+    color: #ffffff;
+    background-color: #ef4444;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.btn-reject-user:hover:not(:disabled) {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    transform: translateY(-1px);
+}
+
+.btn-reject-user:disabled {
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.badge-status-rechazado {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+}

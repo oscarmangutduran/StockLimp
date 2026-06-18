@@ -43,6 +43,7 @@ export const userService = {
     updateRole: (id_user, rol) => api.post('/usuarios/update-role', { id_user, rol }),
     create: (data) => api.post('/usuarios', data),
     approve: (id_user) => api.post('/usuarios/aprobar', { id_user }),
+    reject: (id_user) => api.post('/usuarios/rechazar', { id_user }),
 };
 
 export default api;

@@ -144,6 +144,26 @@ const ControlPanel = () => {
         }
     };
 
+    const handleRejectUser = async (userId) => {
+        setLoading(true);
+        try {
+            await userService.reject(userId);
+            // Actualizar localmente el estado del usuario a rechazado
+            setUsers(prevUsers => prevUsers.map(u => {
+                if (u.id_user === userId) {
+                    return { ...u, estado: 'rechazado' };
+                }
+                return u;
+            }));
+            showAlert("Usuario rechazado correctamente.", "Éxito");
+        } catch (err) {
+            console.error("Error al rechazar usuario:", err);
+            showAlert("Ocurrió un error al intentar rechazar al usuario.", "Error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         return dateStr.split(' ')[0]; // Retorna solo YYYY-MM-DD
@@ -299,6 +319,33 @@ const ControlPanel = () => {
                                         {u.estado === 'pendiente' ? (
                                             <div className="status-actions-container">
                                                 <span className="badge-status badge-status-pendiente">Pendiente</span>
+                                                <button 
+                                                    className="btn-approve-user"
+                                                    onClick={() => handleApproveUser(u.id_user)}
+                                                    title="Aprobar Usuario"
+                                                    disabled={loading}
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                    <span>Aceptar</span>
+                                                </button>
+                                                <button 
+                                                    className="btn-reject-user"
+                                                    onClick={() => handleRejectUser(u.id_user)}
+                                                    title="Rechazar Usuario"
+                                                    disabled={loading}
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                                    </svg>
+                                                    <span>Rechazar</span>
+                                                </button>
+                                            </div>
+                                        ) : u.estado === 'rechazado' ? (
+                                            <div className="status-actions-container">
+                                                <span className="badge-status badge-status-rechazado">Rechazado</span>
                                                 <button 
                                                     className="btn-approve-user"
                                                     onClick={() => handleApproveUser(u.id_user)}

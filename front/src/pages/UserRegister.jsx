@@ -139,6 +139,22 @@ const UserRegister = () => {
         }
     };
 
+    // Rechazo de usuario (Super Admin)
+    const handleRejectUser = async (userId) => {
+        setLoading(true);
+        try {
+            await userService.reject(userId);
+            // Remover de la lista local
+            setPendingUsers(prev => prev.filter(u => u.id_user !== userId));
+            showAlert("Usuario rechazado correctamente.", "Éxito");
+        } catch (err) {
+            console.error("Error al rechazar usuario:", err);
+            showAlert("Ocurrió un error al intentar rechazar al usuario.", "Error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         return dateStr.split(' ')[0];
@@ -207,16 +223,29 @@ const UserRegister = () => {
                                             </td>
                                             <td className="pending-cell-date">{formatDate(u.fecha_creacion)}</td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <button
-                                                    className="btn-approve-alta"
-                                                    onClick={() => handleApproveUser(u.id_user)}
-                                                    disabled={loading}
-                                                >
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="20 6 9 17 4 12" />
-                                                    </svg>
-                                                    <span>Aceptar</span>
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                    <button
+                                                        className="btn-approve-alta"
+                                                        onClick={() => handleApproveUser(u.id_user)}
+                                                        disabled={loading}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="20 6 9 17 4 12" />
+                                                        </svg>
+                                                        <span>Aceptar</span>
+                                                    </button>
+                                                    <button
+                                                        className="btn-reject-alta"
+                                                        onClick={() => handleRejectUser(u.id_user)}
+                                                        disabled={loading}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                                        </svg>
+                                                        <span>Rechazar</span>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

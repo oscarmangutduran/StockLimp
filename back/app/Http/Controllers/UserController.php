@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserRegistered;
+use App\Mail\UserApproved;
+use App\Mail\UserRejected;
 
 class UserController extends Controller
 {
@@ -33,6 +37,13 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Tu cuenta está pendiente de aprobación por el Super Administrador.'
+            ], 403);
+        }
+
+        if ($user->estado === 'rechazado') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu cuenta ha sido rechazada por el Super Administrador.'
             ], 403);
         }
 
@@ -88,6 +99,12 @@ class UserController extends Controller
             'fecha_creacion' => now(),
         ]);
 
+        try {
+            Mail::to($user->email)->send(new UserRegistered($user, $request->password));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error enviando correo de registro: " . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Usuario creado correctamente.',
@@ -105,9 +122,38 @@ class UserController extends Controller
         $user->estado = 'activo';
         $user->save();
 
+        try {
+            Mail::to($user->email)->send(new UserApproved($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error enviando correo de aprobación: " . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Usuario aprobado correctamente.',
+            'user' => $user
+        ], 200);
+    }
+
+    public function rechazar(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+        ]);
+
+        $user = User::find($request->id_user);
+        $user->estado = 'rechazado';
+        $user->save();
+
+        try {
+            Mail::to($user->email)->send(new UserRejected($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error enviando correo de rechazo: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario rechazado correctamente.',
             'user' => $user
         ], 200);
     }
