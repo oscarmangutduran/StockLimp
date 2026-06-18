@@ -157,4 +157,80 @@ class UserController extends Controller
             'user' => $user
         ], 200);
     }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+        ]);
+
+        $user = User::find($request->id_user);
+
+        // Si el usuario es super_admin, validar que no sea el único activo
+        if ($user->rol === 'super_admin') {
+            $superAdminsCount = User::where('rol', 'super_admin')->where('estado', 'activo')->count();
+            if ($superAdminsCount <= 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes eliminar al único Super Administrador activo del sistema.'
+                ], 400);
+            }
+        }
+
+        // Verificar si tiene pedidos asociados en la base de datos
+        $hasOrders = \Illuminate\Support\Facades\DB::table('pedidos')->where('id_user', $request->id_user)->exists();
+        if ($hasOrders) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede eliminar el usuario porque tiene pedidos asociados en el sistema.'
+            ], 400);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario eliminado correctamente.'
+        ], 200);
+    }
+
+    public function update(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+            'nombre' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $request->id_user . ',id_user',
+            'rol' => 'required|in:super_admin,admin,usuario',
+            'password' => 'nullable|string|min:4',
+        ]);
+
+        $user = User::find($request->id_user);
+
+        // Si se cambia el rol de super_admin a otro, validar que no sea el único activo
+        if ($user->rol === 'super_admin' && $request->rol !== 'super_admin') {
+            $superAdminsCount = User::where('rol', 'super_admin')->where('estado', 'activo')->count();
+            if ($superAdminsCount <= 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes cambiar el rol al único Super Administrador activo del sistema.'
+                ], 400);
+            }
+        }
+
+        $user->nombre = $request->nombre;
+        $user->email = $request->email;
+        $user->rol = $request->rol;
+
+        if ($request->filled('password')) {
+            $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario actualizado correctamente.',
+            'user' => $user
+        ], 200);
+    }
 }

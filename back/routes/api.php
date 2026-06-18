@@ -35,5 +35,7 @@ Route::post('/usuarios', [UserController::class, 'store']);
 Route::post('/usuarios/update-role', [UserController::class, 'updateRole']);
 Route::post('/usuarios/aprobar', [UserController::class, 'aprobar']);
 Route::post('/usuarios/rechazar', [UserController::class, 'rechazar']);
+Route::post('/usuarios/delete', [UserController::class, 'destroy']);
+Route::post('/usuarios/update', [UserController::class, 'update']);
 
 

@@ -27,6 +27,15 @@ const ControlPanel = () => {
     const [loading, setLoading] = useState(false);
     
     const [alertModal, setAlertModal] = useState({ isOpen: false, title: 'Atención', message: '' });
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
+    const [editModal, setEditModal] = useState({ isOpen: false, user: null });
+    const [editForm, setEditForm] = useState({
+        nombre: '',
+        email: '',
+        rol: '',
+        password: ''
+    });
+    const [showPassword, setShowPassword] = useState(false);
     const showAlert = (message, title = 'Atención') => {
         setAlertModal({ isOpen: true, title, message });
     };
@@ -164,6 +173,107 @@ const ControlPanel = () => {
         }
     };
 
+    const confirmDeleteUser = (user) => {
+        setConfirmModal({ isOpen: true, user });
+    };
+
+    const handleDeleteUser = async (userId) => {
+        setConfirmModal({ isOpen: false, user: null });
+        setLoading(true);
+        try {
+            const res = await userService.delete(userId);
+            if (res.data && res.data.success) {
+                setUsers(prevUsers => prevUsers.filter(u => u.id_user !== userId));
+                showAlert("Usuario eliminado correctamente.", "Éxito");
+            } else {
+                showAlert(res.data.message || "No se pudo eliminar al usuario.", "Error");
+            }
+        } catch (err) {
+            console.error("Error al eliminar usuario:", err);
+            const errMsg = err.response?.data?.message || "Ocurrió un error al intentar eliminar al usuario.";
+            showAlert(errMsg, "Error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenEdit = (user) => {
+        setEditModal({ isOpen: true, user });
+        setEditForm({
+            nombre: user.nombre,
+            email: user.email,
+            rol: user.rol,
+            password: ''
+        });
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        if (!editForm.nombre.trim() || !editForm.email.trim()) {
+            showAlert("Nombre y Email son campos obligatorios.", "Advertencia");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                id_user: editModal.user.id_user,
+                nombre: editForm.nombre,
+                email: editForm.email,
+                rol: editForm.rol
+            };
+            if (editForm.password) {
+                payload.password = editForm.password;
+            }
+
+            const res = await userService.update(payload);
+            if (res.data && res.data.success) {
+                // Actualizar la lista local
+                setUsers(prevUsers => prevUsers.map(u => {
+                    if (u.id_user === editModal.user.id_user) {
+                        return { 
+                            ...u, 
+                            nombre: editForm.nombre, 
+                            email: editForm.email, 
+                            rol: editForm.rol 
+                        };
+                    }
+                    return u;
+                }));
+
+                // Si editamos nuestro propio usuario, actualizar localStorage
+                if (editModal.user.id_user === activeUser.id_user) {
+                    const updatedUser = { 
+                        ...activeUser, 
+                        nombre: editForm.nombre, 
+                        name: editForm.nombre,
+                        email: editForm.email,
+                        rol: editForm.rol,
+                        role: editForm.rol
+                    };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    
+                    // Si cambiamos nuestro propio rol a algo diferente de super_admin, recargar para redirigir
+                    if (editForm.rol !== 'super_admin') {
+                        window.location.reload();
+                        return;
+                    }
+                }
+
+                setEditModal({ isOpen: false, user: null });
+                showAlert("Usuario actualizado correctamente.", "Éxito");
+            } else {
+                showAlert(res.data.message || "No se pudo actualizar el usuario.", "Error");
+            }
+        } catch (err) {
+            console.error("Error al actualizar usuario:", err);
+            const errMsg = err.response?.data?.message || "Ocurrió un error al intentar actualizar al usuario.";
+            showAlert(errMsg, "Error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
         return dateStr.split(' ')[0]; // Retorna solo YYYY-MM-DD
@@ -294,6 +404,7 @@ const ControlPanel = () => {
                             <th>Rol Asignado</th>
                             <th>Estado</th>
                             <th>Fecha de Registro</th>
+                            <th style={{ textAlign: 'center' }}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -363,12 +474,40 @@ const ControlPanel = () => {
                                         )}
                                     </td>
                                     <td className="cell-date">{formatDate(u.fecha_creacion)}</td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                            <button 
+                                                className="btn-edit-user"
+                                                onClick={() => handleOpenEdit(u)}
+                                                title="Editar Usuario"
+                                                disabled={loading}
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                </svg>
+                                            </button>
+                                            <button 
+                                                className="btn-delete-user"
+                                                onClick={() => confirmDeleteUser(u)}
+                                                title="Eliminar Usuario"
+                                                disabled={loading || u.id_user === activeUser.id_user}
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    <line x1="10" y1="11" x2="10" y2="17" />
+                                                    <line x1="14" y1="11" x2="14" y2="17" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             );
                         })}
                         {currentRecords.length === 0 && (
                             <tr>
-                                <td colSpan="5" className="table-empty">
+                                <td colSpan="7" className="table-empty">
                                     No se encontraron usuarios en la búsqueda.
                                 </td>
                             </tr>
@@ -442,6 +581,99 @@ const ControlPanel = () => {
                         </button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Modal de Confirmación de Eliminación */}
+            <Modal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal({ isOpen: false, user: null })} title="Confirmar Eliminación">
+                <div style={{ textAlign: 'left', padding: '10px 0' }}>
+                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
+                        ¿Estás seguro de que deseas eliminar al usuario <strong>{confirmModal.user?.nombre}</strong> ({confirmModal.user?.email}) del sistema? Esta acción no se puede deshacer y eliminará permanentemente la cuenta.
+                    </p>
+                    <div className="form-actions" style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn-cancel" onClick={() => setConfirmModal({ isOpen: false, user: null })} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            Cancelar
+                        </button>
+                        <button type="button" className="btn-submit" onClick={() => handleDeleteUser(confirmModal.user?.id_user)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal de Edición de Usuario */}
+            <Modal isOpen={editModal.isOpen} onClose={() => setEditModal({ isOpen: false, user: null })} title="Editar Usuario">
+                <form onSubmit={handleUpdateUser} style={{ textAlign: 'left', padding: '10px 0' }}>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#475569', textTransform: 'uppercase' }}>Nombre Completo</label>
+                        <input
+                            type="text"
+                            value={editForm.nombre}
+                            onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })}
+                            style={{ width: '100%', height: '38px', padding: '0 12px', borderRadius: '6px', border: '1px solid var(--border)', boxSizing: 'border-box' }}
+                            required
+                        />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#475569', textTransform: 'uppercase' }}>Correo Electrónico</label>
+                        <input
+                            type="email"
+                            value={editForm.email}
+                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                            style={{ width: '100%', height: '38px', padding: '0 12px', borderRadius: '6px', border: '1px solid var(--border)', boxSizing: 'border-box' }}
+                            required
+                        />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#475569', textTransform: 'uppercase' }}>Rol Asignado</label>
+                        <select
+                            value={editForm.rol}
+                            onChange={(e) => setEditForm({ ...editForm, rol: e.target.value })}
+                            style={{ width: '100%', height: '38px', padding: '0 12px', borderRadius: '6px', border: '1px solid var(--border)', boxSizing: 'border-box' }}
+                            required
+                        >
+                            <option value="super_admin">Super Administrador</option>
+                            <option value="admin">Administrador</option>
+                            <option value="usuario">Usuario (Operario)</option>
+                        </select>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: '#475569', textTransform: 'uppercase' }}>Nueva Contraseña (Opcional)</label>
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Dejar vacío para mantener la actual"
+                                value={editForm.password}
+                                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                                style={{ width: '100%', height: '38px', padding: '0 40px 0 12px', borderRadius: '6px', border: '1px solid var(--border)', boxSizing: 'border-box' }}
+                            />
+                            <span 
+                                className="password-toggle-icon"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#6b7280', display: 'flex', alignItems: 'center' }}
+                            >
+                                {showPassword ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                    </svg>
+                                ) : (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="form-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                        <button type="button" className="btn-cancel" onClick={() => setEditModal({ isOpen: false, user: null })} style={{ background: '#e2e8f0', color: '#475569', border: 'none', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className="btn-submit" disabled={loading} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 24px', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}>
+                            {loading ? "Guardando..." : "Guardar"}
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </div>
     );

@@ -44,6 +44,8 @@ export const userService = {
     create: (data) => api.post('/usuarios', data),
     approve: (id_user) => api.post('/usuarios/aprobar', { id_user }),
     reject: (id_user) => api.post('/usuarios/rechazar', { id_user }),
+    delete: (id_user) => api.post('/usuarios/delete', { id_user }),
+    update: (data) => api.post('/usuarios/update', data),
 };
 
 export default api;

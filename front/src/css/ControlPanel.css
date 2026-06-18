@@ -359,3 +359,61 @@
     color: #ef4444;
     border: 1px solid #fee2e2;
 }
+
+/* Botón de eliminación en la tabla */
+.btn-delete-user {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #fee2e2;
+    background-color: #fef2f2;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-user:hover:not(:disabled) {
+    background-color: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    transform: scale(1.05);
+}
+
+.btn-delete-user:disabled {
+    background-color: #f1f5f9;
+    color: #cbd5e1;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* Botón de edición en la tabla */
+.btn-edit-user {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-user:hover:not(:disabled) {
+    background-color: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.btn-edit-user:disabled {
+    background-color: #f1f5f9;
+    color: #cbd5e1;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
