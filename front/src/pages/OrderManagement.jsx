@@ -29,6 +29,71 @@ const OrderManagement = ({ user }) => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
     const [selectedItems, setSelectedItems] = useState([{ id_producto: '', cantidad: 1 }]);
+    
+    const [isUserOrderModalOpen, setIsUserOrderModalOpen] = useState(false);
+    const [userCart, setUserCart] = useState({});
+
+    const handleOpenUserOrderModal = () => {
+        setUserCart({});
+        setIsUserOrderModalOpen(true);
+    };
+
+    const handleIncrementCart = (id_producto) => {
+        setUserCart(prev => ({
+            ...prev,
+            [id_producto]: (prev[id_producto] || 0) + 1
+        }));
+    };
+
+    const handleDecrementCart = (id_producto) => {
+        setUserCart(prev => {
+            const current = prev[id_producto] || 0;
+            if (current <= 1) {
+                const updated = { ...prev };
+                delete updated[id_producto];
+                return updated;
+            }
+            return {
+                ...prev,
+                [id_producto]: current - 1
+            };
+        });
+    };
+
+    const handleClearCartItem = (id_producto) => {
+        setUserCart(prev => {
+            const updated = { ...prev };
+            delete updated[id_producto];
+            return updated;
+        });
+    };
+
+    const handleSubmitUserOrder = async () => {
+        const cleanProducts = Object.keys(userCart)
+            .filter(id => userCart[id] > 0)
+            .map(id => ({
+                id_producto: parseInt(id),
+                cantidad: userCart[id]
+            }));
+
+        if (cleanProducts.length === 0) {
+            showAlert("Debes seleccionar al menos un producto haciendo clic en su imagen.", "Pedido vacío");
+            return;
+        }
+
+        try {
+            const res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
+            if (res.data && res.data.success) {
+                setIsUserOrderModalOpen(false);
+                showAlert("Tu pedido se ha registrado correctamente.", "Pedido Completado");
+            } else {
+                showAlert("Error al procesar el pedido en el servidor.", "Error");
+            }
+        } catch (err) {
+            console.error("Error al enviar el pedido del usuario:", err);
+            showAlert("Ocurrió un error al enviar el pedido.", "Error");
+        }
+    };
 
     // Estados para edición y eliminación de pedidos
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -233,6 +298,306 @@ const OrderManagement = ({ user }) => {
     const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
     const currentRecords = filteredOrders.slice(indexOfFirstRecord, indexOfLastRecord);
     const totalPages = Math.ceil(filteredOrders.length / recordsPerPage);
+
+    const renderUserOrderModal = () => {
+        return (
+            <Modal 
+                isOpen={isUserOrderModalOpen} 
+                onClose={() => setIsUserOrderModalOpen(false)} 
+                title="Seleccionar Productos para el Pedido"
+            >
+                <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+                    <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px', textAlign: 'left', lineHeight: '1.5' }}>
+                        Haz clic en la imagen de los productos que deseas pedir. Cada clic incrementará la cantidad en 1.
+                    </p>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                        gap: '16px',
+                        marginBottom: '24px'
+                    }}>
+                        {productsList.map((prod) => {
+                            const qty = userCart[prod.id_producto] || 0;
+                            return (
+                                <div 
+                                    key={prod.id_producto}
+                                    style={{
+                                        border: qty > 0 ? '2px solid var(--accent)' : '1px solid var(--border)',
+                                        borderRadius: '12px',
+                                        padding: '12px',
+                                        textAlign: 'center',
+                                        position: 'relative',
+                                        backgroundColor: qty > 0 ? 'rgba(94, 140, 137, 0.03)' : '#ffffff',
+                                        boxShadow: qty > 0 ? '0 4px 12px rgba(94, 140, 137, 0.1)' : 'none',
+                                        transition: 'all 0.2s ease',
+                                        cursor: 'pointer',
+                                        userSelect: 'none'
+                                    }}
+                                    onClick={() => handleIncrementCart(prod.id_producto)}
+                                    className="hover-scale-img"
+                                >
+                                    {/* Cantidad seleccionada (badge flotante) */}
+                                    {qty > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '-8px',
+                                            right: '-8px',
+                                            backgroundColor: 'var(--accent)',
+                                            color: '#ffffff',
+                                            borderRadius: '50%',
+                                            width: '24px',
+                                            height: '24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '12px',
+                                            fontWeight: '700',
+                                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                            zIndex: 10
+                                        }}>
+                                            {qty}
+                                        </div>
+                                    )}
+
+                                    {/* Contenedor de la Imagen */}
+                                    <div style={{
+                                        width: '100%',
+                                        height: '90px',
+                                        borderRadius: '8px',
+                                        overflow: 'hidden',
+                                        marginBottom: '8px',
+                                        backgroundColor: '#f8fafc',
+                                        border: '1px solid var(--border)'
+                                    }}>
+                                        <img 
+                                            src={`/images/${prod.imagen || 'detergente.png'}`} 
+                                            alt={prod.nombre} 
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                objectFit: 'cover'
+                                            }}
+                                            onError={(e) => {
+                                                e.target.onerror = null; 
+                                                e.target.src = '/images/detergente.png';
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Nombre del Producto */}
+                                    <div style={{
+                                        fontWeight: '600',
+                                        fontSize: '13px',
+                                        color: 'var(--text-h)',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        marginBottom: '4px'
+                                    }} title={prod.nombre}>
+                                        {prod.nombre}
+                                    </div>
+
+                                    {/* Stock y Precio */}
+                                    <div style={{
+                                        fontSize: '11px',
+                                        color: '#64748b',
+                                        marginBottom: '8px'
+                                    }}>
+                                        Stock: {Math.round(prod.stock_actual)} | {parseFloat(prod.precio_unidad).toFixed(2)}€
+                                    </div>
+
+                                    {/* Controles de decremento/borrado si ya está seleccionado */}
+                                    {qty > 0 && (
+                                        <div 
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                marginTop: '8px'
+                                            }}
+                                            onClick={(e) => e.stopPropagation()} // Evitar incrementar al hacer clic en los controles
+                                        >
+                                            <button 
+                                                type="button" 
+                                                style={{
+                                                    backgroundColor: '#f1f5f9',
+                                                    color: '#334155',
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '4px',
+                                                    padding: '2px 8px',
+                                                    fontSize: '12px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '700',
+                                                    lineHeight: '1'
+                                                }}
+                                                onClick={() => handleDecrementCart(prod.id_producto)}
+                                                title="Reducir cantidad"
+                                            >
+                                                -
+                                            </button>
+                                            <button 
+                                                type="button" 
+                                                style={{
+                                                    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    padding: '2px 6px',
+                                                    fontSize: '11px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '600'
+                                                }}
+                                                onClick={() => handleClearCartItem(prod.id_producto)}
+                                                title="Quitar producto"
+                                            >
+                                                Quitar
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Footer del Modal con Resumen */}
+                <div style={{
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                }}>
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-h)' }}>
+                            Resumen de Pedido
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                            {Object.values(userCart).reduce((a, b) => a + b, 0)} artículos seleccionados
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            type="button" 
+                            className="btn-cancel" 
+                            onClick={() => setIsUserOrderModalOpen(false)}
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            type="button" 
+                            className="btn-submit" 
+                            style={{ 
+                                backgroundColor: '#10b981', 
+                                color: '#ffffff', 
+                                border: 'none', 
+                                padding: '10px 20px', 
+                                borderRadius: '6px', 
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                            onClick={handleSubmitUserOrder}
+                        >
+                            Confirmar Pedido
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+        );
+    };
+
+    if (activeUser?.rol === 'usuario') {
+        return (
+            <div className="order-container user-blank-screen" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '70vh',
+                fontFamily: 'var(--sans)'
+            }}>
+                <div className="user-welcome-card" style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '40px',
+                    textAlign: 'center',
+                    border: '1px solid var(--border)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+                    maxWidth: '450px',
+                    width: '100%'
+                }}>
+                    <div style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(94, 140, 137, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        color: 'var(--accent)'
+                    }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="9" cy="21" r="1" />
+                            <circle cx="20" cy="21" r="1" />
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                        </svg>
+                    </div>
+                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-h)', marginBottom: '12px' }}>Realizar Pedido</h2>
+                    <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', marginBottom: '28px' }}>
+                        Selecciona y añade productos a tu solicitud de forma rápida e intuitiva haciendo clic sobre la imagen.
+                    </p>
+                    <button 
+                        onClick={handleOpenUserOrderModal}
+                        className="btn-add-order" 
+                        style={{
+                            height: '46px',
+                            padding: '0 28px',
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            borderRadius: '24px',
+                            backgroundColor: 'var(--accent)',
+                            color: '#ffffff',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            justifyContent: 'center',
+                            width: '100%',
+                            boxShadow: '0 4px 12px rgba(94, 140, 137, 0.25)'
+                        }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Realizar nuevo pedido
+                    </button>
+                </div>
+
+                {/* Modal de Pedido para Usuario */}
+                {renderUserOrderModal()}
+                
+                {/* Modal de Alerta */}
+                <Modal isOpen={alertModal.isOpen} onClose={() => setAlertModal({ ...alertModal, isOpen: false })} title={alertModal.title}>
+                    <div style={{ textAlign: 'left', padding: '10px 0' }}>
+                        <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
+                            {alertModal.message}
+                        </p>
+                        <div className="form-actions" style={{ marginTop: '24px' }}>
+                            <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
+                                Aceptar
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            </div>
+        );
+    }
 
     return (
         <div className="order-container">
