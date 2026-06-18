@@ -18,6 +18,11 @@ const DashboardLayout = () => {
         return <Navigate to="/" replace />;
     }
 
+    // Redirigir a pedidos si es un usuario estándar y está intentando acceder a otra pestaña
+    if (user.rol === 'usuario' && !location.pathname.includes('/pedidos')) {
+        return <Navigate to="/dashboard/pedidos" replace />;
+    }
+
     // Mapear la ruta actual al tab activo del Navbar
     let activeTab = 'productos';
     if (location.pathname.includes('/pedidos')) {

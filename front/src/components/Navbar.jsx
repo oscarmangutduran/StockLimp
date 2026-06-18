@@ -18,22 +18,24 @@ const Navbar = ({ activeTab, setActiveTab, user, onLogout }) => {
 
             {/* Menú de Navegación Vertical */}
             <ul className="sidebar-menu">
-                <li className="menu-item-wrapper">
-                    <button 
-                        className={`sidebar-item ${activeTab === 'productos' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('productos')}
-                    >
-                        <span className="menu-icon icon-productos">
-                            {/* Icono de Caja/Paquete */}
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                                <line x1="12" y1="22.08" x2="12" y2="12" />
-                            </svg>
-                        </span>
-                        <span className="menu-label">Productos</span>
-                    </button>
-                </li>
+                {(user?.rol === 'admin' || user?.rol === 'super_admin') && (
+                    <li className="menu-item-wrapper">
+                        <button 
+                            className={`sidebar-item ${activeTab === 'productos' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('productos')}
+                        >
+                            <span className="menu-icon icon-productos">
+                                {/* Icono de Caja/Paquete */}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                                </svg>
+                            </span>
+                            <span className="menu-label">Productos</span>
+                        </button>
+                    </li>
+                )}
                 <li className="menu-item-wrapper">
                     <button 
                         className={`sidebar-item ${activeTab === 'pedidos' ? 'active' : ''}`}
@@ -52,23 +54,25 @@ const Navbar = ({ activeTab, setActiveTab, user, onLogout }) => {
                         <span className="menu-label">Pedidos</span>
                     </button>
                 </li>
-                <li className="menu-item-wrapper">
-                    <button 
-                        className={`sidebar-item ${activeTab === 'centros_trabajo' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('centros_trabajo')}
-                    >
-                        <span className="menu-icon icon-centros">
-                            {/* Icono de Edificio */}
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 21h18" />
-                                <path d="M9 21V9a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v12" />
-                                <path d="M5 21V7a2 2 0 0 1 2-2h2" />
-                                <path d="M19 21V5a2 2 0 0 0-2-2H7" />
-                            </svg>
-                        </span>
-                        <span className="menu-label">Centros</span>
-                    </button>
-                </li>
+                {(user?.rol === 'admin' || user?.rol === 'super_admin') && (
+                    <li className="menu-item-wrapper">
+                        <button 
+                            className={`sidebar-item ${activeTab === 'centros_trabajo' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('centros_trabajo')}
+                        >
+                            <span className="menu-icon icon-centros">
+                                {/* Icono de Edificio */}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 21h18" />
+                                    <path d="M9 21V9a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v12" />
+                                    <path d="M5 21V7a2 2 0 0 1 2-2h2" />
+                                    <path d="M19 21V5a2 2 0 0 0-2-2H7" />
+                                </svg>
+                            </span>
+                            <span className="menu-label">Centros</span>
+                        </button>
+                    </li>
+                )}
                 {(user?.rol === 'admin' || user?.rol === 'super_admin') && (
                     <li className="menu-item-wrapper">
                         <button 
