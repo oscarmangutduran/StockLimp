@@ -19,7 +19,8 @@ class ProductController extends Controller
             'sku' => 'nullable|string|max:100',
             'precio_unidad' => 'required|numeric',
             'stock_actual' => 'required|integer|min:0',
-            'es_toxico' => 'nullable|boolean'
+            'es_toxico' => 'nullable|boolean',
+            'imagen' => 'nullable|string|max:255'
         ]);
 
         $product = Product::create($validated);

@@ -28,6 +28,11 @@ const ProductManagement = ({ user }) => {
     const [selectedProductDetails, setSelectedProductDetails] = useState(null);
     const [productToDelete, setProductToDelete] = useState(null);
     const [currentProduct, setCurrentProduct] = useState(null); 
+    const [previewImage, setPreviewImage] = useState({ isOpen: false, src: '', alt: '' });
+
+    const handleOpenImagePreview = (src, alt) => {
+        setPreviewImage({ isOpen: true, src, alt });
+    };
 
     // Sincronizar el estado local si el contexto cambia
     useEffect(() => {
@@ -62,7 +67,8 @@ const ProductManagement = ({ user }) => {
         sku: '',
         es_toxico: false,
         precio_unidad: '',
-        stock_actual: ''
+        stock_actual: '',
+        imagen: 'detergente.png'
     });
 
     const getRegisterDate = (product) => {
@@ -92,7 +98,7 @@ const ProductManagement = ({ user }) => {
 
     const handleOpenCreate = () => {
         setCurrentProduct(null);
-        setFormData({ nombre: '', sku: '', es_toxico: false, precio_unidad: '', stock_actual: '' });
+        setFormData({ nombre: '', sku: '', es_toxico: false, precio_unidad: '', stock_actual: '', imagen: 'detergente.png' });
         setIsModalOpen(true);
     };
 
@@ -103,7 +109,8 @@ const ProductManagement = ({ user }) => {
             sku: product.sku || '',
             es_toxico: product.es_toxico == 1,
             precio_unidad: product.precio_unidad,
-            stock_actual: product.stock_actual
+            stock_actual: product.stock_actual,
+            imagen: product.imagen || 'detergente.png'
         });
         setIsModalOpen(true);
     };
@@ -119,7 +126,8 @@ const ProductManagement = ({ user }) => {
             ...formData,
             es_toxico: formData.es_toxico ? 1 : 0,
             precio_unidad: parseFloat(formData.precio_unidad),
-            stock_actual: parseFloat(formData.stock_actual)
+            stock_actual: parseFloat(formData.stock_actual),
+            imagen: formData.imagen
         };
 
         if (currentProduct) {
@@ -219,6 +227,7 @@ const ProductManagement = ({ user }) => {
                     <thead>
                         <tr>
                             <th>ID Producto</th>
+                            <th>Imagen</th>
                             <th>Nombre</th>
                             <th>SKU</th>
                             <th>¿Tóxico?</th>
@@ -232,6 +241,28 @@ const ProductManagement = ({ user }) => {
                         {currentRecords.map((product) => (
                             <tr key={product.id_producto}>
                                 <td className="cell-id">{product.id_producto}</td>
+                                <td className="cell-imagen" style={{ padding: '8px 16px', verticalAlign: 'middle' }}>
+                                    <img 
+                                        src={`/images/${product.imagen || 'detergente.png'}`} 
+                                        alt={product.nombre} 
+                                        style={{ 
+                                            width: '38px', 
+                                            height: '38px', 
+                                            objectFit: 'cover', 
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--border)',
+                                            backgroundColor: '#f8fafc',
+                                            display: 'block'
+                                        }} 
+                                        className="hover-scale-img"
+                                        title="Click para ampliar"
+                                        onClick={() => handleOpenImagePreview(`/images/${product.imagen || 'detergente.png'}`, product.nombre)}
+                                        onError={(e) => {
+                                            e.target.onerror = null; 
+                                            e.target.src = '/images/detergente.png';
+                                        }}
+                                    />
+                                </td>
                                 <td className="cell-nombre">{product.nombre}</td>
                                 <td className="cell-sku">{product.sku || 'N/A'}</td>
                                 <td className="cell-toxic">{product.es_toxico == 1 ? 'SÍ' : 'NO'}</td>
@@ -351,6 +382,20 @@ const ProductManagement = ({ user }) => {
                         <input type="checkbox" id="es_toxico_check" checked={formData.es_toxico} onChange={(e) => setFormData({ ...formData, es_toxico: e.target.checked })} />
                         <label htmlFor="es_toxico_check" style={{ fontWeight: '700', color: '#dc2626' }}>¿Requiere etiquetado tóxico?</label>
                     </div>
+                    <div className="form-group">
+                        <label>Imagen del Producto</label>
+                        <select 
+                            value={formData.imagen} 
+                            onChange={(e) => setFormData({ ...formData, imagen: e.target.value })} 
+                            className="select-product-dropdown"
+                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)', backgroundColor: '#fff', color: '#334155' }}
+                        >
+                            <option value="detergente.png">Detergente (Botella Azul/Verde)</option>
+                            <option value="lejia.png">Lejía (Botella Amarilla)</option>
+                            <option value="cristales.png">Limpia Cristales (Spray Azul)</option>
+                            <option value="ambientador.png">Ambientador (Spray Verde)</option>
+                        </select>
+                    </div>
                     <div className="form-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancelar</button>
                         <button type="submit" className="btn-submit">{currentProduct ? 'Actualizar Ficha' : 'Dar de Alta'}</button>
@@ -362,6 +407,28 @@ const ProductManagement = ({ user }) => {
             <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Detalles del Producto">
                 {selectedProductDetails && (
                     <div className="detail-card-container">
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+                            <img 
+                                src={`/images/${selectedProductDetails.imagen || 'detergente.png'}`} 
+                                alt={selectedProductDetails.nombre} 
+                                style={{ 
+                                    width: '120px', 
+                                    height: '120px', 
+                                    objectFit: 'cover', 
+                                    borderRadius: '12px',
+                                    border: '2px solid var(--border)',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                                    backgroundColor: '#f8fafc'
+                                }}
+                                className="hover-scale-img"
+                                title="Click para ampliar"
+                                onClick={() => handleOpenImagePreview(`/images/${selectedProductDetails.imagen || 'detergente.png'}`, selectedProductDetails.nombre)}
+                                onError={(e) => {
+                                    e.target.onerror = null; 
+                                    e.target.src = '/images/detergente.png';
+                                }}
+                            />
+                        </div>
                         <div className="detail-grid">
                             <div className="detail-grid-item"><span className="grid-label">PRODUCTO</span><span className="grid-value">{selectedProductDetails.nombre}</span></div>
                             <div className="detail-grid-item"><span className="grid-label">STOCK</span><span className="grid-value">{selectedProductDetails.stock_actual} uds.</span></div>
@@ -395,6 +462,35 @@ const ProductManagement = ({ user }) => {
                     <div className="form-actions" style={{ marginTop: '24px' }}>
                         <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
                             Aceptar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal de Vista Previa de Imagen */}
+            <Modal isOpen={previewImage.isOpen} onClose={() => setPreviewImage({ ...previewImage, isOpen: false })} title={previewImage.alt}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 0' }}>
+                    <img 
+                        src={previewImage.src} 
+                        alt={previewImage.alt} 
+                        style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '380px', 
+                            objectFit: 'contain', 
+                            borderRadius: '12px',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.08)',
+                            backgroundColor: '#f8fafc',
+                            marginBottom: '20px'
+                        }}
+                        onError={(e) => {
+                            e.target.onerror = null; 
+                            e.target.src = '/images/detergente.png';
+                        }}
+                    />
+                    <div className="form-actions" style={{ width: '100%', margin: 0, padding: 0 }}>
+                        <button type="button" className="btn-submit" onClick={() => setPreviewImage({ ...previewImage, isOpen: false })}>
+                            Cerrar
                         </button>
                     </div>
                 </div>
