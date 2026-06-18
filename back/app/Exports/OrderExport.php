@@ -3,12 +3,21 @@
 namespace App\Exports;
 
 use App\Models\Order;
+use App\Models\Product;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
 class OrderExport implements FromCollection, WithHeadings, WithMapping
 {
+    protected $products;
+
+    public function __construct()
+    {
+        // Cargamos todos los productos de la base de datos para generar las columnas dinámicas
+        $this->products = Product::orderBy('id_producto')->get();
+    }
+
     public function collection()
     {
         return Order::with('detalles.producto', 'usuario')->orderBy('fecha_creacion', 'desc')->get();
@@ -16,26 +25,33 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['ID Pedido', 'Operario', 'Fecha Creación', 'Estado', 'Productos', 'Total Pedido'];
+        $headers = ['ID Pedido', 'Operario', 'Fecha Creación', 'Estado'];
+        foreach ($this->products as $product) {
+            $headers[] = $product->nombre;
+        }
+        return $headers;
     }
 
     public function map($order): array
     {
-        $productosStr = [];
-        $total = 0;
-        foreach ($order->detalles as $detalle) {
-            $prodNombre = $detalle->producto ? $detalle->producto->nombre : 'Desconocido';
-            $productosStr[] = "{$prodNombre} (x" . (float)$detalle->cantidad_solicitada . ")";
-            $total += (float)$detalle->precio_total_linea;
-        }
-
-        return [
+        $row = [
             $order->id_pedido,
             $order->operario,
             $order->fecha_creacion,
             $order->estado,
-            implode(', ', $productosStr),
-            $total . '€',
         ];
+
+        // Mapear id_producto -> cantidad para este pedido
+        $quantities = [];
+        foreach ($order->detalles as $detalle) {
+            $quantities[$detalle->id_producto] = (float)$detalle->cantidad_solicitada;
+        }
+
+        // Agregar la cantidad para cada columna de producto
+        foreach ($this->products as $product) {
+            $row[] = $quantities[$product->id_producto] ?? 0;
+        }
+
+        return $row;
     }
 }

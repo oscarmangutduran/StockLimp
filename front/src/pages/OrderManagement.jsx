@@ -206,21 +206,8 @@ const OrderManagement = ({ user }) => {
     };
 
     // FUNCIÓN CORREGIDA: Descarga binaria directa desde Laravel
-    const handleExportExcel = async () => {
-        try {
-            const response = await axios.get('http://127.0.0.1:8000/api/pedidos/exportar', {
-                responseType: 'blob'
-            });
-
-            const blob = new Blob([response.data], { 
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-            });
-            
-            saveAs(blob, 'gestion_pedidos.xlsx');
-        } catch (err) {
-            console.error("Error al descargar el Excel de pedidos desde Laravel:", err);
-            showAlert("No se pudo generar el listado Excel en este momento.", "Error de Exportación");
-        }
+    const handleExportExcel = () => {
+        window.location.href = 'http://127.0.0.1:8000/api/pedidos/exportar';
     };
 
     const handleOpenCreateModal = () => {
@@ -629,6 +616,7 @@ const OrderManagement = ({ user }) => {
                         <tr>
                             <th>ID Pedido</th>
                             <th>Operario</th>
+                            <th>Productos Pedidos</th>
                             <th>Fecha de pedido</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -639,6 +627,14 @@ const OrderManagement = ({ user }) => {
                             <tr key={order.id_pedido}>
                                 <td className="cell-id"># {order.id_pedido}</td>
                                 <td className="cell-operario">{order.operario}</td>
+                                <td className="cell-productos" style={{ maxWidth: '250px' }}>
+                                    <div style={{ fontWeight: '600', color: 'var(--accent)' }}>
+                                        {order.detalles ? order.detalles.reduce((sum, item) => sum + parseInt(item.cantidad_solicitada || 0), 0) : 0} uds.
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={order.detalles && order.detalles.map(d => `${d.producto?.nombre || 'Producto'} (x${d.cantidad_solicitada})`).join(', ')}>
+                                        {order.detalles && order.detalles.map(d => `${d.producto?.nombre || 'Producto'} (x${d.cantidad_solicitada})`).join(', ')}
+                                    </div>
+                                </td>
                                 <td className="cell-date">{formatDateTime(order.fecha_pedido)}</td>
                                 <td className="cell-status">
                                     <span className={`badge ${order.estado.toLowerCase()}`}>{order.estado}</span>
@@ -647,6 +643,15 @@ const OrderManagement = ({ user }) => {
                                     <div className="actions-wrapper">
                                         {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
                                             <>
+                                                <button 
+                                                    className="action-btn btn-circle-info" 
+                                                    title="Detalles" 
+                                                    onClick={() => handleOpenDetail(order)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                                                    </svg>
+                                                </button>
                                                 <button 
                                                     className="action-btn btn-circle-edit" 
                                                     title="Editar" 
@@ -677,7 +682,7 @@ const OrderManagement = ({ user }) => {
                         ))}
                         {currentRecords.length === 0 && (
                             <tr>
-                                <td colSpan="5" className="table-empty">
+                                <td colSpan="6" className="table-empty">
                                     No se encontraron pedidos registrados.
                                 </td>
                             </tr>
@@ -821,6 +826,74 @@ const OrderManagement = ({ user }) => {
                                 onClick={handleDeleteOrder}
                             >
                                 Eliminar
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Modal de Detalles de Pedido */}
+            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={`Detalles de Pedido #${selectedOrderDetails?.id_pedido}`}>
+                {selectedOrderDetails && (
+                    <div className="detail-card-container">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Operario</div>
+                                <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-h)' }}>{selectedOrderDetails.operario}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Estado</div>
+                                <span className={`badge ${selectedOrderDetails.estado.toLowerCase()}`} style={{ display: 'inline-block', marginTop: '4px' }}>
+                                    {selectedOrderDetails.estado}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style={{ textAlign: 'left', marginBottom: '16px' }}>
+                            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '12px' }}>Productos en el Pedido</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {selectedOrderDetails.detalles && selectedOrderDetails.detalles.map((d, index) => (
+                                    <div key={index} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '10px',
+                                        backgroundColor: '#f8fafc',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border)'
+                                    }}>
+                                        <img 
+                                            src={`/images/${d.producto?.imagen || 'detergente.png'}`} 
+                                            alt={d.producto?.nombre} 
+                                            style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                objectFit: 'cover',
+                                                borderRadius: '6px',
+                                                marginRight: '12px',
+                                                border: '1px solid var(--border)',
+                                                backgroundColor: '#fff'
+                                            }}
+                                            onError={(e) => {
+                                                e.target.onerror = null; 
+                                                e.target.src = '/images/detergente.png';
+                                            }}
+                                        />
+                                        <div style={{ flexGrow: 1 }}>
+                                            <div style={{ fontSize: '13.5px', fontWeight: '600', color: 'var(--text-h)' }}>
+                                                {d.producto?.nombre || 'Producto'}
+                                            </div>
+                                            <div style={{ fontSize: '12.5px', color: 'var(--accent)', fontWeight: '700', marginTop: '3px' }}>
+                                                Cantidad: {Math.round(d.cantidad_solicitada)} uds.
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-actions" style={{ marginTop: '24px', paddingBottom: 0 }}>
+                            <button type="button" className="btn-submit" onClick={() => setIsDetailOpen(false)}>
+                                Cerrar
                             </button>
                         </div>
                     </div>

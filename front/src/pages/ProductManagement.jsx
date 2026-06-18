@@ -79,21 +79,8 @@ const ProductManagement = ({ user }) => {
     };
 
     // FUNCIÓN CORREGIDA: Descarga binaria directa desde Laravel
-    const handleExportExcel = async () => {
-        try {
-            const response = await axios.get('http://127.0.0.1:8000/api/productos/exportar', {
-                responseType: 'blob'
-            });
-
-            const blob = new Blob([response.data], { 
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-            });
-            
-            saveAs(blob, 'gestion_productos.xlsx');
-        } catch (err) {
-            console.error("Error al descargar el archivo Excel desde el servidor:", err);
-            showAlert("No se pudo generar el reporte Excel en este momento.", "Error de Exportación");
-        }
+    const handleExportExcel = () => {
+        window.location.href = 'http://127.0.0.1:8000/api/productos/exportar';
     };
 
     const handleOpenCreate = () => {
