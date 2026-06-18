@@ -46,6 +46,9 @@ export const userService = {
     reject: (id_user) => api.post('/usuarios/rechazar', { id_user }),
     delete: (id_user) => api.post('/usuarios/delete', { id_user }),
     update: (data) => api.post('/usuarios/update', data),
+    solicitarRestablecimiento: (email) => api.post('/usuarios/solicitar-restablecimiento', { email }),
+    enviarRestablecimiento: (id_user) => api.post('/usuarios/enviar-restablecimiento', { id_user }),
+    cambiarPasswordObligatorio: (id_user, password) => api.post('/usuarios/cambiar-password-obligatorio', { id_user, password }),
 };
 
 export default api;

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\UserRegistered;
 use App\Mail\UserApproved;
 use App\Mail\UserRejected;
+use App\Mail\PasswordResetMail;
 
 class UserController extends Controller
 {
@@ -54,6 +55,23 @@ class UserController extends Controller
             ], 403);
         }
 
+        if ($credentials['password'] === '12345') {
+            return response()->json([
+                'success' => true,
+                'debe_cambiar_password' => true,
+                'message' => 'Debes cambiar la contraseña por defecto para poder ingresar.',
+                'user' => [
+                    'id' => $user->id_user,
+                    'id_user' => $user->id_user,
+                    'nombre' => $user->nombre,
+                    'name' => $user->nombre,
+                    'email' => $user->email,
+                    'rol' => $user->rol,
+                    'role' => $user->rol
+                ]
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Login correcto',
@@ -93,21 +111,20 @@ class UserController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:4',
             'rol' => 'required|in:super_admin,admin,usuario',
         ]);
 
         $user = User::create([
             'nombre' => $request->nombre,
             'email' => $request->email,
-            'password_hash' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'password_hash' => \Illuminate\Support\Facades\Hash::make('12345'),
             'rol' => $request->rol,
             'estado' => 'pendiente',
             'fecha_creacion' => now(),
         ]);
 
         try {
-            Mail::to($user->email)->send(new UserRegistered($user, $request->password));
+            Mail::to($user->email)->send(new UserRegistered($user, '12345'));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Error enviando correo de registro: " . $e->getMessage());
         }
@@ -238,6 +255,66 @@ class UserController extends Controller
             'success' => true,
             'message' => 'Usuario actualizado correctamente.',
             'user' => $user
+        ], 200);
+    }
+
+    public function solicitarRestablecimiento(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        $user->solicita_restablecimiento = true;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Solicitud de restablecimiento registrada correctamente.'
+        ], 200);
+    }
+
+    public function enviarRestablecimiento(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+        ]);
+
+        $user = User::find($request->id_user);
+        
+        // Generar una contraseña temporal aleatoria de 8 caracteres
+        $tempPassword = substr(str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%"), 0, 8);
+        
+        $user->password_hash = \Illuminate\Support\Facades\Hash::make($tempPassword);
+        $user->solicita_restablecimiento = false;
+        $user->save();
+
+        try {
+            Mail::to($user->email)->send(new PasswordResetMail($user, $tempPassword));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error enviando correo de restablecimiento: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Correo de restablecimiento enviado correctamente.'
+        ], 200);
+    }
+
+    public function cambiarPasswordObligatorio(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+            'password' => 'required|string|min:4',
+        ]);
+
+        $user = User::find($request->id_user);
+        $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Contraseña actualizada correctamente.'
         ], 200);
     }
 }

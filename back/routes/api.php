@@ -37,5 +37,8 @@ Route::post('/usuarios/aprobar', [UserController::class, 'aprobar']);
 Route::post('/usuarios/rechazar', [UserController::class, 'rechazar']);
 Route::post('/usuarios/delete', [UserController::class, 'destroy']);
 Route::post('/usuarios/update', [UserController::class, 'update']);
+Route::post('/usuarios/solicitar-restablecimiento', [UserController::class, 'solicitarRestablecimiento']);
+Route::post('/usuarios/enviar-restablecimiento', [UserController::class, 'enviarRestablecimiento']);
+Route::post('/usuarios/cambiar-password-obligatorio', [UserController::class, 'cambiarPasswordObligatorio']);
 
 
