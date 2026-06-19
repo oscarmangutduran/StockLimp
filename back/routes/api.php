@@ -20,6 +20,7 @@ Route::get('/productos/exportar', [ProductController::class, 'exportarExcel']);
 Route::get('/pedidos', [OrderController::class, 'index']);
 Route::post('/pedidos/multiple', [OrderController::class, 'storeMultiple']);
 Route::post('/pedidos/update', [OrderController::class, 'updateStatus']);
+Route::post('/pedidos/update-multiple', [OrderController::class, 'updateMultipleStatus']);
 Route::post('/pedidos/update-details', [OrderController::class, 'updateDetails']);
 Route::post('/pedidos/delete', [OrderController::class, 'destroy']);
 Route::get('/pedidos/exportar', [OrderController::class, 'exportarExcel']);

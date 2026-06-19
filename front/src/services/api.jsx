@@ -26,6 +26,7 @@ export const orderService = {
     getAll: (params) => api.get('/pedidos', { params }),
     createMultiple: (id_user, productos, observaciones) => api.post('/pedidos/multiple', { id_user, productos, observaciones }),
     updateStatus: (id_pedido, estado, fecha_pedido) => api.post('/pedidos/update', { id_pedido, estado, fecha_pedido }),
+    updateMultipleStatus: (ids, estado) => api.post('/pedidos/update-multiple', { ids, estado }),
     updateDetails: (id_pedido, id_user, productos, observaciones, force_period) => api.post('/pedidos/update-details', { id_pedido, id_user, productos, observaciones, force_period }),
     delete: (id) => api.post('/pedidos/delete', { id_pedido: id }),
 };

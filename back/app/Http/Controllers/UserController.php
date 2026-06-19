@@ -96,7 +96,7 @@ class UserController extends Controller
     {
         $request->validate([
             'id_user' => 'required|exists:users,id_user',
-            'rol' => 'required|in:super_admin,admin,usuario',
+            'rol' => 'required|in:super_admin,admin,usuario,repartidor',
         ]);
 
         $user = User::find($request->id_user);
@@ -111,7 +111,7 @@ class UserController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'rol' => 'required|in:super_admin,admin,usuario',
+            'rol' => 'required|in:super_admin,admin,usuario,repartidor',
         ]);
 
         $user = User::create([
@@ -224,7 +224,7 @@ class UserController extends Controller
             'id_user' => 'required|exists:users,id_user',
             'nombre' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $request->id_user . ',id_user',
-            'rol' => 'required|in:super_admin,admin,usuario',
+            'rol' => 'required|in:super_admin,admin,usuario,repartidor',
             'password' => 'nullable|string|min:4',
         ]);
 

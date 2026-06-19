@@ -12,8 +12,8 @@ class Order extends Model
 
     protected $guarded = [];
 
-    // Relación para traer los detalles y el usuario que hizo el pedido
-    public $with = ['detalles', 'usuario'];
+    // Relación para traer los detalles, el usuario y el centro
+    public $with = ['detalles', 'usuario', 'centro'];
 
     protected $appends = ['operario'];
 
@@ -25,6 +25,11 @@ class Order extends Model
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function centro()
+    {
+        return $this->belongsTo(WorkCenter::class, 'id_centro', 'id_centro');
     }
 
     public function getOperarioAttribute()

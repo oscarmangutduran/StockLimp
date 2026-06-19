@@ -470,6 +470,7 @@ const ControlPanel = () => {
                                         >
                                             <option value="super_admin">Super Administrador</option>
                                             <option value="admin">Administrador</option>
+                                            <option value="repartidor">Repartidor</option>
                                             <option value="usuario">Usuario</option>
                                         </select>
                                     </td>
@@ -690,6 +691,7 @@ const ControlPanel = () => {
                         >
                             <option value="super_admin">Super Administrador</option>
                             <option value="admin">Administrador</option>
+                            <option value="repartidor">Repartidor</option>
                             <option value="usuario">Usuario (Operario)</option>
                         </select>
                     </div>

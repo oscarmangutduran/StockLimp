@@ -33,11 +33,32 @@ const OrderManagement = ({ user }) => {
     const [isUserOrderModalOpen, setIsUserOrderModalOpen] = useState(false);
     const [userCart, setUserCart] = useState({});
     
-    // Estados adicionales para la modificación de pedidos por parte de operarios
     const [editingOrder, setEditingOrder] = useState(null);
     const [forcePeriod, setForcePeriod] = useState(false);
     const [userObservations, setUserObservations] = useState('');
     const [adminObservations, setAdminObservations] = useState('');
+    const [massStatus, setMassStatus] = useState('ENTREGADO');
+
+    const handleMassUpdate = async () => {
+        const idsToUpdate = filteredOrders.map(o => o.id_pedido);
+        if (idsToUpdate.length === 0) {
+            showAlert("No hay pedidos en la lista para actualizar.", "Acción Masiva");
+            return;
+        }
+
+        try {
+            const res = await orderService.updateMultipleStatus(idsToUpdate, massStatus);
+            if (res.data && res.data.success) {
+                showAlert(`Se han actualizado ${idsToUpdate.length} pedidos a ${massStatus}.`, "Éxito");
+                loadOrders();
+            } else {
+                showAlert("No se pudieron actualizar los pedidos.", "Error");
+            }
+        } catch (err) {
+            console.error("Error en la actualización masiva:", err);
+            showAlert("Ocurrió un error al actualizar los pedidos.", "Error");
+        }
+    };
     
     // Determinar si hoy está en el periodo del 2 al 8 del mes
     const todayDay = new Date().getDate();
@@ -572,12 +593,33 @@ const OrderManagement = ({ user }) => {
                         </button>
                     )}
 
-                    <button className="btn-add-order" onClick={activeUser?.rol === 'usuario' ? handleOpenUserOrderModal : handleOpenCreateModal}>
-                        <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        <span>{activeUser?.rol === 'usuario' ? 'Nuevo Pedido' : 'Nuevo'}</span>
-                    </button>
+                    {activeUser?.rol !== 'repartidor' && (
+                        <button className="btn-add-order" onClick={activeUser?.rol === 'usuario' ? handleOpenUserOrderModal : handleOpenCreateModal}>
+                            <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            <span>{activeUser?.rol === 'usuario' ? 'Nuevo Pedido' : 'Nuevo'}</span>
+                        </button>
+                    )}
+
+                    {activeUser?.rol === 'repartidor' && (
+                        <div className="mass-action-container">
+                            <select 
+                                value={massStatus} 
+                                onChange={(e) => setMassStatus(e.target.value)}
+                                className="select-status-sleek"
+                            >
+                                <option value="PENDIENTE">PENDIENTE</option>
+                                <option value="EN_PREPARACION">EN PREPARACIÓN</option>
+                                <option value="DESPACHADO">DESPACHADO</option>
+                                <option value="ENTREGADO">ENTREGADO</option>
+                                <option value="CANCELADO">CANCELADO</option>
+                            </select>
+                            <button className="btn-mass-update" onClick={handleMassUpdate}>
+                                Cambiar Todos
+                            </button>
+                        </div>
+                    )}
 
                     <div className="search-wrapper">
                         <input type="text" className="search-input" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -645,7 +687,7 @@ const OrderManagement = ({ user }) => {
                                 </td>
                                 <td className="cell-actions">
                                     <div className="actions-wrapper">
-                                        {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
+                                        {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin' || activeUser?.rol === 'repartidor') && (
                                             <>
                                                 <button 
                                                     className="action-btn btn-circle-info" 
@@ -657,27 +699,30 @@ const OrderManagement = ({ user }) => {
                                                     </svg>
                                                 </button>
                                                 <button 
-                                                    className="action-btn btn-circle-edit" 
-                                                    title="Editar" 
+                                                    className="action-btn btn-circle-status" 
+                                                    title="Cambiar Estado" 
                                                     onClick={() => handleOpenEditModal(order)}
                                                 >
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                                                        <path d="m9 14 2 2 4-4" />
                                                     </svg>
                                                 </button>
-                                                <button 
-                                                    className="action-btn btn-circle-delete" 
-                                                    title="Borrar" 
-                                                    onClick={() => confirmDeleteOrder(order)}
-                                                >
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="3 6 5 6 21 6" />
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                        <line x1="10" y1="11" x2="10" y2="17" />
-                                                        <line x1="14" y1="11" x2="14" y2="17" />
-                                                    </svg>
-                                                </button>
+                                                {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
+                                                    <button 
+                                                        className="action-btn btn-circle-delete" 
+                                                        title="Borrar" 
+                                                        onClick={() => confirmDeleteOrder(order)}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="3 6 5 6 21 6" />
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                            <line x1="10" y1="11" x2="10" y2="17" />
+                                                            <line x1="14" y1="11" x2="14" y2="17" />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                             </>
                                         )}
                                         {activeUser?.rol === 'usuario' && (

@@ -62,8 +62,17 @@ class OrderController extends Controller
             'estado' => 'required|string'
         ]);
 
-        $order = Order::find($request->id_pedido);
+        $order = Order::with('usuario', 'centro')->find($request->id_pedido);
         $order->update(['estado' => strtoupper($request->estado)]);
+
+        // Si el usuario es de rol 'usuario', enviar correo
+        if ($order->usuario && $order->usuario->rol === 'usuario') {
+            try {
+                \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado: " . $e->getMessage());
+            }
+        }
 
         return response()->json(['success' => true, 'order' => $order], 200);
     }
@@ -145,5 +154,34 @@ class OrderController extends Controller
         });
 
         return response()->json(['success' => true, 'message' => 'Pedido modificado correctamente'], 200);
+    }
+
+    public function updateMultipleStatus(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:pedidos,id_pedido',
+            'estado' => 'required|string'
+        ]);
+
+        $estadoUpper = strtoupper($request->estado);
+
+        // Actualizar en base de datos
+        Order::whereIn('id_pedido', $request->ids)->update(['estado' => $estadoUpper]);
+
+        // Cargar los pedidos actualizados para enviar los correos
+        $orders = Order::with('usuario', 'centro')->whereIn('id_pedido', $request->ids)->get();
+
+        foreach ($orders as $order) {
+            if ($order->usuario && $order->usuario->rol === 'usuario') {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado masivo: " . $e->getMessage());
+                }
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Pedidos actualizados correctamente'], 200);
     }
 }

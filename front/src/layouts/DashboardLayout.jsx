@@ -94,8 +94,8 @@ const DashboardLayout = () => {
         return <Navigate to="/" replace />;
     }
 
-    // Redirigir a pedidos si es un usuario estándar y está intentando acceder a otra pestaña
-    if (user.rol === 'usuario' && !location.pathname.includes('/pedidos')) {
+    // Redirigir a pedidos si es un usuario estándar o repartidor y está intentando acceder a otra pestaña
+    if ((user.rol === 'usuario' || user.rol === 'repartidor') && !location.pathname.includes('/pedidos')) {
         return <Navigate to="/dashboard/pedidos" replace />;
     }
 

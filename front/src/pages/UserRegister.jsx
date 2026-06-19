@@ -161,6 +161,7 @@ const UserRegister = () => {
             case 'super_admin': return 'Super Administrador';
             case 'admin': return 'Administrador';
             case 'usuario': return 'Usuario';
+            case 'repartidor': return 'Repartidor';
             default: return roleVal;
         }
     };
@@ -301,6 +302,7 @@ const UserRegister = () => {
                                 onChange={handleChange}
                             >
                                 <option value="usuario">Usuario (Operario)</option>
+                                <option value="repartidor">Repartidor</option>
                                 <option value="admin">Administrador</option>
                                 <option value="super_admin">Super Administrador</option>
                             </select>

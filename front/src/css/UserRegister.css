@@ -283,6 +283,12 @@
     border-color: #e2e8f0;
 }
 
+.badge-role-repartidor {
+    background-color: #f5f3ff;
+    color: #7c3aed;
+    border-color: #ddd6fe;
+}
+
 /* Botón de Aprobación */
 .btn-approve-alta {
     display: inline-flex;
