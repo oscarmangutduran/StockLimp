@@ -466,3 +466,58 @@
     background-color: #dcfce7;
     color: #15803d;
 }
+
+@media (max-width: 1024px) {
+    .order-container {
+        padding: 20px 24px;
+        gap: 16px;
+    }
+
+    .order-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .order-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .search-wrapper {
+        flex-grow: 1;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+    .search-input:focus {
+        width: 100%;
+    }
+
+    .mass-action-container {
+        flex-grow: 1;
+        justify-content: space-between;
+    }
+
+    .btn-excel-export, .btn-add-order {
+        flex-grow: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .order-container {
+        padding: 16px;
+    }
+
+    .orders-table th, .orders-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .cell-actions {
+        width: auto;
+    }
+}

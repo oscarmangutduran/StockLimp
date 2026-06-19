@@ -20,6 +20,7 @@ const DashboardLayout = () => {
     const [centers, setCenters] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const loadProducts = async () => {
         try {
@@ -133,13 +134,40 @@ const DashboardLayout = () => {
 
     return (
         <div className="dashboard-layout">
+            {/* Overlay for mobile drawer */}
+            {isSidebarOpen && (
+                <div 
+                    className="sidebar-overlay" 
+                    onClick={() => setIsSidebarOpen(false)}
+                ></div>
+            )}
+
             <Navbar 
                 activeTab={activeTab} 
-                setActiveTab={handleTabChange} 
+                setActiveTab={(tab) => {
+                    handleTabChange(tab);
+                    setIsSidebarOpen(false); // Close menu on select in mobile
+                }} 
                 user={user} 
                 onLogout={handleLogout} 
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
             <div className="dashboard-content">
+                {/* Mobile Header */}
+                <div className="mobile-header">
+                    <button 
+                        className={`hamburger-btn ${isSidebarOpen ? 'active' : ''}`}
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        <span className="bar"></span>
+                        <span className="bar"></span>
+                        <span className="bar"></span>
+                    </button>
+                    <span className="mobile-title">StockLimp</span>
+                </div>
+
                 <div className="tab-fade-in" key={location.pathname}>
                     {/* Renderiza las subrutas hijas de /dashboard */}
                     <Outlet context={{
