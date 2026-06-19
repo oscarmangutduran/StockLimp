@@ -100,7 +100,7 @@ class OrderController extends Controller
         }
 
         // Restricción de fecha del 2 al 8 para rol usuario
-        if ($user->rol === 'usuario') {
+        if ($user->rol === 'usuario' && !$request->input('force_period')) {
             $day = (int)date('j');
             if ($day < 2 || $day > 8) {
                 return response()->json([

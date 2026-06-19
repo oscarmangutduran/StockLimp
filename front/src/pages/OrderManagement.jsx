@@ -96,7 +96,7 @@ const OrderManagement = ({ user }) => {
         try {
             let res;
             if (editingOrder) {
-                res = await orderService.updateDetails(editingOrder.id_pedido, activeUser?.id_user, cleanProducts, userObservations);
+                res = await orderService.updateDetails(editingOrder.id_pedido, activeUser?.id_user, cleanProducts, userObservations, forcePeriod);
             } else {
                 res = await orderService.createMultiple(activeUser?.id_user, cleanProducts, userObservations);
             }
