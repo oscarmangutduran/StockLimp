@@ -38,18 +38,19 @@ const OrderManagement = ({ user }) => {
     const [userObservations, setUserObservations] = useState('');
     const [adminObservations, setAdminObservations] = useState('');
     const [massStatus, setMassStatus] = useState('ENTREGADO');
+    const [selectedOrderIds, setSelectedOrderIds] = useState([]);
 
     const handleMassUpdate = async () => {
-        const idsToUpdate = filteredOrders.map(o => o.id_pedido);
-        if (idsToUpdate.length === 0) {
-            showAlert("No hay pedidos en la lista para actualizar.", "Acción Masiva");
+        if (selectedOrderIds.length === 0) {
+            showAlert("Por favor, selecciona al menos un pedido utilizando las casillas de verificación.", "Acción Masiva");
             return;
         }
 
         try {
-            const res = await orderService.updateMultipleStatus(idsToUpdate, massStatus);
+            const res = await orderService.updateMultipleStatus(selectedOrderIds, massStatus);
             if (res.data && res.data.success) {
-                showAlert(`Se han actualizado ${idsToUpdate.length} pedidos a ${massStatus}.`, "Éxito");
+                showAlert(`Se han actualizado ${selectedOrderIds.length} pedidos a ${massStatus}.`, "Éxito");
+                setSelectedOrderIds([]);
                 loadOrders();
             } else {
                 showAlert("No se pudieron actualizar los pedidos.", "Error");
@@ -616,7 +617,9 @@ const OrderManagement = ({ user }) => {
                                 <option value="CANCELADO">CANCELADO</option>
                             </select>
                             <button className="btn-mass-update" onClick={handleMassUpdate}>
-                                Cambiar Todos
+                                {selectedOrderIds.length > 0 
+                                    ? `Cambiar Seleccionados (${selectedOrderIds.length})` 
+                                    : 'Cambiar Estado'}
                             </button>
                         </div>
                     )}
@@ -660,6 +663,32 @@ const OrderManagement = ({ user }) => {
                 <table className="orders-table">
                     <thead>
                         <tr>
+                            {activeUser?.rol === 'repartidor' && (
+                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                    <input 
+                                        type="checkbox" 
+                                        style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
+                                        checked={currentRecords.length > 0 && currentRecords.every(o => selectedOrderIds.includes(o.id_pedido))}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                const visibleIds = currentRecords.map(o => o.id_pedido);
+                                                setSelectedOrderIds(prev => {
+                                                    const combined = [...prev];
+                                                    visibleIds.forEach(id => {
+                                                        if (!combined.includes(id)) {
+                                                            combined.push(id);
+                                                        }
+                                                    });
+                                                    return combined;
+                                                });
+                                            } else {
+                                                const visibleIds = currentRecords.map(o => o.id_pedido);
+                                                setSelectedOrderIds(prev => prev.filter(id => !visibleIds.includes(id)));
+                                            }
+                                        }} 
+                                    />
+                                </th>
+                            )}
                             <th>ID Pedido</th>
                             {activeUser?.rol !== 'usuario' && <th>Operario</th>}
                             <th>Productos Pedidos</th>
@@ -671,6 +700,22 @@ const OrderManagement = ({ user }) => {
                     <tbody>
                         {currentRecords.map((order) => (
                             <tr key={order.id_pedido}>
+                                {activeUser?.rol === 'repartidor' && (
+                                    <td style={{ textAlign: 'center' }}>
+                                        <input 
+                                            type="checkbox"
+                                            style={{ cursor: 'pointer', transform: 'scale(1.2)' }}
+                                            checked={selectedOrderIds.includes(order.id_pedido)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedOrderIds(prev => [...prev, order.id_pedido]);
+                                                } else {
+                                                    setSelectedOrderIds(prev => prev.filter(id => id !== order.id_pedido));
+                                                }
+                                            }}
+                                        />
+                                    </td>
+                                )}
                                 <td className="cell-id"># {order.id_pedido}</td>
                                 {activeUser?.rol !== 'usuario' && <td className="cell-operario">{order.operario}</td>}
                                 <td className="cell-productos" style={{ maxWidth: '250px' }}>
@@ -764,7 +809,7 @@ const OrderManagement = ({ user }) => {
                         ))}
                         {currentRecords.length === 0 && (
                             <tr>
-                                <td colSpan={activeUser?.rol === 'usuario' ? 5 : 6} className="table-empty">
+                                <td colSpan={activeUser?.rol === 'usuario' ? 5 : activeUser?.rol === 'repartidor' ? 7 : 6} className="table-empty">
                                     No se encontraron pedidos registrados.
                                 </td>
                             </tr>
