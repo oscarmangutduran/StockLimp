@@ -26,6 +26,7 @@ class OrderController extends Controller
         $request->validate([
             'id_user' => 'required|exists:users,id_user',
             'productos' => 'required|array', // Array de objetos con id_producto y cantidad
+            'observaciones' => 'nullable|string',
         ]);
 
         // Usamos una transacción para asegurarnos de que si falla un detalle, no se cree el pedido a medias
@@ -34,7 +35,8 @@ class OrderController extends Controller
                 'id_user' => $request->id_user,
                 'id_centro' => 1, // Centro predeterminado para cumplir con la restricción de clave foránea
                 'fecha_creacion' => now()->format('Y-m-d H:i:s'),
-                'estado' => 'PENDIENTE'
+                'estado' => 'PENDIENTE',
+                'observaciones' => $request->observaciones
             ]);
 
             foreach ($request->productos as $item) {
@@ -89,6 +91,7 @@ class OrderController extends Controller
             'id_pedido' => 'required|exists:pedidos,id_pedido',
             'id_user' => 'required|exists:users,id_user',
             'productos' => 'required|array', // Array de objetos con id_producto y cantidad
+            'observaciones' => 'nullable|string',
         ]);
 
         $user = \App\Models\User::find($request->id_user);
@@ -119,6 +122,11 @@ class OrderController extends Controller
 
         // Usamos una transacción para asegurarnos de que si falla un detalle, no se cree el pedido a medias
         DB::transaction(function () use ($pedido, $request) {
+            // Actualizar observaciones
+            $pedido->update([
+                'observaciones' => $request->input('observaciones')
+            ]);
+
             // Eliminar detalles anteriores
             OrderDetail::where('id_pedido', $pedido->id_pedido)->delete();
 

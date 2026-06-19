@@ -36,6 +36,8 @@ const OrderManagement = ({ user }) => {
     // Estados adicionales para la modificación de pedidos por parte de operarios
     const [editingOrder, setEditingOrder] = useState(null);
     const [forcePeriod, setForcePeriod] = useState(false);
+    const [userObservations, setUserObservations] = useState('');
+    const [adminObservations, setAdminObservations] = useState('');
     
     // Determinar si hoy está en el periodo del 2 al 8 del mes
     const todayDay = new Date().getDate();
@@ -44,6 +46,7 @@ const OrderManagement = ({ user }) => {
     const handleOpenUserOrderModal = () => {
         setEditingOrder(null);
         setUserCart({});
+        setUserObservations('');
         setIsUserOrderModalOpen(true);
     };
 
@@ -93,15 +96,16 @@ const OrderManagement = ({ user }) => {
         try {
             let res;
             if (editingOrder) {
-                res = await orderService.updateDetails(editingOrder.id_pedido, activeUser?.id_user, cleanProducts);
+                res = await orderService.updateDetails(editingOrder.id_pedido, activeUser?.id_user, cleanProducts, userObservations);
             } else {
-                res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
+                res = await orderService.createMultiple(activeUser?.id_user, cleanProducts, userObservations);
             }
 
             if (res.data && res.data.success) {
                 setIsUserOrderModalOpen(false);
                 setEditingOrder(null);
                 setUserCart({});
+                setUserObservations('');
                 showAlert(
                     editingOrder ? "Tu pedido se ha modificado correctamente." : "Tu pedido se ha registrado correctamente.",
                     editingOrder ? "Pedido Modificado" : "Pedido Completado"
@@ -125,6 +129,7 @@ const OrderManagement = ({ user }) => {
             });
         }
         setUserCart(cart);
+        setUserObservations(order.observaciones || '');
         setIsUserOrderModalOpen(true);
     };
 
@@ -245,6 +250,7 @@ const OrderManagement = ({ user }) => {
 
     const handleOpenCreateModal = () => {
         setSelectedItems([{ id_producto: '', cantidad: 1 }]);
+        setAdminObservations('');
         setIsModalOpen(true);
     };
 
@@ -271,9 +277,10 @@ const OrderManagement = ({ user }) => {
         }
 
         try {
-            const res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
+            const res = await orderService.createMultiple(activeUser?.id_user, cleanProducts, adminObservations);
             if (res.data && res.data.success) {
                 setIsModalOpen(false);
+                setAdminObservations('');
                 loadOrders();
             } else {
                 showAlert("Error al procesar la inserción transaccional en el servidor.", "Error de Envío");
@@ -478,6 +485,29 @@ const OrderManagement = ({ user }) => {
                             );
                         })}
                     </div>
+                </div>
+
+                {/* Campo de observaciones */}
+                <div style={{ marginTop: '16px', marginBottom: '16px', textAlign: 'left' }}>
+                    <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '6px', color: 'var(--text-h)' }}>
+                        Observaciones / Anotaciones
+                    </label>
+                    <textarea
+                        placeholder="Escribe aquí alguna anotación sobre el pedido..."
+                        value={userObservations}
+                        onChange={(e) => setUserObservations(e.target.value)}
+                        style={{
+                            width: '100%',
+                            minHeight: '60px',
+                            padding: '10px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border)',
+                            fontSize: '13px',
+                            fontFamily: 'var(--sans)',
+                            resize: 'vertical',
+                            boxSizing: 'border-box'
+                        }}
+                    />
                 </div>
 
                 {/* Footer del Modal con Resumen */}
@@ -768,6 +798,30 @@ const OrderManagement = ({ user }) => {
                         </div>
                     ))}
                     <button type="button" className="btn-add-item-field" onClick={handleAddItemField}>+ Añadir otro producto</button>
+
+                    {/* Campo de observaciones */}
+                    <div style={{ marginTop: '16px', marginBottom: '16px', textAlign: 'left' }}>
+                        <label style={{ fontWeight: '600', fontSize: '13px', display: 'block', marginBottom: '6px', color: 'var(--text-h)' }}>
+                            Observaciones / Anotaciones
+                        </label>
+                        <textarea
+                            placeholder="Escribe aquí alguna anotación sobre el pedido..."
+                            value={adminObservations}
+                            onChange={(e) => setAdminObservations(e.target.value)}
+                            style={{
+                                width: '100%',
+                                minHeight: '60px',
+                                padding: '10px',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border)',
+                                fontSize: '13px',
+                                fontFamily: 'var(--sans)',
+                                resize: 'vertical',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+
                     <div className="form-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancelar</button>
                         <button type="submit" className="btn-submit" style={{ backgroundColor: '#10b981' }}>Enviar Solicitud</button>
@@ -858,6 +912,13 @@ const OrderManagement = ({ user }) => {
                                 </span>
                             </div>
                         </div>
+
+                        {selectedOrderDetails.observaciones && (
+                            <div style={{ textAlign: 'left', marginBottom: '20px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '4px' }}>Observaciones</div>
+                                <div style={{ fontSize: '13.5px', color: 'var(--text-h)', whiteSpace: 'pre-wrap' }}>{selectedOrderDetails.observaciones}</div>
+                            </div>
+                        )}
 
                         <div style={{ textAlign: 'left', marginBottom: '16px' }}>
                             <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', marginBottom: '12px' }}>Productos en el Pedido</div>

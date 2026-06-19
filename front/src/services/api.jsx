@@ -24,9 +24,9 @@ export const productService = {
 // 3. Servicio de Suministros y Logística (Pedidos)
 export const orderService = {
     getAll: (params) => api.get('/pedidos', { params }),
-    createMultiple: (id_user, productos) => api.post('/pedidos/multiple', { id_user, productos }),
+    createMultiple: (id_user, productos, observaciones) => api.post('/pedidos/multiple', { id_user, productos, observaciones }),
     updateStatus: (id_pedido, estado, fecha_pedido) => api.post('/pedidos/update', { id_pedido, estado, fecha_pedido }),
-    updateDetails: (id_pedido, id_user, productos) => api.post('/pedidos/update-details', { id_pedido, id_user, productos }),
+    updateDetails: (id_pedido, id_user, productos, observaciones) => api.post('/pedidos/update-details', { id_pedido, id_user, productos, observaciones }),
     delete: (id) => api.post('/pedidos/delete', { id_pedido: id }),
 };
 
