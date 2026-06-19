@@ -32,7 +32,11 @@ const DashboardLayout = () => {
 
     const loadOrders = async () => {
         try {
-            const res = await orderService.getAll();
+            const params = {};
+            if (user && user.rol === 'usuario') {
+                params.id_user = user.id_user;
+            }
+            const res = await orderService.getAll(params);
             if (Array.isArray(res.data)) setOrders(res.data);
         } catch (err) {
             console.error("Error al cargar pedidos en layout:", err);

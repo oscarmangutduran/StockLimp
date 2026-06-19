@@ -32,8 +32,17 @@ const OrderManagement = ({ user }) => {
     
     const [isUserOrderModalOpen, setIsUserOrderModalOpen] = useState(false);
     const [userCart, setUserCart] = useState({});
+    
+    // Estados adicionales para la modificación de pedidos por parte de operarios
+    const [editingOrder, setEditingOrder] = useState(null);
+    const [forcePeriod, setForcePeriod] = useState(false);
+    
+    // Determinar si hoy está en el periodo del 2 al 8 del mes
+    const todayDay = new Date().getDate();
+    const canModify = (todayDay >= 2 && todayDay <= 8) || forcePeriod;
 
     const handleOpenUserOrderModal = () => {
+        setEditingOrder(null);
         setUserCart({});
         setIsUserOrderModalOpen(true);
     };
@@ -82,10 +91,22 @@ const OrderManagement = ({ user }) => {
         }
 
         try {
-            const res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
+            let res;
+            if (editingOrder) {
+                res = await orderService.updateDetails(editingOrder.id_pedido, activeUser?.id_user, cleanProducts);
+            } else {
+                res = await orderService.createMultiple(activeUser?.id_user, cleanProducts);
+            }
+
             if (res.data && res.data.success) {
                 setIsUserOrderModalOpen(false);
-                showAlert("Tu pedido se ha registrado correctamente.", "Pedido Completado");
+                setEditingOrder(null);
+                setUserCart({});
+                showAlert(
+                    editingOrder ? "Tu pedido se ha modificado correctamente." : "Tu pedido se ha registrado correctamente.",
+                    editingOrder ? "Pedido Modificado" : "Pedido Completado"
+                );
+                loadOrders();
             } else {
                 showAlert("Error al procesar el pedido en el servidor.", "Error");
             }
@@ -93,6 +114,18 @@ const OrderManagement = ({ user }) => {
             console.error("Error al enviar el pedido del usuario:", err);
             showAlert("Ocurrió un error al enviar el pedido.", "Error");
         }
+    };
+
+    const handleOpenEditUserOrder = (order) => {
+        setEditingOrder(order);
+        const cart = {};
+        if (order.detalles) {
+            order.detalles.forEach(d => {
+                cart[d.id_producto] = Math.round(d.cantidad_solicitada);
+            });
+        }
+        setUserCart(cart);
+        setIsUserOrderModalOpen(true);
     };
 
     // Estados para edición y eliminación de pedidos
@@ -495,114 +528,25 @@ const OrderManagement = ({ user }) => {
         );
     };
 
-    if (activeUser?.rol === 'usuario') {
-        return (
-            <div className="order-container user-blank-screen" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '70vh',
-                fontFamily: 'var(--sans)'
-            }}>
-                <div className="user-welcome-card" style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    padding: '40px',
-                    textAlign: 'center',
-                    border: '1px solid var(--border)',
-                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-                    maxWidth: '450px',
-                    width: '100%'
-                }}>
-                    <div style={{
-                        width: '70px',
-                        height: '70px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(94, 140, 137, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 24px',
-                        color: 'var(--accent)'
-                    }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="9" cy="21" r="1" />
-                            <circle cx="20" cy="21" r="1" />
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                        </svg>
-                    </div>
-                    <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-h)', marginBottom: '12px' }}>Realizar Pedido</h2>
-                    <p style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.6', marginBottom: '28px' }}>
-                        Selecciona y añade productos a tu solicitud de forma rápida e intuitiva haciendo clic sobre la imagen.
-                    </p>
-                    <button 
-                        onClick={handleOpenUserOrderModal}
-                        className="btn-add-order" 
-                        style={{
-                            height: '46px',
-                            padding: '0 28px',
-                            fontSize: '15px',
-                            fontWeight: '700',
-                            borderRadius: '24px',
-                            backgroundColor: 'var(--accent)',
-                            color: '#ffffff',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            justifyContent: 'center',
-                            width: '100%',
-                            boxShadow: '0 4px 12px rgba(94, 140, 137, 0.25)'
-                        }}
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Realizar nuevo pedido
-                    </button>
-                </div>
-
-                {/* Modal de Pedido para Usuario */}
-                {renderUserOrderModal()}
-                
-                {/* Modal de Alerta */}
-                <Modal isOpen={alertModal.isOpen} onClose={() => setAlertModal({ ...alertModal, isOpen: false })} title={alertModal.title}>
-                    <div style={{ textAlign: 'left', padding: '10px 0' }}>
-                        <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text)' }}>
-                            {alertModal.message}
-                        </p>
-                        <div className="form-actions" style={{ marginTop: '24px' }}>
-                            <button type="button" className="btn-submit" onClick={() => setAlertModal({ ...alertModal, isOpen: false })}>
-                                Aceptar
-                            </button>
-                        </div>
-                    </div>
-                </Modal>
-            </div>
-        );
-    }
-
     return (
         <div className="order-container">
             <div className="order-header">
-                <h1 className="order-title">GESTIÓN DE PEDIDOS</h1>
+                <h1 className="order-title">{activeUser?.rol === 'usuario' ? 'MIS PEDIDOS' : 'GESTIÓN DE PEDIDOS'}</h1>
                 <div className="order-header-actions">
-                    <button className="btn-excel-export" onClick={handleExportExcel}>
-                        <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Excel</span>
-                    </button>
+                    {(activeUser?.rol === 'super_admin' || activeUser?.rol === 'admin') && (
+                        <button className="btn-excel-export" onClick={handleExportExcel}>
+                            <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span>Excel</span>
+                        </button>
+                    )}
 
-                    <button className="btn-add-order" onClick={handleOpenCreateModal}>
+                    <button className="btn-add-order" onClick={activeUser?.rol === 'usuario' ? handleOpenUserOrderModal : handleOpenCreateModal}>
                         <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                         </svg>
-                        <span>Nuevo</span>
+                        <span>{activeUser?.rol === 'usuario' ? 'Nuevo Pedido' : 'Nuevo'}</span>
                     </button>
 
                     <div className="search-wrapper">
@@ -610,12 +554,42 @@ const OrderManagement = ({ user }) => {
                     </div>
                 </div>
             </div>
+
+            {activeUser?.rol === 'usuario' && (
+                <div style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#eff6ff',
+                    color: '#1e40af',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                    border: '1px solid #bfdbfe',
+                    marginBottom: '16px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                        <span>Nota: Puedes modificar tus pedidos del día 2 al 8 de cada mes. Estado actual: <strong>{canModify ? "HABILITADO" : "DESHABILITADO"}</strong>.</span>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12.5px', color: '#1e3a8a' }}>
+                        <input type="checkbox" checked={forcePeriod} onChange={(e) => setForcePeriod(e.target.checked)} />
+                        Simular periodo activo (para pruebas)
+                    </label>
+                </div>
+            )}
+
             <div className="table-card">
                 <table className="orders-table">
                     <thead>
                         <tr>
                             <th>ID Pedido</th>
-                            <th>Operario</th>
+                            {activeUser?.rol !== 'usuario' && <th>Operario</th>}
                             <th>Productos Pedidos</th>
                             <th>Fecha de pedido</th>
                             <th>Estado</th>
@@ -626,7 +600,7 @@ const OrderManagement = ({ user }) => {
                         {currentRecords.map((order) => (
                             <tr key={order.id_pedido}>
                                 <td className="cell-id"># {order.id_pedido}</td>
-                                <td className="cell-operario">{order.operario}</td>
+                                {activeUser?.rol !== 'usuario' && <td className="cell-operario">{order.operario}</td>}
                                 <td className="cell-productos" style={{ maxWidth: '250px' }}>
                                     <div style={{ fontWeight: '600', color: 'var(--accent)' }}>
                                         {order.detalles ? order.detalles.reduce((sum, item) => sum + parseInt(item.cantidad_solicitada || 0), 0) : 0} uds.
@@ -635,7 +609,7 @@ const OrderManagement = ({ user }) => {
                                         {order.detalles && order.detalles.map(d => `${d.producto?.nombre || 'Producto'} (x${d.cantidad_solicitada})`).join(', ')}
                                     </div>
                                 </td>
-                                <td className="cell-date">{formatDateTime(order.fecha_pedido)}</td>
+                                <td className="cell-date">{formatDateTime(order.fecha_creacion || order.fecha_pedido)}</td>
                                 <td className="cell-status">
                                     <span className={`badge ${order.estado.toLowerCase()}`}>{order.estado}</span>
                                 </td>
@@ -676,13 +650,46 @@ const OrderManagement = ({ user }) => {
                                                 </button>
                                             </>
                                         )}
+                                        {activeUser?.rol === 'usuario' && (
+                                            <>
+                                                <button 
+                                                    className="action-btn btn-circle-info" 
+                                                    title="Detalles" 
+                                                    onClick={() => handleOpenDetail(order)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                                                    </svg>
+                                                </button>
+                                                <button 
+                                                    className={`action-btn btn-circle-edit ${!canModify ? 'disabled' : ''}`}
+                                                    title={canModify ? "Modificar Pedido" : "Modificación solo del 2 al 8 del mes"} 
+                                                    onClick={() => {
+                                                        if (canModify) {
+                                                            handleOpenEditUserOrder(order);
+                                                        } else {
+                                                            showAlert("Solo se pueden modificar los pedidos entre los días 2 y 8 del mes en curso.", "Fecha fuera de rango");
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        opacity: canModify ? 1 : 0.5,
+                                                        cursor: canModify ? 'pointer' : 'not-allowed'
+                                                    }}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
                         ))}
                         {currentRecords.length === 0 && (
                             <tr>
-                                <td colSpan="6" className="table-empty">
+                                <td colSpan={activeUser?.rol === 'usuario' ? 5 : 6} className="table-empty">
                                     No se encontraron pedidos registrados.
                                 </td>
                             </tr>
@@ -781,6 +788,9 @@ const OrderManagement = ({ user }) => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Modal de Pedido para Usuario */}
+            {renderUserOrderModal()}
 
             {/* Modal de Edición de Pedido (Cambio de Estado) */}
             <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Modificar Estado de Pedido">
