@@ -25,6 +25,7 @@ class OrderController extends Controller
     {
         $request->validate([
             'id_user' => 'required|exists:users,id_user',
+            'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
             'productos' => 'required|array', // Array de objetos con id_producto y cantidad
             'observaciones' => 'nullable|string',
         ]);
@@ -33,7 +34,7 @@ class OrderController extends Controller
         DB::transaction(function () use ($request) {
             $pedido = Order::create([
                 'id_user' => $request->id_user,
-                'id_centro' => 1, // Centro predeterminado para cumplir con la restricción de clave foránea
+                'id_centro' => $request->input('id_centro', 1), // Centro especificado o predeterminado
                 'fecha_creacion' => now()->format('Y-m-d H:i:s'),
                 'estado' => 'PENDIENTE',
                 'observaciones' => $request->observaciones
@@ -99,6 +100,7 @@ class OrderController extends Controller
         $request->validate([
             'id_pedido' => 'required|exists:pedidos,id_pedido',
             'id_user' => 'required|exists:users,id_user',
+            'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
             'productos' => 'required|array', // Array de objetos con id_producto y cantidad
             'observaciones' => 'nullable|string',
         ]);
@@ -131,10 +133,14 @@ class OrderController extends Controller
 
         // Usamos una transacción para asegurarnos de que si falla un detalle, no se cree el pedido a medias
         DB::transaction(function () use ($pedido, $request) {
-            // Actualizar observaciones
-            $pedido->update([
+            // Actualizar observaciones e id_centro
+            $updateData = [
                 'observaciones' => $request->input('observaciones')
-            ]);
+            ];
+            if ($request->has('id_centro')) {
+                $updateData['id_centro'] = $request->input('id_centro');
+            }
+            $pedido->update($updateData);
 
             // Eliminar detalles anteriores
             OrderDetail::where('id_pedido', $pedido->id_pedido)->delete();

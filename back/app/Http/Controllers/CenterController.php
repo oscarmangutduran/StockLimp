@@ -17,6 +17,9 @@ class CenterController extends Controller
                 if (!Schema::hasColumn('centros_trabajo', 'ciudad')) {
                     DB::statement("ALTER TABLE centros_trabajo ADD COLUMN ciudad VARCHAR(100) DEFAULT NULL");
                 }
+                if (!Schema::hasColumn('centros_trabajo', 'numero_ruta')) {
+                    DB::statement("ALTER TABLE centros_trabajo ADD COLUMN numero_ruta INT DEFAULT NULL");
+                }
                 if (!Schema::hasColumn('centros_trabajo', 'fecha_registro')) {
                     DB::statement("ALTER TABLE centros_trabajo ADD COLUMN fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
                 }
@@ -37,6 +40,7 @@ class CenterController extends Controller
             'nombre' => 'required|string|max:100',
             'direccion' => 'nullable|string|max:255',
             'ciudad' => 'nullable|string|max:100',
+            'numero_ruta' => 'nullable|integer|between:1,17',
         ]);
 
         $center = WorkCenter::create($validated);
@@ -50,10 +54,11 @@ class CenterController extends Controller
             'nombre' => 'required|string|max:100',
             'direccion' => 'nullable|string|max:255',
             'ciudad' => 'nullable|string|max:100',
+            'numero_ruta' => 'nullable|integer|between:1,17',
         ]);
 
         $center = WorkCenter::find($request->id_centro);
-        $center->update($request->only(['nombre', 'direccion', 'ciudad']));
+        $center->update($request->only(['nombre', 'direccion', 'ciudad', 'numero_ruta']));
 
         return response()->json(['success' => true, 'center' => $center], 200);
     }

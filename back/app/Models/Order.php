@@ -15,7 +15,7 @@ class Order extends Model
     // Relación para traer los detalles, el usuario y el centro
     public $with = ['detalles', 'usuario', 'centro'];
 
-    protected $appends = ['operario'];
+    protected $appends = ['operario', 'numero_ruta'];
 
     public function detalles()
     {
@@ -35,5 +35,10 @@ class Order extends Model
     public function getOperarioAttribute()
     {
         return $this->usuario ? $this->usuario->nombre : 'Desconocido';
+    }
+
+    public function getNumeroRutaAttribute()
+    {
+        return $this->centro ? $this->centro->numero_ruta : null;
     }
 }

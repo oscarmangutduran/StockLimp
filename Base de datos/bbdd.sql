@@ -25,6 +25,9 @@ CREATE TABLE `centros_trabajo` (
   `direccion` VARCHAR(255) NOT NULL,
   `contacto` VARCHAR(100) DEFAULT NULL,
   `telefono` VARCHAR(20) DEFAULT NULL,
+  `ciudad` VARCHAR(100) DEFAULT NULL,
+  `numero_ruta` INT DEFAULT NULL,
+  `fecha_registro` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`id_centro`)
 ) ENGINE=InnoDB;
 
@@ -61,6 +64,7 @@ CREATE TABLE `pedidos` (
   `estado` ENUM('PENDIENTE','EN_PREPARACION','DESPACHADO','ENTREGADO','CANCELADO') NOT NULL DEFAULT 'PENDIENTE',
   `id_user` INT(10) UNSIGNED NOT NULL,
   `id_centro` INT(10) UNSIGNED NOT NULL,
+  `observaciones` TEXT DEFAULT NULL,
   PRIMARY KEY (`id_pedido`),
   CONSTRAINT `fk_pedido_user` FOREIGN KEY (`id_user`) 
     REFERENCES `users` (`id_user`) ON UPDATE CASCADE,

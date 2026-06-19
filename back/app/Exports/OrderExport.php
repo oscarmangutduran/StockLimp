@@ -25,7 +25,7 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        $headers = ['ID Pedido', 'Operario', 'Fecha Creación', 'Estado', 'Observaciones'];
+        $headers = ['ID Pedido', 'Operario', 'Fecha Creación', 'Estado', 'Observaciones', 'Número de Ruta'];
         foreach ($this->products as $product) {
             $headers[] = $product->nombre;
         }
@@ -40,6 +40,7 @@ class OrderExport implements FromCollection, WithHeadings, WithMapping
             $order->fecha_creacion,
             $order->estado,
             $order->observaciones,
+            $order->numero_ruta,
         ];
 
         // Mapear id_producto -> cantidad para este pedido
