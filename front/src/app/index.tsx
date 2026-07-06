@@ -72,13 +72,24 @@ export default function HomeScreen() {
         });
       }
 
-      // If backend is down, we allow a local backdoor for super admin testing
+      // If backend is down, we allow local backdoors for testing
       if (email === 'oscar@stocklimp.com' && password === 'admin123') {
         setUser({
           id_user: 1,
           nombre: 'Oscar Mangut',
           email: 'oscar@stocklimp.com',
           rol: 'super_admin',
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (email === 'admin@stocklimp.com' && password === 'admin123') {
+        setUser({
+          id_user: 2,
+          nombre: 'Admin Pruebas',
+          email: 'admin@stocklimp.com',
+          rol: 'admin',
         });
         setLoading(false);
         return;
@@ -102,7 +113,7 @@ export default function HomeScreen() {
       }
     } catch (err) {
       console.log('Error authenticating, checking local mock credentials:', err);
-      // Backdoor for offline testing
+      // Backdoors for offline testing
       if (email === 'oscar@stocklimp.com' && password === 'admin123') {
         setUser({
           id_user: 1,
@@ -110,8 +121,15 @@ export default function HomeScreen() {
           email: 'oscar@stocklimp.com',
           rol: 'super_admin',
         });
+      } else if (email === 'admin@stocklimp.com' && password === 'admin123') {
+        setUser({
+          id_user: 2,
+          nombre: 'Admin Pruebas',
+          email: 'admin@stocklimp.com',
+          rol: 'admin',
+        });
       } else {
-        setError('No se pudo conectar con el servidor. Usa oscar@stocklimp.com / admin123 para modo pruebas.');
+        setError('No se pudo conectar con el servidor. Usa oscar@stocklimp.com o admin@stocklimp.com con clave admin123.');
       }
     } finally {
       setLoading(false);
@@ -138,9 +156,13 @@ export default function HomeScreen() {
         case 'centros':
           return <CentersView baseUrl={BASE_URL} />;
         case 'alta':
-          return <ApproveUsersView baseUrl={BASE_URL} />;
+          return <ApproveUsersView baseUrl={BASE_URL} userRole={user.rol} />;
         case 'control':
-          return <ControlPanelView baseUrl={BASE_URL} currentUser={user} />;
+          return user.rol === 'super_admin' ? (
+            <ControlPanelView baseUrl={BASE_URL} currentUser={user} />
+          ) : (
+            <CentersView baseUrl={BASE_URL} />
+          );
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -216,19 +238,21 @@ export default function HomeScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'control' && styles.menuItemActive]}
-            onPress={() => {
-              setActiveTab('control');
-              setMobileMenuOpen(false);
-            }}
-          >
-            {activeTab === 'control' && <View style={styles.activeBar} />}
-            <Feather name="grid" size={18} color={activeTab === 'control' ? '#FFFFFF' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'control' && styles.menuItemTextActive]}>
-              Control
-            </Text>
-          </TouchableOpacity>
+          {user.rol === 'super_admin' && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'control' && styles.menuItemActive]}
+              onPress={() => {
+                setActiveTab('control');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'control' && <View style={styles.activeBar} />}
+              <Feather name="grid" size={18} color={activeTab === 'control' ? '#FFFFFF' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'control' && styles.menuItemTextActive]}>
+                Control
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Logout Button */}

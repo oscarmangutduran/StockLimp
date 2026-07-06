@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Switch,
+  Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -47,6 +48,28 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  // Search animation states
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchWidth = React.useRef(new Animated.Value(180)).current;
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+    Animated.timing(searchWidth, {
+      toValue: 260,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleSearchBlur = () => {
+    setIsSearchFocused(false);
+    Animated.timing(searchWidth, {
+      toValue: 180,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
   
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
@@ -237,14 +260,27 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
             <Feather name="plus" size={16} color="#FFFFFF" />
             <Text style={styles.btnText}>Nuevo</Text>
           </TouchableOpacity>
-          <View style={styles.searchContainer}>
+          <Animated.View
+            style={[
+              styles.searchContainer,
+              {
+                width: searchWidth,
+                borderColor: isSearchFocused ? '#5C8E8D' : '#E2E8F0',
+                borderWidth: isSearchFocused ? 2 : 1,
+                backgroundColor: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
+              },
+            ]}
+          >
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar..."
+              placeholderTextColor="#94A3B8"
               value={search}
               onChangeText={setSearch}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
             />
-          </View>
+          </Animated.View>
         </View>
       </View>
 
