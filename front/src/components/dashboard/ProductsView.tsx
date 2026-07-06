@@ -367,7 +367,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                         {parseFloat(product.precio_unidad.toString()).toFixed(2)}€
                       </Text>
                       <Text style={[styles.tdText, { width: 100 }]}>
-                        {product.stock_actual}
+                        {parseInt(product.stock_actual.toString(), 10)}
                       </Text>
                       <Text style={[styles.tdText, { width: 120 }]}>
                         {product.fecha_registro ||
@@ -518,7 +518,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Stock Actual:</Text>
-                  <Text style={styles.detailVal}>{selectedProduct.stock_actual}</Text>
+                  <Text style={styles.detailVal}>{parseInt(selectedProduct.stock_actual.toString(), 10)}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>¿Es Tóxico?:</Text>
