@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -43,6 +44,28 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  // Search animation states
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchWidth = React.useRef(new Animated.Value(220)).current;
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
+    Animated.timing(searchWidth, {
+      toValue: 300,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleSearchBlur = () => {
+    setIsSearchFocused(false);
+    Animated.timing(searchWidth, {
+      toValue: 220,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  };
 
   // Metrics states
   const [userCount, setUserCount] = useState(11);
@@ -310,14 +333,27 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
       <View style={styles.tableCard}>
         <View style={styles.tableHeaderBar}>
           <Text style={styles.tableTitle}>Listado de Personal</Text>
-          <View style={styles.searchContainer}>
+          <Animated.View
+            style={[
+              styles.searchContainer,
+              {
+                width: searchWidth,
+                borderColor: isSearchFocused ? '#5C8E8D' : '#E2E8F0',
+                borderWidth: isSearchFocused ? 2 : 1,
+                backgroundColor: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
+              },
+            ]}
+          >
             <TextInput
               style={styles.searchInput}
               placeholder="Buscar usuarios..."
+              placeholderTextColor="#94A3B8"
               value={search}
               onChangeText={setSearch}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
             />
-          </View>
+          </Animated.View>
         </View>
 
         {loading && users.length === 0 ? (
@@ -605,6 +641,7 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 14,
     color: '#1E293B',
+    outlineStyle: 'none',
   },
   loadingContainer: {
     flex: 1,

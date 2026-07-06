@@ -539,6 +539,7 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 14,
     color: '#1E293B',
+    outlineStyle: 'none',
   },
   loadingContainer: {
     flex: 1,
