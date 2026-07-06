@@ -71,6 +71,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'info' | 'create' | 'edit'>('info');
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form states
   const [formNombre, setFormNombre] = useState('');
@@ -112,6 +113,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
     setFormCiudad('');
     setFormRuta('');
     setModalType('create');
+    setSuccessMessage(null);
     setModalVisible(true);
   };
 
@@ -122,6 +124,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
     setFormCiudad(center.ciudad || '');
     setFormRuta(center.numero_ruta ? center.numero_ruta.toString() : '');
     setModalType('edit');
+    setSuccessMessage(null);
     setModalVisible(true);
   };
 
@@ -157,8 +160,12 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
 
       const resData = await response.json();
       if (response.ok && resData.success) {
+        setSuccessMessage('Se han guardado los datos correctamente.');
         fetchCenters();
-        setModalVisible(false);
+        setTimeout(() => {
+          setModalVisible(false);
+          setSuccessMessage(null);
+        }, 1500);
       } else {
         alert(resData.message || 'Error al guardar el centro.');
         setLoading(false);
@@ -444,6 +451,13 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                 <Feather name="x" size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
+
+            {successMessage && (
+              <View style={{ backgroundColor: '#DEF7EC', padding: 12, borderRadius: 8, marginHorizontal: 20, marginTop: 15, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="check-circle" size={16} color="#03543F" />
+                <Text style={{ color: '#03543F', fontSize: 14, fontWeight: '500' }}>Se han guardado los datos correctamente.</Text>
+              </View>
+            )}
 
             <View style={styles.modalBody}>
               <Text style={styles.label}>Nombre del Centro *</Text>

@@ -176,6 +176,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'info' | 'create' | 'edit'>('info');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form states (Create/Edit order)
   const [formUserId, setFormUserId] = useState('');
@@ -229,6 +230,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
     setFormObservaciones('');
     setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
     setModalType('create');
+    setSuccessMessage(null);
     setModalVisible(true);
   };
 
@@ -245,12 +247,14 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
       }))
     );
     setModalType('edit');
+    setSuccessMessage(null);
     setModalVisible(true);
   };
 
   const handleOpenInfo = (order: Order) => {
     setSelectedOrder(order);
     setModalType('info');
+    setSuccessMessage(null);
     setModalVisible(true);
   };
 
@@ -307,8 +311,12 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
 
       const resData = await response.json();
       if (response.ok && resData.success) {
+        setSuccessMessage('Se han guardado los datos correctamente.');
         fetchData();
-        setModalVisible(false);
+        setTimeout(() => {
+          setModalVisible(false);
+          setSuccessMessage(null);
+        }, 1500);
       } else {
         alert(resData.message || 'Error al guardar el pedido.');
         setLoading(false);
@@ -615,6 +623,13 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                 <Feather name="x" size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
+
+            {successMessage && (
+              <View style={{ backgroundColor: '#DEF7EC', padding: 12, borderRadius: 8, marginHorizontal: 20, marginTop: 15, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="check-circle" size={16} color="#03543F" />
+                <Text style={{ color: '#03543F', fontSize: 14, fontWeight: '500' }}>Se han guardado los datos correctamente.</Text>
+              </View>
+            )}
 
             {modalType === 'info' && selectedOrder ? (
               <View style={styles.modalBody}>
