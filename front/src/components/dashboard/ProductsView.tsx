@@ -450,20 +450,40 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {modalType === 'info' && 'Detalles del Producto'}
-                {modalType === 'create' && 'Nuevo Producto'}
-                {modalType === 'edit' && 'Editar Producto'}
-                {modalType === 'image' && selectedProduct?.nombre}
-              </Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Feather name="x" size={20} color="#64748B" />
-              </TouchableOpacity>
-            </View>
+            {modalType !== 'image' && (
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {modalType === 'info' && 'Detalles del Producto'}
+                  {modalType === 'create' && 'Nuevo Producto'}
+                  {modalType === 'edit' && 'Editar Producto'}
+                </Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Feather name="x" size={20} color="#64748B" />
+                </TouchableOpacity>
+              </View>
+            )}
 
             {modalType === 'image' && selectedProduct && (
               <View style={[styles.modalBody, { alignItems: 'center', justifyContent: 'center', padding: 20 }]}>
+                <TouchableOpacity 
+                  style={{ 
+                    position: 'absolute', 
+                    top: 15, 
+                    right: 15, 
+                    zIndex: 10, 
+                    padding: 8, 
+                    backgroundColor: 'rgba(15, 23, 42, 0.6)', 
+                    borderRadius: 20,
+                    width: 36,
+                    height: 36,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }} 
+                  onPress={() => setModalVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="x" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
                 {selectedProduct.imagen ? (
                   <Image
                     source={{ uri: selectedProduct.imagen.startsWith('http') ? selectedProduct.imagen : `${baseUrl.replace('/api', '')}/${selectedProduct.imagen}` }}
@@ -567,22 +587,24 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
               </View>
             )}
 
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelModalBtn]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelBtnText}>Cerrar</Text>
-              </TouchableOpacity>
-              {modalType !== 'info' && modalType !== 'image' && (
+            {modalType !== 'image' && (
+              <View style={styles.modalFooter}>
                 <TouchableOpacity
-                  style={[styles.modalBtn, styles.saveModalBtn]}
-                  onPress={handleSave}
+                  style={[styles.modalBtn, styles.cancelModalBtn]}
+                  onPress={() => setModalVisible(false)}
                 >
-                  <Text style={styles.saveBtnText}>Guardar</Text>
+                  <Text style={styles.cancelBtnText}>Cerrar</Text>
                 </TouchableOpacity>
-              )}
-            </View>
+                {modalType !== 'info' && (
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.saveModalBtn]}
+                    onPress={handleSave}
+                  >
+                    <Text style={styles.saveBtnText}>Guardar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
         </View>
       </Modal>
