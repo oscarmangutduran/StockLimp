@@ -64,6 +64,7 @@ interface Product {
 
 interface OrdersViewProps {
   baseUrl: string;
+  userRole?: string;
 }
 
 const mockOrders: Order[] = [
@@ -137,7 +138,7 @@ const mockOrders: Order[] = [
   }
 ];
 
-export default function OrdersView({ baseUrl }: OrdersViewProps) {
+export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
@@ -495,9 +496,15 @@ export default function OrdersView({ baseUrl }: OrdersViewProps) {
                           { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                         ]}
                       >
-                        <Text style={[styles.tdText, { width: 80, fontWeight: '600' }]}>
-                          #{order.id_pedido}
-                        </Text>
+                        <TouchableOpacity
+                          style={{ width: 80 }}
+                          onPress={() => handleOpenInfo(order)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[styles.tdText, { fontWeight: '600', color: '#5C8E8D', textDecorationLine: 'underline' }]}>
+                            #{order.id_pedido}
+                          </Text>
+                        </TouchableOpacity>
                         <Text style={[styles.tdText, { width: 140, fontWeight: '500' }]}>
                           {order.operario}
                         </Text>
@@ -523,24 +530,22 @@ export default function OrdersView({ baseUrl }: OrdersViewProps) {
                           </View>
                         </View>
                         <View style={[styles.tdActions, { width: 140 }]}>
-                          <TouchableOpacity
-                            style={[styles.actionIcon, styles.infoIcon]}
-                            onPress={() => handleOpenInfo(order)}
-                          >
-                            <Feather name="info" size={14} color="#FFFFFF" />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.actionIcon, styles.checkIcon]}
-                            onPress={() => handleUpdateStatus(order.id_pedido, order.estado)}
-                          >
-                            <Feather name="check" size={14} color="#FFFFFF" />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.actionIcon, styles.deleteIcon]}
-                            onPress={() => handleDelete(order.id_pedido)}
-                          >
-                            <Feather name="trash-2" size={14} color="#FFFFFF" />
-                          </TouchableOpacity>
+                          {(userRole === 'super_admin' || userRole === 'admin') && (
+                            <>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, styles.editIcon]}
+                                onPress={() => handleOpenEdit(order)}
+                              >
+                                <Feather name="edit-2" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, styles.deleteIcon]}
+                                onPress={() => handleDelete(order.id_pedido)}
+                              >
+                                <Feather name="trash-2" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                            </>
+                          )}
                         </View>
                       </View>
                     );
@@ -909,6 +914,9 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     backgroundColor: '#3B82F6',
+  },
+  editIcon: {
+    backgroundColor: '#F59E0B',
   },
   checkIcon: {
     backgroundColor: '#8B5CF6',

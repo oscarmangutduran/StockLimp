@@ -200,7 +200,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         case 'productos':
           return <ProductsView baseUrl={BASE_URL} />;
         case 'pedidos':
-          return <OrdersView baseUrl={BASE_URL} />;
+          return <OrdersView baseUrl={BASE_URL} userRole={user.rol} />;
         case 'centros':
           return <CentersView baseUrl={BASE_URL} />;
         case 'alta':
