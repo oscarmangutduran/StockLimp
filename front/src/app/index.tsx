@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 
@@ -28,7 +29,7 @@ const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://1
 
 type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control';
 
-export default function HomeScreen() {
+export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -46,10 +47,47 @@ export default function HomeScreen() {
   const [user, setUser] = useState<any | null>(null);
   
   // Active dashboard tab
-  const [activeTab, setActiveTab] = useState<TabType>('centros');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'centros');
   
   // Mobile sidebar menu drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Redirect to '/centros' if logged in and on the root path '/'
+  useEffect(() => {
+    if (user && !initialTab) {
+      router.replace('/centros');
+    }
+  }, [user, initialTab]);
+
+  // Restore session from localStorage on mount (Web only)
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      try {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (e) {
+        console.error('Error restoring session from localStorage:', e);
+      }
+    }
+  }, []);
+
+  const saveUserSession = (userData: any) => {
+    setUser(userData);
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.setItem('user', JSON.stringify(userData));
+      } catch (e) {
+        console.error('Error saving session to localStorage:', e);
+      }
+    }
+  };
+
+  const changeTab = (newTab: TabType) => {
+    setActiveTab(newTab);
+    router.replace(`/${newTab}`);
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -74,7 +112,7 @@ export default function HomeScreen() {
 
       // If backend is down, we allow local backdoors for testing
       if (email === 'oscar@stocklimp.com' && password === 'admin123') {
-        setUser({
+        saveUserSession({
           id_user: 1,
           nombre: 'Oscar Mangut',
           email: 'oscar@stocklimp.com',
@@ -85,7 +123,7 @@ export default function HomeScreen() {
       }
 
       if (email === 'admin@stocklimp.com' && password === 'admin123') {
-        setUser({
+        saveUserSession({
           id_user: 2,
           nombre: 'Admin Pruebas',
           email: 'admin@stocklimp.com',
@@ -107,7 +145,7 @@ export default function HomeScreen() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setUser(data.user);
+        saveUserSession(data.user);
       } else {
         setError(data.message || 'Las credenciales no coinciden.');
       }
@@ -115,14 +153,14 @@ export default function HomeScreen() {
       console.log('Error authenticating, checking local mock credentials:', err);
       // Backdoors for offline testing
       if (email === 'oscar@stocklimp.com' && password === 'admin123') {
-        setUser({
+        saveUserSession({
           id_user: 1,
           nombre: 'Oscar Mangut',
           email: 'oscar@stocklimp.com',
           rol: 'super_admin',
         });
       } else if (email === 'admin@stocklimp.com' && password === 'admin123') {
-        setUser({
+        saveUserSession({
           id_user: 2,
           nombre: 'Admin Pruebas',
           email: 'admin@stocklimp.com',
@@ -143,6 +181,16 @@ export default function HomeScreen() {
     setSolicitaRestablecimiento(false);
     setActiveTab('centros');
     setMobileMenuOpen(false);
+    if (Platform.OS === 'web') {
+      try {
+        localStorage.removeItem('user');
+      } catch (e) {
+        console.error('Error clearing session from localStorage:', e);
+      }
+    }
+    router.replace({
+      pathname: '/',
+    });
   };
 
   // If logged in, render the admin dashboard layout
@@ -185,7 +233,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
             onPress={() => {
-              setActiveTab('productos');
+              changeTab('productos');
               setMobileMenuOpen(false);
             }}
           >
@@ -199,7 +247,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[styles.menuItem, activeTab === 'pedidos' && styles.menuItemActive]}
             onPress={() => {
-              setActiveTab('pedidos');
+              changeTab('pedidos');
               setMobileMenuOpen(false);
             }}
           >
@@ -213,7 +261,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
             onPress={() => {
-              setActiveTab('centros');
+              changeTab('centros');
               setMobileMenuOpen(false);
             }}
           >
@@ -227,7 +275,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
             onPress={() => {
-              setActiveTab('alta');
+              changeTab('alta');
               setMobileMenuOpen(false);
             }}
           >
@@ -242,7 +290,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'control' && styles.menuItemActive]}
               onPress={() => {
-                setActiveTab('control');
+                changeTab('control');
                 setMobileMenuOpen(false);
               }}
             >
@@ -698,3 +746,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
 });
+
+export default function IndexPage() {
+  return <HomeScreen />;
+}

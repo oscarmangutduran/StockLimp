@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Animated,
+  Linking,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -331,12 +332,32 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                       <Text style={[styles.tdText, { width: 220, fontWeight: '500' }]}>
                         {center.nombre}
                       </Text>
-                      <View style={[styles.tdView, { width: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}>
-                        <Feather name="map-pin" size={14} color="#5C8E8D" />
-                        <Text style={[styles.tdText, { flex: 1, color: '#64748B' }]} numberOfLines={2}>
+                      <TouchableOpacity
+                        style={[styles.tdView, { width: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}
+                        onPress={() => {
+                          if (center.direccion && center.direccion !== 'N/A') {
+                            const query = `${center.direccion}${center.ciudad && center.ciudad !== 'N/A' ? ', ' + center.ciudad : ''}`;
+                            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+                            Linking.openURL(url).catch((err) => console.error("Error al abrir Google Maps:", err));
+                          }
+                        }}
+                        activeOpacity={0.7}
+                        disabled={!center.direccion || center.direccion === 'N/A'}
+                      >
+                        <Feather name="map-pin" size={14} color={center.direccion && center.direccion !== 'N/A' ? '#5C8E8D' : '#94A3B8'} />
+                        <Text
+                          style={[
+                            styles.tdText,
+                            { flex: 1 },
+                            center.direccion && center.direccion !== 'N/A'
+                              ? { color: '#5C8E8D', textDecorationLine: 'underline' }
+                              : { color: '#94A3B8' }
+                          ]}
+                          numberOfLines={2}
+                        >
                           {center.direccion || 'N/A'}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                       <Text style={[styles.tdText, { width: 120 }]}>
                         {center.ciudad || 'N/A'}
                       </Text>

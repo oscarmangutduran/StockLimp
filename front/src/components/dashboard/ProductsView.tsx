@@ -12,6 +12,7 @@ import {
   Alert,
   Switch,
   Animated,
+  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -73,7 +74,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'info' | 'create' | 'edit'>('info');
+  const [modalType, setModalType] = useState<'info' | 'create' | 'edit' | 'image'>('info');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // Form states
@@ -135,6 +136,12 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   const handleOpenInfo = (product: Product) => {
     setSelectedProduct(product);
     setModalType('info');
+    setModalVisible(true);
+  };
+
+  const handleOpenImage = (product: Product) => {
+    setSelectedProduct(product);
+    setModalType('image');
     setModalVisible(true);
   };
 
@@ -322,11 +329,22 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                       ]}
                     >
                       <Text style={[styles.tdText, { width: 60 }]}>#{product.id_producto}</Text>
-                      <View style={[styles.tdView, { width: 80, alignItems: 'center' }]}>
-                        <View style={styles.imagePlaceholder}>
-                          <Feather name="box" size={18} color="#94A3B8" />
-                        </View>
-                      </View>
+                      <TouchableOpacity
+                        style={[styles.tdView, { width: 80, alignItems: 'center' }]}
+                        onPress={() => handleOpenImage(product)}
+                        activeOpacity={0.7}
+                      >
+                        {product.imagen ? (
+                          <Image
+                            source={{ uri: product.imagen.startsWith('http') ? product.imagen : `${baseUrl.replace('/api', '')}/${product.imagen}` }}
+                            style={styles.thumbnailImage}
+                          />
+                        ) : (
+                          <View style={styles.imagePlaceholder}>
+                            <Feather name="image" size={18} color="#94A3B8" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
                       <Text style={[styles.tdText, { width: 180, fontWeight: '500' }]}>
                         {product.nombre}
                       </Text>
@@ -437,11 +455,28 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                 {modalType === 'info' && 'Detalles del Producto'}
                 {modalType === 'create' && 'Nuevo Producto'}
                 {modalType === 'edit' && 'Editar Producto'}
+                {modalType === 'image' && selectedProduct?.nombre}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Feather name="x" size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
+
+            {modalType === 'image' && selectedProduct && (
+              <View style={[styles.modalBody, { alignItems: 'center', justifyContent: 'center', padding: 20 }]}>
+                {selectedProduct.imagen ? (
+                  <Image
+                    source={{ uri: selectedProduct.imagen.startsWith('http') ? selectedProduct.imagen : `${baseUrl.replace('/api', '')}/${selectedProduct.imagen}` }}
+                    style={{ width: '100%', height: 300, borderRadius: 12, resizeMode: 'contain' }}
+                  />
+                ) : (
+                  <View style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                    <Feather name="image" size={48} color="#94A3B8" />
+                    <Text style={{ color: '#64748B', fontSize: 14 }}>Sin imagen disponible</Text>
+                  </View>
+                )}
+              </View>
+            )}
 
             {modalType === 'info' && selectedProduct ? (
               <View style={styles.modalBody}>
@@ -539,7 +574,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
               >
                 <Text style={styles.cancelBtnText}>Cerrar</Text>
               </TouchableOpacity>
-              {modalType !== 'info' && (
+              {modalType !== 'info' && modalType !== 'image' && (
                 <TouchableOpacity
                   style={[styles.modalBtn, styles.saveModalBtn]}
                   onPress={handleSave}
@@ -663,6 +698,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  thumbnailImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
   },
   emptyRow: {
     padding: 32,
