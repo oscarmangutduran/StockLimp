@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -66,6 +67,7 @@ interface OrdersViewProps {
   baseUrl: string;
   userRole?: string;
   userId?: number;
+  idCentro?: number | null;
 }
 
 const mockOrders: Order[] = [
@@ -139,7 +141,12 @@ const mockOrders: Order[] = [
   }
 ];
 
-export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProps) {
+export default function OrdersView({ baseUrl, userRole, userId, idCentro }: OrdersViewProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
+  const isDesktop = width >= 1024;
+  const isTabletOrDesktop = width >= 768;
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
@@ -257,7 +264,7 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
   const handleOpenCreate = () => {
     setSelectedOrder(null);
     setFormUserId(userRole === 'usuario' && userId ? userId.toString() : (users[0]?.id_user?.toString() || '1'));
-    setFormCenterId(centers[0]?.id_centro?.toString() || '1');
+    setFormCenterId(userRole === 'usuario' && idCentro ? idCentro.toString() : (centers[0]?.id_centro?.toString() || '1'));
     setFormObservaciones('');
     setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
     setModalType('create');
@@ -579,14 +586,28 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
     currentPage * itemsPerPage
   );
 
+  const colWidths = {
+    id: 80,
+    operario: isTabletOrDesktop ? 140 : 120,
+    productos: isTabletOrDesktop ? (userRole === 'usuario' ? 320 : 260) : 200,
+    fecha: isTabletOrDesktop ? (userRole === 'usuario' ? 180 : 160) : 150,
+    centro: 160,
+    estado: isTabletOrDesktop ? 140 : 110,
+    acciones: 140,
+  };
+
+  const tableMinWidth = isDesktop
+    ? (userRole === 'usuario' ? 860 : 1120)
+    : (isTablet ? (userRole === 'usuario' ? 860 : 960) : 660);
+
   return (
     <View style={styles.container}>
       {/* View Header */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
         <Text style={styles.viewTitle}>
           {userRole === 'usuario' ? 'MIS PEDIDOS' : 'GESTIÓN DE PEDIDOS'}
         </Text>
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
           {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={[styles.selectWrapper, { height: 40, width: 160, marginBottom: 0, overflow: 'hidden', borderRadius: 20, borderColor: '#E2E8F0', borderWidth: 1 }]}>
@@ -620,7 +641,7 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
 
           {userRole === 'usuario' && (
             <TouchableOpacity
-              style={[styles.actionBtn, styles.newBtn]}
+              style={[styles.actionBtn, styles.newBtn, isMobile && { justifyContent: 'center' }]}
               onPress={handleOpenCreateForUser}
             >
               <Feather name="plus" size={16} color="#FFFFFF" />
@@ -629,23 +650,36 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
           )}
 
           {userRole !== 'admin' && userRole !== 'repartidor' && userRole !== 'usuario' && (
-            <>
-              <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
-                <Feather name="download" size={16} color="#FFFFFF" />
-                <Text style={styles.btnText}>Excel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
-                <Feather name="plus" size={16} color="#FFFFFF" />
-                <Text style={styles.btnText}>Nuevo</Text>
-              </TouchableOpacity>
-            </>
+            isTabletOrDesktop ? (
+              <>
+                <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
+                  <Feather name="download" size={16} color="#FFFFFF" />
+                  <Text style={styles.btnText}>Excel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
+                  <Feather name="plus" size={16} color="#FFFFFF" />
+                  <Text style={styles.btnText}>Nuevo</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                <TouchableOpacity style={[styles.actionBtn, styles.excelBtn, { flex: 1, justifyContent: 'center' }]} onPress={handleExportExcel}>
+                  <Feather name="download" size={16} color="#FFFFFF" />
+                  <Text style={styles.btnText}>Excel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn, styles.newBtn, { flex: 1, justifyContent: 'center' }]} onPress={handleOpenCreate}>
+                  <Feather name="plus" size={16} color="#FFFFFF" />
+                  <Text style={styles.btnText}>Nuevo</Text>
+                </TouchableOpacity>
+              </View>
+            )
           )}
 
           <Animated.View
             style={[
               styles.searchContainer,
               {
-                width: searchWidth,
+                width: isTabletOrDesktop ? searchWidth : '100%',
                 borderColor: isSearchFocused ? '#5C8E8D' : '#E2E8F0',
                 borderWidth: isSearchFocused ? 2 : 1,
                 backgroundColor: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
@@ -715,10 +749,10 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView style={styles.scrollContainer} horizontal={true}>
-            <View style={[styles.tableContainer, { minWidth: userRole === 'usuario' ? 860 : 1120 }]}>
+            <View style={[styles.tableContainer, { minWidth: tableMinWidth }]}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
-                {userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                {isDesktop && userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
                   <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                     <TouchableOpacity
                       style={[
@@ -734,13 +768,13 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                     </TouchableOpacity>
                   </View>
                 )}
-                <Text style={[styles.thText, { width: 80 }]}>ID Pedido</Text>
-                {userRole !== 'usuario' && <Text style={[styles.thText, { width: 140 }]}>Operario</Text>}
-                <Text style={[styles.thText, { width: userRole === 'usuario' ? 320 : 260 }]}>Productos Pedidos</Text>
-                <Text style={[styles.thText, { width: userRole === 'usuario' ? 180 : 160 }]}>Fecha de pedido</Text>
-                {userRole !== 'usuario' && <Text style={[styles.thText, { width: 160 }]}>Centro Destino</Text>}
-                <Text style={[styles.thText, { width: 140 }]}>Estado</Text>
-                <Text style={[styles.thText, { width: 140, textAlign: 'center' }]}>Acciones</Text>
+                <Text style={[styles.thText, { width: colWidths.id }]}>ID Pedido</Text>
+                {userRole !== 'usuario' && <Text style={[styles.thText, { width: colWidths.operario }]}>Operario</Text>}
+                <Text style={[styles.thText, { width: colWidths.productos }]}>Productos Pedidos</Text>
+                <Text style={[styles.thText, { width: colWidths.fecha }]}>Fecha de pedido</Text>
+                {isDesktop && userRole !== 'usuario' && <Text style={[styles.thText, { width: colWidths.centro }]}>Centro Destino</Text>}
+                <Text style={[styles.thText, { width: colWidths.estado }]}>Estado</Text>
+                {isTabletOrDesktop && <Text style={[styles.thText, { width: colWidths.acciones, textAlign: 'center' }]}>Acciones</Text>}
               </View>
 
               {/* Table Rows */}
@@ -766,7 +800,7 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                           { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                         ]}
                       >
-                        {userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                        {isDesktop && userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
                           <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                             <TouchableOpacity
                               style={[styles.checkbox, isSelected && styles.checkboxChecked]}
@@ -777,7 +811,7 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                           </View>
                         )}
                         <TouchableOpacity
-                          style={{ width: 80 }}
+                          style={{ width: colWidths.id }}
                           onPress={() => handleOpenInfo(order)}
                           activeOpacity={0.7}
                         >
@@ -786,27 +820,27 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                           </Text>
                         </TouchableOpacity>
                         {userRole !== 'usuario' && (
-                          <Text style={[styles.tdText, { width: 140, fontWeight: '500' }]}>
+                          <Text style={[styles.tdText, { width: colWidths.operario, fontWeight: '500' }]}>
                             {order.operario}
                           </Text>
                         )}
-                        <View style={{ width: userRole === 'usuario' ? 320 : 260, paddingRight: 10 }}>
+                        <View style={{ width: colWidths.productos, paddingRight: 10 }}>
                           <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }]}>{totalUds} uds.</Text>
                           <Text style={styles.detailsText} numberOfLines={2}>
                             {detailString || 'Sin productos'}
                           </Text>
                         </View>
-                        <Text style={[styles.tdText, { width: userRole === 'usuario' ? 180 : 160, color: '#475569' }]}>
+                        <Text style={[styles.tdText, { width: colWidths.fecha, color: '#475569' }]}>
                           {order.fecha_creacion}
                         </Text>
-                        {userRole !== 'usuario' && (
-                          <Text style={[styles.tdText, { width: 160, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
+                        {isDesktop && userRole !== 'usuario' && (
+                          <Text style={[styles.tdText, { width: colWidths.centro, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
                             {order.centro?.nombre || 'N/A'}
                           </Text>
                         )}
-                        <View style={{ width: 140 }}>
+                        <View style={{ width: colWidths.estado }}>
                           {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') ? (
-                            <View style={[styles.selectWrapper, { height: 36, width: 130, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
+                            <View style={[styles.selectWrapper, { height: 36, width: colWidths.estado - 10, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
                               <select
                                 style={{
                                   ...styles.htmlSelect,
@@ -845,84 +879,86 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                             </View>
                           )}
                         </View>
-                        <View style={[styles.tdActions, { width: 140 }]}>
-                          {userRole === 'usuario' && (
-                            <>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
-                                onPress={() => handleOpenInfo(order)}
-                              >
-                                <Feather name="info" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[
-                                  styles.actionIcon,
-                                  styles.editIcon,
-                                  (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
-                                ]}
-                                disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
-                                onPress={() => handleOpenEdit(order)}
-                              >
-                                <Feather name="edit-2" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[
-                                  styles.actionIcon,
-                                  styles.deleteIcon,
-                                  (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
-                                ]}
-                                disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
-                                onPress={() => handleDelete(order.id_pedido)}
-                              >
-                                <Feather name="trash-2" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                            </>
-                          )}
-                          {(userRole === 'admin' || userRole === 'repartidor') && (
-                            <>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
-                                onPress={() => handleOpenInfo(order)}
-                              >
-                                <Feather name="info" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
-                                onPress={() => handleSaveOrderStatus(order.id_pedido)}
-                              >
-                                <Feather name="save" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                            </>
-                          )}
-                          {userRole === 'super_admin' && (
-                            <>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
-                                onPress={() => handleOpenInfo(order)}
-                              >
-                                <Feather name="info" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
-                                onPress={() => handleSaveOrderStatus(order.id_pedido)}
-                              >
-                                <Feather name="save" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, styles.editIcon]}
-                                onPress={() => handleOpenEdit(order)}
-                              >
-                                <Feather name="edit-2" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[styles.actionIcon, styles.deleteIcon]}
-                                onPress={() => handleDelete(order.id_pedido)}
-                              >
-                                <Feather name="trash-2" size={14} color="#FFFFFF" />
-                              </TouchableOpacity>
-                            </>
-                          )}
-                        </View>
+                        {isTabletOrDesktop && (
+                          <View style={[styles.tdActions, { width: colWidths.acciones }]}>
+                            {userRole === 'usuario' && (
+                              <>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                  onPress={() => handleOpenInfo(order)}
+                                >
+                                  <Feather name="info" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[
+                                    styles.actionIcon,
+                                    styles.editIcon,
+                                    (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
+                                  ]}
+                                  disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
+                                  onPress={() => handleOpenEdit(order)}
+                                >
+                                  <Feather name="edit-2" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[
+                                    styles.actionIcon,
+                                    styles.deleteIcon,
+                                    (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
+                                  ]}
+                                  disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
+                                  onPress={() => handleDelete(order.id_pedido)}
+                                >
+                                  <Feather name="trash-2" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                              </>
+                            )}
+                            {(userRole === 'admin' || userRole === 'repartidor') && (
+                              <>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                  onPress={() => handleOpenInfo(order)}
+                                >
+                                  <Feather name="info" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
+                                  onPress={() => handleSaveOrderStatus(order.id_pedido)}
+                                >
+                                  <Feather name="save" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                              </>
+                            )}
+                            {userRole === 'super_admin' && (
+                              <>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                  onPress={() => handleOpenInfo(order)}
+                                >
+                                  <Feather name="info" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
+                                  onPress={() => handleSaveOrderStatus(order.id_pedido)}
+                                >
+                                  <Feather name="save" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, styles.editIcon]}
+                                  onPress={() => handleOpenEdit(order)}
+                                >
+                                  <Feather name="edit-2" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.actionIcon, styles.deleteIcon]}
+                                  onPress={() => handleDelete(order.id_pedido)}
+                                >
+                                  <Feather name="trash-2" size={14} color="#FFFFFF" />
+                                </TouchableOpacity>
+                              </>
+                            )}
+                          </View>
+                        )}
                       </View>
                     );
                   })
@@ -1114,11 +1150,13 @@ export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProp
                         value={formCenterId}
                         onChange={(e) => setFormCenterId(e.target.value)}
                       >
-                        {centers.map((c) => (
-                          <option key={c.id_centro} value={c.id_centro}>
-                            {c.nombre}
-                          </option>
-                        ))}
+                        {centers
+                          .filter((c) => userRole !== 'usuario' || !idCentro || c.id_centro === idCentro)
+                          .map((c) => (
+                            <option key={c.id_centro} value={c.id_centro}>
+                              {c.nombre}
+                            </option>
+                          ))}
                       </select>
                     </View>
 

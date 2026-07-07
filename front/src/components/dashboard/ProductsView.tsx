@@ -13,6 +13,7 @@ import {
   Switch,
   Animated,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -42,6 +43,9 @@ const mockProducts: Product[] = [
 ];
 
 export default function ProductsView({ baseUrl }: ProductsViewProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const isTabletOrDesktop = width >= 768;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -265,22 +269,37 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   return (
     <View style={styles.container}>
       {/* View Header */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
         <Text style={styles.viewTitle}>GESTIÓN DE PRODUCTOS</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
-            <Feather name="download" size={16} color="#FFFFFF" />
-            <Text style={styles.btnText}>Excel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
-            <Feather name="plus" size={16} color="#FFFFFF" />
-            <Text style={styles.btnText}>Nuevo</Text>
-          </TouchableOpacity>
+        <View style={[styles.headerActions, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
+          {isTabletOrDesktop ? (
+            <>
+              <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
+                <Feather name="download" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Excel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
+                <Feather name="plus" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Nuevo</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+              <TouchableOpacity style={[styles.actionBtn, styles.excelBtn, { flex: 1, justifyContent: 'center' }]} onPress={handleExportExcel}>
+                <Feather name="download" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Excel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.newBtn, { flex: 1, justifyContent: 'center' }]} onPress={handleOpenCreate}>
+                <Feather name="plus" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Nuevo</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           <Animated.View
             style={[
               styles.searchContainer,
               {
-                width: searchWidth,
+                width: isTabletOrDesktop ? searchWidth : '100%',
                 borderColor: isSearchFocused ? '#5C8E8D' : '#E2E8F0',
                 borderWidth: isSearchFocused ? 2 : 1,
                 backgroundColor: isSearchFocused ? '#FFFFFF' : '#F1F5F9',
@@ -308,18 +327,22 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView style={styles.scrollContainer} horizontal={true}>
-            <View style={styles.tableContainer}>
+            <View style={[styles.tableContainer, { minWidth: isTabletOrDesktop ? 920 : 320 }]}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.thText, { width: 60 }]}>ID Producto</Text>
                 <Text style={[styles.thText, { width: 80 }]}>Imagen</Text>
                 <Text style={[styles.thText, { width: 180 }]}>Nombre</Text>
-                <Text style={[styles.thText, { width: 120 }]}>SKU</Text>
-                <Text style={[styles.thText, { width: 100 }]}>¿Tóxico?</Text>
-                <Text style={[styles.thText, { width: 100 }]}>Precio Unidad</Text>
-                <Text style={[styles.thText, { width: 100 }]}>Stock Actual</Text>
-                <Text style={[styles.thText, { width: 120 }]}>Fecha de registro</Text>
-                <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+                {isTabletOrDesktop && (
+                  <>
+                    <Text style={[styles.thText, { width: 120 }]}>SKU</Text>
+                    <Text style={[styles.thText, { width: 100 }]}>¿Tóxico?</Text>
+                    <Text style={[styles.thText, { width: 100 }]}>Precio Unidad</Text>
+                    <Text style={[styles.thText, { width: 100 }]}>Stock Actual</Text>
+                    <Text style={[styles.thText, { width: 120 }]}>Fecha de registro</Text>
+                    <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+                  </>
+                )}
               </View>
 
               {/* Table Rows */}
@@ -357,51 +380,55 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                       <Text style={[styles.tdText, { width: 180, fontWeight: '500' }]}>
                         {product.nombre}
                       </Text>
-                      <Text style={[styles.tdText, { width: 120, color: '#64748B' }]}>
-                        {product.sku || 'N/A'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tdText,
-                          {
-                            width: 100,
-                            fontWeight: 'bold',
-                            color: product.es_toxico ? '#EF4444' : '#1E293B',
-                          },
-                        ]}
-                      >
-                        {product.es_toxico ? 'SÍ' : 'NO'}
-                      </Text>
-                      <Text style={[styles.tdText, { width: 100 }]}>
-                        {parseFloat(product.precio_unidad.toString()).toFixed(2)}€
-                      </Text>
-                      <Text style={[styles.tdText, { width: 100 }]}>
-                        {parseInt(product.stock_actual.toString(), 10)}
-                      </Text>
-                      <Text style={[styles.tdText, { width: 120 }]}>
-                        {product.fecha_registro ||
-                          (product.created_at ? product.created_at.substring(0, 10) : '2026-06-17')}
-                      </Text>
-                      <View style={[styles.tdActions, { width: 120 }]}>
-                        <TouchableOpacity
-                          style={[styles.actionIcon, styles.infoIcon]}
-                          onPress={() => handleOpenInfo(product)}
-                        >
-                          <Feather name="info" size={14} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionIcon, styles.editIcon]}
-                          onPress={() => handleOpenEdit(product)}
-                        >
-                          <Feather name="edit-2" size={14} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionIcon, styles.deleteIcon]}
-                          onPress={() => handleDelete(product.id_producto)}
-                        >
-                          <Feather name="trash-2" size={14} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      </View>
+                      {isTabletOrDesktop && (
+                        <>
+                          <Text style={[styles.tdText, { width: 120, color: '#64748B' }]}>
+                            {product.sku || 'N/A'}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.tdText,
+                              {
+                                width: 100,
+                                fontWeight: 'bold',
+                                color: product.es_toxico ? '#EF4444' : '#1E293B',
+                              },
+                            ]}
+                          >
+                            {product.es_toxico ? 'SÍ' : 'NO'}
+                          </Text>
+                          <Text style={[styles.tdText, { width: 100 }]}>
+                            {parseFloat(product.precio_unidad.toString()).toFixed(2)}€
+                          </Text>
+                          <Text style={[styles.tdText, { width: 100 }]}>
+                            {parseInt(product.stock_actual.toString(), 10)}
+                          </Text>
+                          <Text style={[styles.tdText, { width: 120 }]}>
+                            {product.fecha_registro ||
+                              (product.created_at ? product.created_at.substring(0, 10) : '2026-06-17')}
+                          </Text>
+                          <View style={[styles.tdActions, { width: 120 }]}>
+                            <TouchableOpacity
+                              style={[styles.actionIcon, styles.infoIcon]}
+                              onPress={() => handleOpenInfo(product)}
+                            >
+                              <Feather name="info" size={14} color="#FFFFFF" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionIcon, styles.editIcon]}
+                              onPress={() => handleOpenEdit(product)}
+                            >
+                              <Feather name="edit-2" size={14} color="#FFFFFF" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionIcon, styles.deleteIcon]}
+                              onPress={() => handleDelete(product.id_producto)}
+                            >
+                              <Feather name="trash-2" size={14} color="#FFFFFF" />
+                            </TouchableOpacity>
+                          </View>
+                        </>
+                      )}
                     </View>
                   ))
                 )}

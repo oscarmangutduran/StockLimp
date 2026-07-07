@@ -67,7 +67,8 @@ class UserController extends Controller
                     'name' => $user->nombre,
                     'email' => $user->email,
                     'rol' => $user->rol,
-                    'role' => $user->rol
+                    'role' => $user->rol,
+                    'id_centro' => $user->id_centro
                 ]
             ]);
         }
@@ -82,7 +83,8 @@ class UserController extends Controller
                 'name' => $user->nombre,
                 'email' => $user->email,
                 'rol' => $user->rol,
-                'role' => $user->rol
+                'role' => $user->rol,
+                'id_centro' => $user->id_centro
             ]
         ]);
     }
@@ -112,6 +114,7 @@ class UserController extends Controller
             'nombre' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'rol' => 'required|in:super_admin,admin,usuario,repartidor',
+            'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
         ]);
 
         $user = User::create([
@@ -119,6 +122,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password_hash' => \Illuminate\Support\Facades\Hash::make('12345'),
             'rol' => $request->rol,
+            'id_centro' => $request->id_centro,
             'estado' => 'pendiente',
             'fecha_creacion' => now(),
         ]);
@@ -226,6 +230,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $request->id_user . ',id_user',
             'rol' => 'required|in:super_admin,admin,usuario,repartidor',
             'password' => 'nullable|string|min:4',
+            'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
         ]);
 
         $user = User::find($request->id_user);
@@ -244,6 +249,7 @@ class UserController extends Controller
         $user->nombre = $request->nombre;
         $user->email = $request->email;
         $user->rol = $request->rol;
+        $user->id_centro = $request->id_centro;
 
         if ($request->filled('password')) {
             $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);

@@ -37,6 +37,8 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
   const [formRol, setFormRol] = useState('usuario');
   const [formSaving, setFormSaving] = useState(false);
   const [formSuccess, setFormSuccess] = useState(false);
+  const [centers, setCenters] = useState<any[]>([]);
+  const [formCentroId, setFormCentroId] = useState<string>('');
 
   const fetchPendingUsers = async () => {
     if (userRole !== 'super_admin') return;
@@ -61,6 +63,19 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
 
   useEffect(() => {
     fetchPendingUsers();
+
+    const fetchCenters = async () => {
+      try {
+        const res = await fetch(`${baseUrl}/centros_trabajo`);
+        if (res.ok) {
+          const data = await res.json();
+          setCenters(data);
+        }
+      } catch (e) {
+        console.error('Error fetching centers in ApproveUsersView:', e);
+      }
+    };
+    fetchCenters();
   }, [userRole]);
 
   // Actions for Super Admin
@@ -156,6 +171,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
           nombre: formNombre,
           email: formEmail,
           rol: formRol,
+          id_centro: formCentroId ? parseInt(formCentroId, 10) : null
         }),
       });
 
@@ -165,6 +181,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
         setFormNombre('');
         setFormEmail('');
         setFormRol('usuario');
+        setFormCentroId('');
       } else {
         alert(data.message || 'Error al registrar el usuario.');
       }
@@ -175,6 +192,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
       setFormNombre('');
       setFormEmail('');
       setFormRol('usuario');
+      setFormCentroId('');
     } finally {
       setFormSaving(false);
     }
@@ -236,6 +254,22 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
                 <option value="usuario">USUARIO (OPERARIO ALMACÉN)</option>
                 <option value="repartidor">REPARTIDOR</option>
                 <option value="admin">ADMINISTRADOR</option>
+              </select>
+            </View>
+
+            <Text style={styles.formLabel}>Centro Asignado</Text>
+            <View style={styles.formSelectWrapper}>
+              <select
+                style={styles.formHtmlSelect}
+                value={formCentroId}
+                onChange={(e) => setFormCentroId(e.target.value)}
+              >
+                <option value="">Sin centro asignado</option>
+                {centers.map((c) => (
+                  <option key={c.id_centro} value={c.id_centro}>
+                    {c.nombre}
+                  </option>
+                ))}
               </select>
             </View>
 

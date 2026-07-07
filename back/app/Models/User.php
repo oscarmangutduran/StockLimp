@@ -18,4 +18,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password_hash',
     ];
+
+    public $with = ['centro'];
+
+    public function centro()
+    {
+        return $this->belongsTo(WorkCenter::class, 'id_centro', 'id_centro');
+    }
 }

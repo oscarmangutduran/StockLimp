@@ -22,16 +22,17 @@ import OrdersView from '@/components/dashboard/OrdersView';
 import CentersView from '@/components/dashboard/CentersView';
 import ApproveUsersView from '@/components/dashboard/ApproveUsersView';
 import ControlPanelView from '@/components/dashboard/ControlPanelView';
+import AnalyticsView from '@/components/dashboard/AnalyticsView';
 
 const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
 
 const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
 
-type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control';
+type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === 'web' && width >= 768;
+  const isDesktop = Platform.OS === 'web' && width >= 1024;
 
   // Form states
   const [email, setEmail] = useState('');
@@ -211,7 +212,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         case 'productos':
           return <ProductsView baseUrl={BASE_URL} />;
         case 'pedidos':
-          return <OrdersView baseUrl={BASE_URL} userRole={user.rol} userId={user.id_user} />;
+          return <OrdersView baseUrl={BASE_URL} userRole={user.rol} userId={user.id_user} idCentro={user.id_centro} />;
         case 'centros':
           return <CentersView baseUrl={BASE_URL} />;
         case 'alta':
@@ -222,6 +223,8 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           ) : (
             <CentersView baseUrl={BASE_URL} />
           );
+        case 'analitica':
+          return <AnalyticsView baseUrl={BASE_URL} />;
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -230,13 +233,20 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     const sidebarView = (
       <View style={styles.sidebar}>
         {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileIconBg}>
-            <Feather name="user" size={20} color="#64748B" />
+        <View style={[styles.profileHeader, { justifyContent: 'space-between', alignItems: 'center' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+            <View style={styles.profileIconBg}>
+              <Feather name="user" size={20} color="#64748B" />
+            </View>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {user.nombre}
+            </Text>
           </View>
-          <Text style={styles.profileName} numberOfLines={1}>
-            {user.nombre}
-          </Text>
+          {!isDesktop && (
+            <TouchableOpacity onPress={() => setMobileMenuOpen(false)} style={{ padding: 4 }}>
+              <Feather name="x" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Navigation Items */}
@@ -250,7 +260,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               }}
             >
               {activeTab === 'productos' && <View style={styles.activeBar} />}
-              <Feather name="box" size={18} color={activeTab === 'productos' ? '#FFFFFF' : '#94A3B8'} />
+              <Feather name="box" size={18} color={activeTab === 'productos' ? '#F97316' : '#94A3B8'} />
               <Text style={[styles.menuItemText, activeTab === 'productos' && styles.menuItemTextActive]}>
                 Productos
               </Text>
@@ -265,7 +275,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             }}
           >
             {activeTab === 'pedidos' && <View style={styles.activeBar} />}
-            <Feather name="file-text" size={18} color={activeTab === 'pedidos' ? '#FFFFFF' : '#94A3B8'} />
+            <Feather name="file-text" size={18} color={activeTab === 'pedidos' ? '#F97316' : '#94A3B8'} />
             <Text style={[styles.menuItemText, activeTab === 'pedidos' && styles.menuItemTextActive]}>
               Pedidos
             </Text>
@@ -280,7 +290,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               }}
             >
               {activeTab === 'centros' && <View style={styles.activeBar} />}
-              <Feather name="book-open" size={18} color={activeTab === 'centros' ? '#FFFFFF' : '#94A3B8'} />
+              <Feather name="book-open" size={18} color={activeTab === 'centros' ? '#F97316' : '#94A3B8'} />
               <Text style={[styles.menuItemText, activeTab === 'centros' && styles.menuItemTextActive]}>
                 Centros
               </Text>
@@ -296,7 +306,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               }}
             >
               {activeTab === 'alta' && <View style={styles.activeBar} />}
-              <Feather name="user-plus" size={18} color={activeTab === 'alta' ? '#FFFFFF' : '#94A3B8'} />
+              <Feather name="user-plus" size={18} color={activeTab === 'alta' ? '#F97316' : '#94A3B8'} />
               <Text style={[styles.menuItemText, activeTab === 'alta' && styles.menuItemTextActive]}>
                 Dar de alta
               </Text>
@@ -312,9 +322,25 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               }}
             >
               {activeTab === 'control' && <View style={styles.activeBar} />}
-              <Feather name="grid" size={18} color={activeTab === 'control' ? '#FFFFFF' : '#94A3B8'} />
+              <Feather name="grid" size={18} color={activeTab === 'control' ? '#F97316' : '#94A3B8'} />
               <Text style={[styles.menuItemText, activeTab === 'control' && styles.menuItemTextActive]}>
                 Control
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'analitica' && styles.menuItemActive]}
+              onPress={() => {
+                changeTab('analitica');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'analitica' && <View style={styles.activeBar} />}
+              <Feather name="bar-chart-2" size={18} color={activeTab === 'analitica' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'analitica' && styles.menuItemTextActive]}>
+                Analítica
               </Text>
             </TouchableOpacity>
           )}
@@ -380,9 +406,9 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             {/* Mobile Header Bar */}
             <View style={styles.mobileHeader}>
               <TouchableOpacity onPress={() => setMobileMenuOpen(!mobileMenuOpen)} style={styles.hamburgerBtn}>
-                <Feather name={mobileMenuOpen ? 'x' : 'menu'} size={24} color="#1E293B" />
+                <Feather name={mobileMenuOpen ? 'x' : 'menu'} size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <Text style={styles.mobileHeaderTitle}>StockLimp Admin</Text>
+              <Text style={styles.mobileHeaderTitle}>StockLimp</Text>
               <View style={{ width: 24 }} /> {/* Balance space */}
             </View>
 
@@ -393,8 +419,11 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               </View>
             )}
 
-            <ScrollView contentContainerStyle={[styles.mainScrollContent, { padding: 12 }]}>
+            <ScrollView contentContainerStyle={[styles.mainScrollContent, { padding: 12, paddingBottom: 30 }]}>
               {renderContent()}
+              <View style={styles.footerMobile}>
+                <Text style={styles.footerMobileText}>© 2026 StockLimp. Todos los derechos reservados.</Text>
+              </View>
             </ScrollView>
           </View>
         )}
@@ -733,9 +762,7 @@ const styles = StyleSheet.create({
   },
   mobileHeader: {
     height: 56,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#1E2640',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -747,7 +774,7 @@ const styles = StyleSheet.create({
   mobileHeaderTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#FFFFFF',
   },
   mobileDrawerContainer: {
     position: 'absolute',
@@ -761,6 +788,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 10,
+  },
+  footerMobile: {
+    marginTop: 40,
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  footerMobileText: {
+    fontSize: 12,
+    color: '#64748B',
   },
 });
 
