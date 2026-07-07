@@ -43,7 +43,11 @@ class CenterController extends Controller
             'numero_ruta' => 'nullable|integer|between:1,17',
         ]);
 
-        $center = WorkCenter::create($validated);
+        $data = $validated;
+        $data['nombre_centro'] = $data['nombre'];
+        unset($data['nombre']);
+
+        $center = WorkCenter::create($data);
         return response()->json(['success' => true, 'center' => $center], 201);
     }
 
@@ -58,7 +62,12 @@ class CenterController extends Controller
         ]);
 
         $center = WorkCenter::find($request->id_centro);
-        $center->update($request->only(['nombre', 'direccion', 'ciudad', 'numero_ruta']));
+
+        $data = $request->only(['nombre', 'direccion', 'ciudad', 'numero_ruta']);
+        $data['nombre_centro'] = $data['nombre'];
+        unset($data['nombre']);
+
+        $center->update($data);
 
         return response()->json(['success' => true, 'center' => $center], 200);
     }

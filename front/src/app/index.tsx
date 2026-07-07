@@ -230,19 +230,21 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
         {/* Navigation Items */}
         <View style={styles.menuList}>
-          <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
-            onPress={() => {
-              changeTab('productos');
-              setMobileMenuOpen(false);
-            }}
-          >
-            {activeTab === 'productos' && <View style={styles.activeBar} />}
-            <Feather name="box" size={18} color={activeTab === 'productos' ? '#FFFFFF' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'productos' && styles.menuItemTextActive]}>
-              Productos
-            </Text>
-          </TouchableOpacity>
+          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
+              onPress={() => {
+                changeTab('productos');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'productos' && <View style={styles.activeBar} />}
+              <Feather name="box" size={18} color={activeTab === 'productos' ? '#FFFFFF' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'productos' && styles.menuItemTextActive]}>
+                Productos
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.menuItem, activeTab === 'pedidos' && styles.menuItemActive]}
@@ -258,33 +260,37 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
-            onPress={() => {
-              changeTab('centros');
-              setMobileMenuOpen(false);
-            }}
-          >
-            {activeTab === 'centros' && <View style={styles.activeBar} />}
-            <Feather name="book-open" size={18} color={activeTab === 'centros' ? '#FFFFFF' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'centros' && styles.menuItemTextActive]}>
-              Centros
-            </Text>
-          </TouchableOpacity>
+          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
+              onPress={() => {
+                changeTab('centros');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'centros' && <View style={styles.activeBar} />}
+              <Feather name="book-open" size={18} color={activeTab === 'centros' ? '#FFFFFF' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'centros' && styles.menuItemTextActive]}>
+                Centros
+              </Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
-            onPress={() => {
-              changeTab('alta');
-              setMobileMenuOpen(false);
-            }}
-          >
-            {activeTab === 'alta' && <View style={styles.activeBar} />}
-            <Feather name="user-plus" size={18} color={activeTab === 'alta' ? '#FFFFFF' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'alta' && styles.menuItemTextActive]}>
-              Dar de alta
-            </Text>
-          </TouchableOpacity>
+          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
+              onPress={() => {
+                changeTab('alta');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'alta' && <View style={styles.activeBar} />}
+              <Feather name="user-plus" size={18} color={activeTab === 'alta' ? '#FFFFFF' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'alta' && styles.menuItemTextActive]}>
+                Dar de alta
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {user.rol === 'super_admin' && (
             <TouchableOpacity

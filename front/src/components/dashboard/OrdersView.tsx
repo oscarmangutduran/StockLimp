@@ -184,6 +184,26 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
   const [formObservaciones, setFormObservaciones] = useState('');
   const [formItems, setFormItems] = useState<{ id_producto: number; cantidad: number }[]>([]);
 
+  // Checkbox & Bulk Actions states
+  const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
+  const [bulkStatus, setBulkStatus] = useState('ENTREGADO');
+  const [orderStatuses, setOrderStatuses] = useState<{[key: number]: string}>({});
+
+  // Custom Alert / Confirm Modal states
+  const [customAlertVisible, setCustomAlertVisible] = useState(false);
+  const [customAlertTitle, setCustomAlertTitle] = useState('');
+  const [customAlertMessage, setCustomAlertMessage] = useState('');
+  const [customAlertType, setCustomAlertType] = useState<'info' | 'confirm'>('info');
+  const [customAlertConfirmAction, setCustomAlertConfirmAction] = useState<(() => void) | null>(null);
+
+  const showCustomAlert = (title: string, message: string, type: 'info' | 'confirm' = 'info', onConfirm: (() => void) | null = null) => {
+    setCustomAlertTitle(title);
+    setCustomAlertMessage(message);
+    setCustomAlertType(type);
+    setCustomAlertConfirmAction(() => onConfirm);
+    setCustomAlertVisible(true);
+  };
+
   // Fetch all orders and support lists
   const fetchData = async () => {
     setLoading(true);
@@ -278,7 +298,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
 
   const handleSave = async () => {
     if (formItems.length === 0) {
-      alert('Por favor, agrega al menos un producto al pedido.');
+      showCustomAlert('Detalles del Pedido', 'Por favor, agrega al menos un producto al pedido.', 'info');
       return;
     }
 
@@ -318,12 +338,12 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
           setSuccessMessage(null);
         }, 1500);
       } else {
-        alert(resData.message || 'Error al guardar el pedido.');
+        showCustomAlert('Error al guardar', resData.message || 'Error al guardar el pedido.', 'info');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de red al guardar.');
+      showCustomAlert('Error de Red', 'Error de red al guardar.', 'info');
       setLoading(false);
     }
   };
@@ -345,13 +365,96 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
       if (res.ok && data.success) {
         fetchData();
       } else {
-        alert(data.message || 'Error al actualizar el estado.');
+        showCustomAlert('Error', data.message || 'Error al actualizar el estado.', 'info');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de conexión.');
+      showCustomAlert('Error de conexión', 'Error de conexión.', 'info');
       setLoading(false);
+    }
+  };
+
+  const handleSaveOrderStatus = async (id: number) => {
+    const statusToSave = orderStatuses[id] !== undefined ? orderStatuses[id] : orders.find(o => o.id_pedido === id)?.estado || 'PENDIENTE';
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/pedidos/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_pedido: id, estado: statusToSave }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const updatedStatuses = { ...orderStatuses };
+        delete updatedStatuses[id];
+        setOrderStatuses(updatedStatuses);
+        
+        fetchData();
+        showCustomAlert('Éxito', 'Cambios guardados correctamente.', 'info');
+      } else {
+        showCustomAlert('Error', data.message || 'Error al actualizar el estado.', 'info');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error(error);
+      showCustomAlert('Error de conexión', 'Error de conexión.', 'info');
+      setLoading(false);
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (selectedOrderIds.length === 0) {
+      showCustomAlert('Acción Requerida', 'Por favor, selecciona al menos un pedido.', 'info');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/pedidos/update-multiple`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedOrderIds, estado: bulkStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSelectedOrderIds([]);
+        fetchData();
+        showCustomAlert('Éxito', 'Se ha actualizado el estado de los pedidos seleccionados.', 'info');
+      } else {
+        showCustomAlert('Error', data.message || 'Error al actualizar los estados.', 'info');
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error(error);
+      showCustomAlert('Error de conexión', 'Error de conexión con el servidor.', 'info');
+      setLoading(false);
+    }
+  };
+
+  const toggleSelectOrder = (id: number) => {
+    if (selectedOrderIds.includes(id)) {
+      setSelectedOrderIds(selectedOrderIds.filter((orderId) => orderId !== id));
+    } else {
+      setSelectedOrderIds([...selectedOrderIds, id]);
+    }
+  };
+
+  const toggleSelectAll = (currentPageOrders: Order[]) => {
+    const pageIds = currentPageOrders.map(o => o.id_pedido);
+    const allSelected = pageIds.length > 0 && pageIds.every(id => selectedOrderIds.includes(id));
+
+    if (allSelected) {
+      setSelectedOrderIds(selectedOrderIds.filter(id => !pageIds.includes(id)));
+    } else {
+      const newSelected = [...selectedOrderIds];
+      pageIds.forEach(id => {
+        if (!newSelected.includes(id)) {
+          newSelected.push(id);
+        }
+      });
+      setSelectedOrderIds(newSelected);
     }
   };
 
@@ -368,38 +471,30 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
           if (data.success) {
             fetchData();
           } else {
-            alert(data.message || 'No se pudo eliminar el pedido.');
+            showCustomAlert('Error al eliminar', data.message || 'No se pudo eliminar el pedido.', 'info');
             setLoading(false);
           }
         })
         .catch((err) => {
           console.error(err);
-          alert('Error de conexión.');
+          showCustomAlert('Error de conexión', 'Error de conexión.', 'info');
           setLoading(false);
         });
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm('¿Estás seguro de que deseas eliminar este pedido?')) {
-        confirmDelete();
-      }
-    } else {
-      Alert.alert(
-        'Confirmar eliminación',
-        '¿Estás seguro de que deseas eliminar este pedido?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: confirmDelete },
-        ]
-      );
-    }
+    showCustomAlert(
+      'Confirmar eliminación',
+      '¿Estás seguro de que deseas eliminar este pedido?',
+      'confirm',
+      confirmDelete
+    );
   };
 
   const handleExportExcel = () => {
     if (Platform.OS === 'web') {
       window.open(`${baseUrl}/pedidos/exportar`, '_blank');
     } else {
-      alert('La descarga de Excel está disponible en la versión Web.');
+      showCustomAlert('Función No Disponible', 'La descarga de Excel está disponible en la versión Web.', 'info');
     }
   };
 
@@ -431,14 +526,50 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
       <View style={styles.headerContainer}>
         <Text style={styles.viewTitle}>GESTIÓN DE PEDIDOS</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
-            <Feather name="download" size={16} color="#FFFFFF" />
-            <Text style={styles.btnText}>Excel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
-            <Feather name="plus" size={16} color="#FFFFFF" />
-            <Text style={styles.btnText}>Nuevo</Text>
-          </TouchableOpacity>
+          {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={[styles.selectWrapper, { height: 40, width: 160, marginBottom: 0, overflow: 'hidden', borderRadius: 20, borderColor: '#E2E8F0', borderWidth: 1 }]}>
+                <select
+                  style={{
+                    ...styles.htmlSelect,
+                    height: '100%',
+                    fontSize: 14,
+                    outlineStyle: 'none',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                  } as any}
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value)}
+                >
+                  <option value="PENDIENTE">PENDIENTE</option>
+                  <option value="EN_PREPARACION">EN_PREPARACION</option>
+                  <option value="ENTREGADO">ENTREGADO</option>
+                  <option value="CANCELADO">CANCELADO</option>
+                </select>
+              </View>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#10B981' }]}
+                onPress={handleBulkStatusUpdate}
+              >
+                <Text style={styles.btnText}>CAMBIAR ESTADO</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {userRole !== 'admin' && userRole !== 'repartidor' && (
+            <>
+              <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
+                <Feather name="download" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Excel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn, styles.newBtn]} onPress={handleOpenCreate}>
+                <Feather name="plus" size={16} color="#FFFFFF" />
+                <Text style={styles.btnText}>Nuevo</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
           <Animated.View
             style={[
               styles.searchContainer,
@@ -474,10 +605,27 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
             <View style={styles.tableContainer}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
+                {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                  <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.checkbox,
+                        { borderColor: '#FFFFFF', borderWidth: 1.5 },
+                        paginatedOrders.length > 0 && paginatedOrders.every(o => selectedOrderIds.includes(o.id_pedido)) && styles.checkboxChecked
+                      ]}
+                      onPress={() => toggleSelectAll(paginatedOrders)}
+                    >
+                      {paginatedOrders.length > 0 && paginatedOrders.every(o => selectedOrderIds.includes(o.id_pedido)) && (
+                        <View style={[styles.checkboxInner, { backgroundColor: '#FFFFFF' }]} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
                 <Text style={[styles.thText, { width: 80 }]}>ID Pedido</Text>
                 <Text style={[styles.thText, { width: 140 }]}>Operario</Text>
                 <Text style={[styles.thText, { width: 260 }]}>Productos Pedidos</Text>
                 <Text style={[styles.thText, { width: 160 }]}>Fecha de pedido</Text>
+                <Text style={[styles.thText, { width: 160 }]}>Centro Destino</Text>
                 <Text style={[styles.thText, { width: 140 }]}>Estado</Text>
                 <Text style={[styles.thText, { width: 140, textAlign: 'center' }]}>Acciones</Text>
               </View>
@@ -490,10 +638,11 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                   </View>
                 ) : (
                   paginatedOrders.map((order, idx) => {
+                    const isSelected = selectedOrderIds.includes(order.id_pedido);
                     const statusColors = getStatusStyle(order.estado);
                     const totalUds = order.detalles.reduce((acc, d) => acc + d.cantidad_solicitada, 0);
                     const detailString = order.detalles
-                      .map((d) => `${d.producto?.nombre || 'Producto'} (x${d.cantidad_solicitada})`)
+                      .map((d) => `${d.producto?.nombre || 'Producto'} (x${parseFloat(d.cantidad_solicitada.toString()).toFixed(2)})`)
                       .join(', ');
 
                     return (
@@ -504,6 +653,16 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                           { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                         ]}
                       >
+                        {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                          <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
+                            <TouchableOpacity
+                              style={[styles.checkbox, isSelected && styles.checkboxChecked]}
+                              onPress={() => toggleSelectOrder(order.id_pedido)}
+                            >
+                              {isSelected && <View style={styles.checkboxInner} />}
+                            </TouchableOpacity>
+                          </View>
+                        )}
                         <TouchableOpacity
                           style={{ width: 80 }}
                           onPress={() => handleOpenInfo(order)}
@@ -517,7 +676,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                           {order.operario}
                         </Text>
                         <View style={{ width: 260, paddingRight: 10 }}>
-                          <Text style={styles.totalUdsText}>{totalUds} uds.</Text>
+                          <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }]}>{totalUds} uds.</Text>
                           <Text style={styles.detailsText} numberOfLines={2}>
                             {detailString || 'Sin productos'}
                           </Text>
@@ -525,21 +684,81 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                         <Text style={[styles.tdText, { width: 160, color: '#475569' }]}>
                           {order.fecha_creacion}
                         </Text>
+                        <Text style={[styles.tdText, { width: 160, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
+                          {order.centro?.nombre || 'N/A'}
+                        </Text>
                         <View style={{ width: 140 }}>
-                          <View
-                            style={[
-                              styles.statusTag,
-                              { backgroundColor: statusColors.bg },
-                            ]}
-                          >
-                            <Text style={[styles.statusText, { color: statusColors.text }]}>
-                              {order.estado}
-                            </Text>
-                          </View>
+                          {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') ? (
+                            <View style={[styles.selectWrapper, { height: 36, width: 130, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
+                              <select
+                                style={{
+                                  ...styles.htmlSelect,
+                                  height: '100%',
+                                  fontSize: 13,
+                                  paddingHorizontal: 8,
+                                  outlineStyle: 'none',
+                                  appearance: 'none',
+                                  WebkitAppearance: 'none',
+                                  MozAppearance: 'none',
+                                } as any}
+                                value={orderStatuses[order.id_pedido] !== undefined ? orderStatuses[order.id_pedido] : order.estado}
+                                onChange={(e) => {
+                                  setOrderStatuses({
+                                    ...orderStatuses,
+                                    [order.id_pedido]: e.target.value
+                                  });
+                                }}
+                              >
+                                <option value="PENDIENTE">PENDIENTE</option>
+                                <option value="EN_PREPARACION">EN_PREPARACION</option>
+                                <option value="ENTREGADO">ENTREGADO</option>
+                                <option value="CANCELADO">CANCELADO</option>
+                              </select>
+                            </View>
+                          ) : (
+                            <View
+                              style={[
+                                styles.statusTag,
+                                { backgroundColor: statusColors.bg },
+                              ]}
+                            >
+                              <Text style={[styles.statusText, { color: statusColors.text }]}>
+                                {order.estado}
+                              </Text>
+                            </View>
+                          )}
                         </View>
                         <View style={[styles.tdActions, { width: 140 }]}>
-                          {(userRole === 'super_admin' || userRole === 'admin') && (
+                          {(userRole === 'admin' || userRole === 'repartidor') && (
                             <>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                onPress={() => handleOpenInfo(order)}
+                              >
+                                <Feather name="info" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
+                                onPress={() => handleSaveOrderStatus(order.id_pedido)}
+                              >
+                                <Feather name="save" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                            </>
+                          )}
+                          {userRole === 'super_admin' && (
+                            <>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                onPress={() => handleOpenInfo(order)}
+                              >
+                                <Feather name="info" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
+                                onPress={() => handleSaveOrderStatus(order.id_pedido)}
+                              >
+                                <Feather name="save" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
                               <TouchableOpacity
                                 style={[styles.actionIcon, styles.editIcon]}
                                 onPress={() => handleOpenEdit(order)}
@@ -785,6 +1004,69 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Alert / Confirm Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={customAlertVisible}
+        onRequestClose={() => setCustomAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxWidth: 400 }]}>
+            <View style={[styles.modalHeader, { borderBottomWidth: 0, paddingBottom: 10 }]}>
+              <Text style={styles.modalTitle}>{customAlertTitle}</Text>
+              <TouchableOpacity onPress={() => setCustomAlertVisible(false)}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={[styles.modalBody, { paddingTop: 10, alignItems: 'center', gap: 16 }]}>
+              {customAlertType === 'confirm' ? (
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="alert-triangle" size={28} color="#EF4444" />
+                </View>
+              ) : (
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="info" size={28} color="#0284C7" />
+                </View>
+              )}
+              <Text style={{ fontSize: 15, color: '#334155', textAlign: 'center', lineHeight: 22 }}>
+                {customAlertMessage}
+              </Text>
+            </View>
+
+            <View style={[styles.modalFooter, { borderTopWidth: 0, backgroundColor: '#FFFFFF', padding: 20, gap: 12 }]}>
+              {customAlertType === 'confirm' ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.cancelModalBtn, { flex: 1 }]}
+                    onPress={() => setCustomAlertVisible(false)}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { flex: 1, backgroundColor: '#EF4444' }]}
+                    onPress={() => {
+                      setCustomAlertVisible(false);
+                      if (customAlertConfirmAction) customAlertConfirmAction();
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 14, textAlign: 'center' }}>Eliminar</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.saveModalBtn, { width: '100%', backgroundColor: '#5C8E8D' }]}
+                  onPress={() => setCustomAlertVisible(false)}
+                >
+                  <Text style={styles.saveBtnText}>Aceptar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -860,7 +1142,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tableContainer: {
-    minWidth: 920,
+    minWidth: 1120,
   },
   tableHeader: {
     flexDirection: 'row',
@@ -1175,5 +1457,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  checkboxChecked: {
+    borderColor: '#5C8E8D',
+    backgroundColor: '#5C8E8D',
+  },
+  checkboxInner: {
+    width: 10,
+    height: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
   },
 });

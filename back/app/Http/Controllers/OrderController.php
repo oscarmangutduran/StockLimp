@@ -66,13 +66,15 @@ class OrderController extends Controller
         $order = Order::with('usuario', 'centro')->find($request->id_pedido);
         $order->update(['estado' => strtoupper($request->estado)]);
 
-        // Si el usuario es de rol 'usuario', enviar correo
+        // Si el usuario es de rol 'usuario', enviar correo después de enviar la respuesta
         if ($order->usuario && $order->usuario->rol === 'usuario') {
-            try {
-                \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado: " . $e->getMessage());
-            }
+            dispatch(function () use ($order) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado: " . $e->getMessage());
+                }
+            })->afterResponse();
         }
 
         return response()->json(['success' => true, 'order' => $order], 200);
@@ -178,15 +180,17 @@ class OrderController extends Controller
         // Cargar los pedidos actualizados para enviar los correos
         $orders = Order::with('usuario', 'centro')->whereIn('id_pedido', $request->ids)->get();
 
-        foreach ($orders as $order) {
-            if ($order->usuario && $order->usuario->rol === 'usuario') {
-                try {
-                    \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado masivo: " . $e->getMessage());
+        dispatch(function () use ($orders) {
+            foreach ($orders as $order) {
+                if ($order->usuario && $order->usuario->rol === 'usuario') {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($order->usuario->email)->send(new \App\Mail\OrderStatusUpdated($order));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Error enviando correo de cambio de estado masivo: " . $e->getMessage());
+                    }
                 }
             }
-        }
+        })->afterResponse();
 
         return response()->json(['success' => true, 'message' => 'Pedidos actualizados correctamente'], 200);
     }

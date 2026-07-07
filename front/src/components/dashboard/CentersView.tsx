@@ -73,6 +73,21 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Custom Alert / Confirm Modal states
+  const [customAlertVisible, setCustomAlertVisible] = useState(false);
+  const [customAlertTitle, setCustomAlertTitle] = useState('');
+  const [customAlertMessage, setCustomAlertMessage] = useState('');
+  const [customAlertType, setCustomAlertType] = useState<'info' | 'confirm'>('info');
+  const [customAlertConfirmAction, setCustomAlertConfirmAction] = useState<(() => void) | null>(null);
+
+  const showCustomAlert = (title: string, message: string, type: 'info' | 'confirm' = 'info', onConfirm: (() => void) | null = null) => {
+    setCustomAlertTitle(title);
+    setCustomAlertMessage(message);
+    setCustomAlertType(type);
+    setCustomAlertConfirmAction(() => onConfirm);
+    setCustomAlertVisible(true);
+  };
+
   // Form states
   const [formNombre, setFormNombre] = useState('');
   const [formDireccion, setFormDireccion] = useState('');
@@ -130,7 +145,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
 
   const handleSave = async () => {
     if (!formNombre) {
-      alert('El Nombre es un campo requerido.');
+      showCustomAlert('Campo Requerido', 'El Nombre es un campo requerido.', 'info');
       return;
     }
 
@@ -167,12 +182,12 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
           setSuccessMessage(null);
         }, 1500);
       } else {
-        alert(resData.message || 'Error al guardar el centro.');
+        showCustomAlert('Error al guardar', resData.message || 'Error al guardar el centro.', 'info');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de red al guardar.');
+      showCustomAlert('Error de Red', 'Error de red al guardar.', 'info');
       setLoading(false);
     }
   };
@@ -190,36 +205,28 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
           if (data.success) {
             fetchCenters();
           } else {
-            alert(data.message || 'No se pudo eliminar el centro.');
+            showCustomAlert('Error al eliminar', data.message || 'No se pudo eliminar el centro.', 'info');
             setLoading(false);
           }
         })
         .catch((err) => {
           console.error(err);
-          alert('Error de conexión.');
+          showCustomAlert('Error de conexión', 'Error de conexión.', 'info');
           setLoading(false);
         });
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm('¿Estás seguro de que deseas eliminar este centro de trabajo?')) {
-        confirmDelete();
-      }
-    } else {
-      Alert.alert(
-        'Confirmar eliminación',
-        '¿Estás seguro de que deseas eliminar este centro de trabajo?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: confirmDelete },
-        ]
-      );
-    }
+    showCustomAlert(
+      'Confirmar eliminación',
+      '¿Estás seguro de que deseas eliminar este centro de trabajo?',
+      'confirm',
+      confirmDelete
+    );
   };
 
   const handleExportCSV = () => {
     if (Platform.OS !== 'web') {
-      alert('La exportación de Excel está disponible en la versión Web.');
+      showCustomAlert('Función No Disponible', 'La exportación de Excel está disponible en la versión Web.', 'info');
       return;
     }
 
@@ -507,6 +514,69 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
               >
                 <Text style={styles.saveBtnText}>Guardar</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Custom Alert / Confirm Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={customAlertVisible}
+        onRequestClose={() => setCustomAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxWidth: 400 }]}>
+            <View style={[styles.modalHeader, { borderBottomWidth: 0, paddingBottom: 10 }]}>
+              <Text style={styles.modalTitle}>{customAlertTitle}</Text>
+              <TouchableOpacity onPress={() => setCustomAlertVisible(false)}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={[styles.modalBody, { paddingTop: 10, alignItems: 'center', gap: 16 }]}>
+              {customAlertType === 'confirm' ? (
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="alert-triangle" size={28} color="#EF4444" />
+                </View>
+              ) : (
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="info" size={28} color="#0284C7" />
+                </View>
+              )}
+              <Text style={{ fontSize: 15, color: '#334155', textAlign: 'center', lineHeight: 22 }}>
+                {customAlertMessage}
+              </Text>
+            </View>
+
+            <View style={[styles.modalFooter, { borderTopWidth: 0, backgroundColor: '#FFFFFF', padding: 20, gap: 12 }]}>
+              {customAlertType === 'confirm' ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.cancelModalBtn, { flex: 1 }]}
+                    onPress={() => setCustomAlertVisible(false)}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { flex: 1, backgroundColor: '#EF4444' }]}
+                    onPress={() => {
+                      setCustomAlertVisible(false);
+                      if (customAlertConfirmAction) customAlertConfirmAction();
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 14, textAlign: 'center' }}>Eliminar</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.saveModalBtn, { width: '100%', backgroundColor: '#5C8E8D' }]}
+                  onPress={() => setCustomAlertVisible(false)}
+                >
+                  <Text style={styles.saveBtnText}>Aceptar</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
