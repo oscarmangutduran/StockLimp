@@ -186,7 +186,6 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
           color
         };
       })
-      .filter(item => item.quantity > 0) // Only show items with actual consumption
       .sort((a, b) => b.quantity - a.quantity);
 
     setDonutData(formattedDonut);
@@ -241,7 +240,6 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
           color
         };
       })
-      .filter(item => item.quantity > 0)
       .sort((a, b) => b.quantity - a.quantity);
 
     setDonutData(formattedDonut);
@@ -356,11 +354,16 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
           {/* Row 1: Donut Chart Distribution */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.cardTitle}>Distribución de Consumo por Producto</Text>
-                <Text style={styles.cardSub}>
-                  {analysisType === 'anual' ? `Año ${selectedYear}` : `${MONTH_LABELS[selectedMonth]} de ${selectedYear}`}
-                </Text>
+              <View style={styles.cardHeaderWithIcon}>
+                <View style={styles.iconBadgePink}>
+                  <Feather name="tag" size={16} color="#EC4899" />
+                </View>
+                <View>
+                  <Text style={styles.cardTitle}>Ventas por categoría</Text>
+                  <Text style={styles.cardSub}>
+                    {analysisType === 'anual' ? `Año ${selectedYear}` : `${MONTH_LABELS[selectedMonth]} de ${selectedYear}`}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -402,31 +405,23 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
                       x="60"
                       y="54"
                       textAnchor="middle"
-                      fontSize="7"
+                      fontSize="6.5"
                       fontWeight="700"
-                      fill="#64748B"
+                      fill="#94A3B8"
+                      fontFamily="Inter, sans-serif"
                     >
-                      TOTAL CONSUMO
+                      Total ventas
                     </SvgText>
                     <SvgText
                       x="60"
-                      y="68"
+                      y="70"
                       textAnchor="middle"
-                      fontSize="11"
+                      fontSize="14"
                       fontWeight="800"
                       fill="#1E293B"
+                      fontFamily="Inter, sans-serif"
                     >
                       {totalUnits}
-                    </SvgText>
-                    <SvgText
-                      x="60"
-                      y="78"
-                      textAnchor="middle"
-                      fontSize="6.5"
-                      fontWeight="600"
-                      fill="#94A3B8"
-                    >
-                      unidades
                     </SvgText>
                   </Svg>
                 </View>
@@ -435,23 +430,16 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
                 <View style={styles.legendContainer}>
                   {donutData.map((item, idx) => (
                     <View key={idx} style={styles.legendItem}>
-                      <View style={styles.legendHeader}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                          <View style={[styles.colorDot, { backgroundColor: item.color }]} />
-                          <Text style={styles.legendName} numberOfLines={1}>
-                            {item.name}
-                          </Text>
-                        </View>
-                        <Text style={styles.legendValue}>
-                          {item.quantity} uds
-                        </Text>
-                        <Text style={styles.legendPercent}>
-                          {item.percentage}%
-                        </Text>
-                      </View>
-                      <View style={styles.barProgressTrack}>
-                        <View style={[styles.barProgressFill, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
-                      </View>
+                      <View style={[styles.colorDot, { backgroundColor: item.color }]} />
+                      <Text style={styles.legendName} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.legendValue}>
+                        {item.quantity} uds
+                      </Text>
+                      <Text style={styles.legendPercent}>
+                        {item.percentage}%
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -461,11 +449,11 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
 
             {donutData.length > 0 && (
               <View style={styles.highlightAlert}>
-                <Feather name="trending-up" size={14} color="#15803D" />
+                <Feather name="trending-up" size={14} color="#059669" />
                 <Text style={styles.highlightAlertText}>
-                  <Text style={{ fontWeight: '700', color: '#166534' }}>
+                  <Text style={{ fontWeight: '700', color: '#065F46' }}>
                     {donutData[0]?.name}
-                  </Text> es tu producto principal en consumo para este período.
+                  </Text> es tu producto principal en consumo.
                 </Text>
               </View>
             )}
@@ -681,48 +669,50 @@ const styles = StyleSheet.create({
   legendContainer: {
     flex: 1,
     flexDirection: 'column',
-    gap: 14,
+    gap: 12,
   },
   legendItem: {
-    flexDirection: 'column',
-  },
-  legendHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 8,
+    width: '100%',
   },
   colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   legendName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#334155',
+    color: '#475569',
+    flex: 1,
   },
   legendValue: {
-    fontSize: 12,
-    color: '#475569',
-    marginRight: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginRight: 10,
   },
   legendPercent: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#94A3B8',
     fontWeight: '700',
     width: 32,
     textAlign: 'right',
   },
-  barProgressTrack: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden',
+  cardHeaderWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  barProgressFill: {
-    height: '100%',
-    borderRadius: 3,
+  iconBadgePink: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FDF2F8',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chartAreaContainer: {
     flexDirection: 'row',
