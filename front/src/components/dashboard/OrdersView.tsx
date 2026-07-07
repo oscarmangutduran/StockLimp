@@ -608,7 +608,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
           {userRole === 'usuario' ? 'MIS PEDIDOS' : 'GESTIÓN DE PEDIDOS'}
         </Text>
         <View style={[styles.headerActions, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
-          {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+          {userRole === 'repartidor' && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={[styles.selectWrapper, { height: 40, width: 160, marginBottom: 0, overflow: 'hidden', borderRadius: 20, borderColor: '#E2E8F0', borderWidth: 1 }]}>
                 <select
@@ -649,7 +649,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
             </TouchableOpacity>
           )}
 
-          {userRole !== 'admin' && userRole !== 'repartidor' && userRole !== 'usuario' && (
+          {(userRole === 'super_admin' || userRole === 'admin') && (
             isTabletOrDesktop ? (
               <>
                 <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
@@ -752,7 +752,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
             <View style={[styles.tableContainer, { minWidth: tableMinWidth }]}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
-                {isDesktop && userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                {isDesktop && userRole === 'repartidor' && (
                   <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                     <TouchableOpacity
                       style={[
@@ -800,7 +800,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                           { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                         ]}
                       >
-                        {isDesktop && userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                        {isDesktop && userRole === 'repartidor' && (
                           <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                             <TouchableOpacity
                               style={[styles.checkbox, isSelected && styles.checkboxChecked]}
@@ -839,7 +839,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                           </Text>
                         )}
                         <View style={{ width: colWidths.estado }}>
-                          {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') ? (
+                          {userRole === 'repartidor' ? (
                             <View style={[styles.selectWrapper, { height: 36, width: colWidths.estado - 10, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
                               <select
                                 style={{
@@ -913,7 +913,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                                 </TouchableOpacity>
                               </>
                             )}
-                            {(userRole === 'admin' || userRole === 'repartidor') && (
+                            {userRole === 'repartidor' && (
                               <>
                                 <TouchableOpacity
                                   style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
@@ -929,19 +929,13 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                                 </TouchableOpacity>
                               </>
                             )}
-                            {userRole === 'super_admin' && (
+                            {(userRole === 'super_admin' || userRole === 'admin') && (
                               <>
                                 <TouchableOpacity
                                   style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
                                   onPress={() => handleOpenInfo(order)}
                                 >
                                   <Feather name="info" size={14} color="#FFFFFF" />
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                  style={[styles.actionIcon, { backgroundColor: '#10B981' }]}
-                                  onPress={() => handleSaveOrderStatus(order.id_pedido)}
-                                >
-                                  <Feather name="save" size={14} color="#FFFFFF" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                   style={[styles.actionIcon, styles.editIcon]}
