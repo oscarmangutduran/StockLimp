@@ -143,10 +143,10 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
     const productTotals: { [name: string]: number } = {};
 
     // Initialise keys for all known products to make sure they have a spot
-    const productNames = allProducts.length > 0 
+    const productNames = allProducts.length > 0
       ? allProducts.map(p => p.nombre)
       : Object.keys(MOCK_MONTHLY_DATA);
-      
+
     productNames.forEach(name => {
       productTotals[name] = 0;
     });
@@ -282,7 +282,7 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
       <View style={styles.headerContainer}>
         <View>
           <Text style={styles.viewTitle}>ANALÍTICA DE CONSUMO</Text>
-          <Text style={styles.viewSub}>Visualiza la distribución de insumos consumidos en la empresa</Text>
+          <Text style={styles.viewSub}>Visualiza la distribución de productos consumidos en la empresa</Text>
         </View>
         {isUsingMocks && (
           <View style={styles.mockBadge}>
@@ -296,7 +296,7 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
       <View style={styles.filterCard}>
         <Text style={styles.filterTitle}>Configurar Período de Análisis</Text>
         <View style={[styles.filterRow, isMobile && { flexDirection: 'column', gap: 12 }]}>
-          
+
           <View style={[styles.filterGroup, { flex: 1 }]}>
             <Text style={styles.filterLabel}>Año</Text>
             <View style={styles.selectWrapper}>
@@ -350,7 +350,7 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
         </View>
       ) : (
         <View style={styles.mainLayout}>
-          
+
           {/* Row 1: Donut Chart Distribution */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -374,13 +374,13 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
               </View>
             ) : (
               <View style={[styles.donutLayout, isMobile && { flexDirection: 'column', alignItems: 'center', gap: 24 }]}>
-                
+
                 {/* SVG Donut Chart using react-native-svg components */}
                 <View style={styles.chartWrapper}>
                   <Svg width={220} height={220} viewBox="0 0 120 120" style={{ width: 220, height: 220 }}>
                     {/* Base shadow circle */}
                     <Circle cx="60" cy="60" r="40" fill="transparent" stroke="#F1F5F9" strokeWidth="16" />
-                    
+
                     {/* Slices mapping */}
                     {donutSlices.map((slice, index) => (
                       <Circle
@@ -396,10 +396,10 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
                         transform="rotate(-90 60 60)"
                       />
                     ))}
-                    
+
                     {/* Center Card */}
                     <Circle cx="60" cy="60" r="32" fill="#FFFFFF" />
-                    
+
                     {/* Middle total text */}
                     <SvgText
                       x="60"
@@ -466,7 +466,7 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
                 <Text style={styles.cardTitle}>Evolución del Consumo Mensual</Text>
                 <Text style={styles.cardSub}>Historial de unidades entregadas a lo largo de {selectedYear}</Text>
               </View>
-              
+
               {/* Product selector specifically for the trend chart */}
               <View style={[styles.selectWrapper, { width: 220, height: 36 }]}>
                 <select
