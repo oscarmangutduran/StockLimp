@@ -56,7 +56,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   // Redirect to '/centros' if logged in and on the root path '/'
   useEffect(() => {
     if (user && !initialTab) {
-      if (user.rol === 'super_admin') {
+      if (user.rol === 'super_admin' || user.rol === 'admin') {
         router.replace('/centros');
       } else {
         router.replace('/pedidos');
@@ -73,7 +73,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           const parsed = JSON.parse(savedUser);
           setUser(parsed);
           if (!initialTab) {
-            setActiveTab(parsed.rol === 'super_admin' ? 'centros' : 'pedidos');
+            setActiveTab(parsed.rol === 'super_admin' || parsed.rol === 'admin' ? 'centros' : 'pedidos');
           }
         }
       } catch (e) {
@@ -85,7 +85,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const saveUserSession = (userData: any) => {
     setUser(userData);
     if (!initialTab) {
-      setActiveTab(userData.rol === 'super_admin' ? 'centros' : 'pedidos');
+      setActiveTab(userData.rol === 'super_admin' || userData.rol === 'admin' ? 'centros' : 'pedidos');
     }
     if (Platform.OS === 'web') {
       try {
@@ -251,7 +251,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
         {/* Navigation Items */}
         <View style={styles.menuList}>
-          {user.rol === 'super_admin' && (
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
               onPress={() => {
@@ -281,7 +281,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </Text>
           </TouchableOpacity>
 
-          {user.rol === 'super_admin' && (
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
               onPress={() => {
@@ -297,7 +297,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </TouchableOpacity>
           )}
 
-          {user.rol === 'super_admin' && (
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
               onPress={() => {
