@@ -55,7 +55,11 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   // Redirect to '/centros' if logged in and on the root path '/'
   useEffect(() => {
     if (user && !initialTab) {
-      router.replace('/centros');
+      if (user.rol === 'super_admin') {
+        router.replace('/centros');
+      } else {
+        router.replace('/pedidos');
+      }
     }
   }, [user, initialTab]);
 
@@ -65,7 +69,11 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
       try {
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          if (!initialTab) {
+            setActiveTab(parsed.rol === 'super_admin' ? 'centros' : 'pedidos');
+          }
         }
       } catch (e) {
         console.error('Error restoring session from localStorage:', e);
@@ -75,6 +83,9 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
   const saveUserSession = (userData: any) => {
     setUser(userData);
+    if (!initialTab) {
+      setActiveTab(userData.rol === 'super_admin' ? 'centros' : 'pedidos');
+    }
     if (Platform.OS === 'web') {
       try {
         localStorage.setItem('user', JSON.stringify(userData));
@@ -200,7 +211,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         case 'productos':
           return <ProductsView baseUrl={BASE_URL} />;
         case 'pedidos':
-          return <OrdersView baseUrl={BASE_URL} userRole={user.rol} />;
+          return <OrdersView baseUrl={BASE_URL} userRole={user.rol} userId={user.id_user} />;
         case 'centros':
           return <CentersView baseUrl={BASE_URL} />;
         case 'alta':
@@ -230,7 +241,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
         {/* Navigation Items */}
         <View style={styles.menuList}>
-          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+          {user.rol === 'super_admin' && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
               onPress={() => {
@@ -260,7 +271,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </Text>
           </TouchableOpacity>
 
-          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+          {user.rol === 'super_admin' && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
               onPress={() => {
@@ -276,7 +287,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </TouchableOpacity>
           )}
 
-          {user.rol !== 'admin' && user.rol !== 'repartidor' && (
+          {user.rol === 'super_admin' && (
             <TouchableOpacity
               style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
               onPress={() => {

@@ -65,6 +65,7 @@ interface Product {
 interface OrdersViewProps {
   baseUrl: string;
   userRole?: string;
+  userId?: number;
 }
 
 const mockOrders: Order[] = [
@@ -138,7 +139,7 @@ const mockOrders: Order[] = [
   }
 ];
 
-export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
+export default function OrdersView({ baseUrl, userRole, userId }: OrdersViewProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
@@ -188,6 +189,13 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState('ENTREGADO');
   const [orderStatuses, setOrderStatuses] = useState<{[key: number]: string}>({});
+  const [simulateActivePeriod, setSimulateActivePeriod] = useState(false);
+
+  const isPeriodActive = () => {
+    if (simulateActivePeriod) return true;
+    const day = new Date().getDate();
+    return day >= 2 && day <= 8;
+  };
 
   // Custom Alert / Confirm Modal states
   const [customAlertVisible, setCustomAlertVisible] = useState(false);
@@ -208,7 +216,10 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const ordersRes = await fetch(`${baseUrl}/pedidos`);
+      const url = userRole === 'usuario' && userId
+        ? `${baseUrl}/pedidos?id_user=${userId}`
+        : `${baseUrl}/pedidos`;
+      const ordersRes = await fetch(url);
       if (ordersRes.ok) {
         const data = await ordersRes.json();
         setOrders(data);
@@ -245,13 +256,21 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
 
   const handleOpenCreate = () => {
     setSelectedOrder(null);
-    setFormUserId(users[0]?.id_user?.toString() || '1');
+    setFormUserId(userRole === 'usuario' && userId ? userId.toString() : (users[0]?.id_user?.toString() || '1'));
     setFormCenterId(centers[0]?.id_centro?.toString() || '1');
     setFormObservaciones('');
     setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
     setModalType('create');
     setSuccessMessage(null);
     setModalVisible(true);
+  };
+
+  const handleOpenCreateForUser = () => {
+    if (!isPeriodActive()) {
+      showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 8 de cada mes.', 'info');
+      return;
+    }
+    handleOpenCreate();
   };
 
   const handleOpenEdit = (order: Order) => {
@@ -278,22 +297,62 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
     setModalVisible(true);
   };
 
-  const handleAddItemRow = () => {
-    setFormItems([...formItems, { id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
+  const getProductColor = (p: Product) => {
+    if (p.es_toxico) return '#FEE2E2'; // Light red background for toxic
+    const name = p.nombre.toLowerCase();
+    if (name.includes('cristal') || name.includes('limpia')) return '#ECFEFF'; // Cyan
+    if (name.includes('ambient') || name.includes('bosque')) return '#ECFDF5'; // Green
+    if (name.includes('lejia') || name.includes('cloro')) return '#FEF3C7'; // Amber
+    return '#EFF6FF'; // Blue
   };
 
-  const handleRemoveItemRow = (index: number) => {
-    const updated = formItems.filter((_, idx) => idx !== index);
-    setFormItems(updated);
+  const getProductIconColor = (p: Product) => {
+    if (p.es_toxico) return '#EF4444'; // Red
+    const name = p.nombre.toLowerCase();
+    if (name.includes('cristal') || name.includes('limpia')) return '#0891B2'; // Cyan
+    if (name.includes('ambient') || name.includes('bosque')) return '#059669'; // Green
+    if (name.includes('lejia') || name.includes('cloro')) return '#D97706'; // Amber
+    return '#2563EB'; // Blue
   };
 
-  const handleItemChange = (index: number, key: 'id_producto' | 'cantidad', value: any) => {
-    const updated = [...formItems];
-    updated[index] = {
-      ...updated[index],
-      [key]: value,
-    };
-    setFormItems(updated);
+  const getProductIcon = (p: Product) => {
+    if (p.es_toxico) return 'alert-triangle';
+    const name = p.nombre.toLowerCase();
+    if (name.includes('cristal') || name.includes('limpia')) return 'wind';
+    if (name.includes('ambient') || name.includes('bosque')) return 'feather';
+    if (name.includes('lejia') || name.includes('cloro')) return 'shield';
+    return 'droplet';
+  };
+
+  const handleProductCardClick = (productId: number) => {
+    const existing = formItems.find((item) => item.id_producto === productId);
+    if (existing) {
+      setFormItems(
+        formItems.map((item) =>
+          item.id_producto === productId ? { ...item, cantidad: item.cantidad + 1 } : item
+        )
+      );
+    } else {
+      setFormItems([...formItems, { id_producto: productId, cantidad: 1 }]);
+    }
+  };
+
+  const handleAdjustQuantity = (productId: number, amount: number) => {
+    setFormItems(
+      formItems
+        .map((item) => {
+          if (item.id_producto === productId) {
+            const nextQty = item.cantidad + amount;
+            return { ...item, cantidad: nextQty };
+          }
+          return item;
+        })
+        .filter((item) => item.cantidad > 0)
+    );
+  };
+
+  const handleRemoveProduct = (productId: number) => {
+    setFormItems(formItems.filter((item) => item.id_producto !== productId));
   };
 
   const handleSave = async () => {
@@ -524,7 +583,9 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
     <View style={styles.container}>
       {/* View Header */}
       <View style={styles.headerContainer}>
-        <Text style={styles.viewTitle}>GESTIÓN DE PEDIDOS</Text>
+        <Text style={styles.viewTitle}>
+          {userRole === 'usuario' ? 'MIS PEDIDOS' : 'GESTIÓN DE PEDIDOS'}
+        </Text>
         <View style={styles.headerActions}>
           {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -557,7 +618,17 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
             </View>
           )}
 
-          {userRole !== 'admin' && userRole !== 'repartidor' && (
+          {userRole === 'usuario' && (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.newBtn]}
+              onPress={handleOpenCreateForUser}
+            >
+              <Feather name="plus" size={16} color="#FFFFFF" />
+              <Text style={styles.btnText}>Nuevo Pedido</Text>
+            </TouchableOpacity>
+          )}
+
+          {userRole !== 'admin' && userRole !== 'repartidor' && userRole !== 'usuario' && (
             <>
               <TouchableOpacity style={[styles.actionBtn, styles.excelBtn]} onPress={handleExportExcel}>
                 <Feather name="download" size={16} color="#FFFFFF" />
@@ -594,6 +665,48 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
         </View>
       </View>
 
+      {userRole === 'usuario' && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#EFF6FF',
+            borderColor: '#BFDBFE',
+            borderWidth: 1,
+            borderRadius: 8,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            marginBottom: 20,
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 280 }}>
+            <Feather name="info" size={18} color="#2563EB" style={{ marginRight: 8 }} />
+            <Text style={{ fontSize: 14, color: '#1E3A8A', lineHeight: 20 }}>
+              Nota: Puedes modificar tus pedidos del día 2 al 8 de cada mes. Estado actual:{' '}
+              <Text style={{ fontWeight: 'bold', color: '#1D4ED8' }}>
+                {isPeriodActive() ? 'HABILITADO' : 'DESHABILITADO'}
+              </Text>
+              .
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            activeOpacity={0.8}
+            onPress={() => setSimulateActivePeriod(!simulateActivePeriod)}
+          >
+            <View style={[styles.checkbox, simulateActivePeriod && styles.checkboxChecked, { borderColor: '#2563EB', width: 16, height: 16 }]}>
+              {simulateActivePeriod && <View style={[styles.checkboxInner, { backgroundColor: '#FFFFFF', width: 8, height: 8 }]} />}
+            </View>
+            <Text style={{ fontSize: 13, color: '#1E3A8A', fontWeight: '500' }}>
+              Simular periodo activo (para pruebas)
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Main Table Content */}
       {loading && orders.length === 0 ? (
         <View style={styles.loadingContainer}>
@@ -602,10 +715,10 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView style={styles.scrollContainer} horizontal={true}>
-            <View style={styles.tableContainer}>
+            <View style={[styles.tableContainer, { minWidth: userRole === 'usuario' ? 860 : 1120 }]}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
-                {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                {userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
                   <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                     <TouchableOpacity
                       style={[
@@ -622,10 +735,10 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                   </View>
                 )}
                 <Text style={[styles.thText, { width: 80 }]}>ID Pedido</Text>
-                <Text style={[styles.thText, { width: 140 }]}>Operario</Text>
-                <Text style={[styles.thText, { width: 260 }]}>Productos Pedidos</Text>
-                <Text style={[styles.thText, { width: 160 }]}>Fecha de pedido</Text>
-                <Text style={[styles.thText, { width: 160 }]}>Centro Destino</Text>
+                {userRole !== 'usuario' && <Text style={[styles.thText, { width: 140 }]}>Operario</Text>}
+                <Text style={[styles.thText, { width: userRole === 'usuario' ? 320 : 260 }]}>Productos Pedidos</Text>
+                <Text style={[styles.thText, { width: userRole === 'usuario' ? 180 : 160 }]}>Fecha de pedido</Text>
+                {userRole !== 'usuario' && <Text style={[styles.thText, { width: 160 }]}>Centro Destino</Text>}
                 <Text style={[styles.thText, { width: 140 }]}>Estado</Text>
                 <Text style={[styles.thText, { width: 140, textAlign: 'center' }]}>Acciones</Text>
               </View>
@@ -653,7 +766,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                           { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                         ]}
                       >
-                        {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
+                        {userRole !== 'usuario' && (userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') && (
                           <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                             <TouchableOpacity
                               style={[styles.checkbox, isSelected && styles.checkboxChecked]}
@@ -672,21 +785,25 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                             #{order.id_pedido}
                           </Text>
                         </TouchableOpacity>
-                        <Text style={[styles.tdText, { width: 140, fontWeight: '500' }]}>
-                          {order.operario}
-                        </Text>
-                        <View style={{ width: 260, paddingRight: 10 }}>
+                        {userRole !== 'usuario' && (
+                          <Text style={[styles.tdText, { width: 140, fontWeight: '500' }]}>
+                            {order.operario}
+                          </Text>
+                        )}
+                        <View style={{ width: userRole === 'usuario' ? 320 : 260, paddingRight: 10 }}>
                           <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }]}>{totalUds} uds.</Text>
                           <Text style={styles.detailsText} numberOfLines={2}>
                             {detailString || 'Sin productos'}
                           </Text>
                         </View>
-                        <Text style={[styles.tdText, { width: 160, color: '#475569' }]}>
+                        <Text style={[styles.tdText, { width: userRole === 'usuario' ? 180 : 160, color: '#475569' }]}>
                           {order.fecha_creacion}
                         </Text>
-                        <Text style={[styles.tdText, { width: 160, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
-                          {order.centro?.nombre || 'N/A'}
-                        </Text>
+                        {userRole !== 'usuario' && (
+                          <Text style={[styles.tdText, { width: 160, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
+                            {order.centro?.nombre || 'N/A'}
+                          </Text>
+                        )}
                         <View style={{ width: 140 }}>
                           {(userRole === 'admin' || userRole === 'super_admin' || userRole === 'repartidor') ? (
                             <View style={[styles.selectWrapper, { height: 36, width: 130, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
@@ -729,6 +846,38 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                           )}
                         </View>
                         <View style={[styles.tdActions, { width: 140 }]}>
+                          {userRole === 'usuario' && (
+                            <>
+                              <TouchableOpacity
+                                style={[styles.actionIcon, { backgroundColor: '#3B82F6' }]}
+                                onPress={() => handleOpenInfo(order)}
+                              >
+                                <Feather name="info" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.actionIcon,
+                                  styles.editIcon,
+                                  (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
+                                ]}
+                                disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
+                                onPress={() => handleOpenEdit(order)}
+                              >
+                                <Feather name="edit-2" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.actionIcon,
+                                  styles.deleteIcon,
+                                  (order.estado !== 'PENDIENTE' || !isPeriodActive()) && { backgroundColor: '#CBD5E1', opacity: 0.5 }
+                                ]}
+                                disabled={order.estado !== 'PENDIENTE' || !isPeriodActive()}
+                                onPress={() => handleDelete(order.id_pedido)}
+                              >
+                                <Feather name="trash-2" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                            </>
+                          )}
                           {(userRole === 'admin' || userRole === 'repartidor') && (
                             <>
                               <TouchableOpacity
@@ -831,7 +980,7 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, modalType !== 'info' && { maxWidth: 850, width: '95%' }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {modalType === 'info' && 'Detalles del Pedido'}
@@ -897,92 +1046,132 @@ export default function OrdersView({ baseUrl, userRole }: OrdersViewProps) {
                 </View>
               </View>
             ) : (
-              <ScrollView style={styles.modalBody}>
-                {modalType === 'create' && (
-                  <>
-                    <Text style={styles.label}>Seleccionar Operario *</Text>
+              <View style={styles.formContainerSplit}>
+                {/* Left Side: Product Catalog */}
+                <View style={styles.catalogColumn}>
+                  <Text style={styles.modalSectionTitle}>Catálogo de Productos</Text>
+                  <Text style={styles.modalSectionSub}>Haz clic en la imagen de un producto para añadirlo o sumar cantidad</Text>
+                  <ScrollView style={styles.catalogScroll}>
+                    <View style={styles.catalogGrid}>
+                      {products.map((p) => {
+                        const existingItem = formItems.find(item => item.id_producto === p.id_producto);
+                        const addedQty = existingItem ? existingItem.cantidad : 0;
+                        return (
+                          <TouchableOpacity
+                            key={p.id_producto}
+                            style={styles.productCard}
+                            onPress={() => handleProductCardClick(p.id_producto)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.productImagePlaceholder, { backgroundColor: getProductColor(p) }]}>
+                              <Feather name={getProductIcon(p)} size={28} color={getProductIconColor(p)} />
+                              {addedQty > 0 && (
+                                <View style={styles.addedBadge}>
+                                  <Text style={styles.addedBadgeText}>+{addedQty}</Text>
+                                </View>
+                              )}
+                            </View>
+                            <View style={styles.productCardInfo}>
+                              <Text style={styles.productCardName} numberOfLines={2}>{p.nombre}</Text>
+                              {p.es_toxico === 1 && (
+                                <Text style={styles.toxicLabel}>⚠️ Tóxico</Text>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                </View>
+
+                {/* Right Side: Order Summary / Checkout */}
+                <View style={styles.cartColumn}>
+                  <Text style={styles.modalSectionTitle}>Detalles del Pedido</Text>
+                  <ScrollView style={styles.cartScroll}>
+                    {modalType === 'create' && userRole !== 'usuario' && (
+                      <View style={{ marginBottom: 12 }}>
+                        <Text style={styles.label}>Seleccionar Operario *</Text>
+                        <View style={styles.selectWrapper}>
+                          <select
+                            style={styles.htmlSelect}
+                            value={formUserId}
+                            onChange={(e) => setFormUserId(e.target.value)}
+                          >
+                            {users.map((u) => (
+                              <option key={u.id_user} value={u.id_user}>
+                                {u.nombre} ({u.rol})
+                              </option>
+                            ))}
+                          </select>
+                        </View>
+                      </View>
+                    )}
+
+                    <Text style={styles.label}>Centro de Trabajo *</Text>
                     <View style={styles.selectWrapper}>
                       <select
                         style={styles.htmlSelect}
-                        value={formUserId}
-                        onChange={(e) => setFormUserId(e.target.value)}
+                        value={formCenterId}
+                        onChange={(e) => setFormCenterId(e.target.value)}
                       >
-                        {users.map((u) => (
-                          <option key={u.id_user} value={u.id_user}>
-                            {u.nombre} ({u.rol})
+                        {centers.map((c) => (
+                          <option key={c.id_centro} value={c.id_centro}>
+                            {c.nombre}
                           </option>
                         ))}
                       </select>
                     </View>
-                  </>
-                )}
 
-                <Text style={styles.label}>Centro de Trabajo *</Text>
-                <View style={styles.selectWrapper}>
-                  <select
-                    style={styles.htmlSelect}
-                    value={formCenterId}
-                    onChange={(e) => setFormCenterId(e.target.value)}
-                  >
-                    {centers.map((c) => (
-                      <option key={c.id_centro} value={c.id_centro}>
-                        {c.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </View>
-
-                <Text style={styles.label}>Observaciones</Text>
-                <TextInput
-                  style={[styles.modalInput, { height: 60 }]}
-                  multiline={true}
-                  value={formObservaciones}
-                  onChangeText={setFormObservaciones}
-                  placeholder="Detalles de entrega, zona especial, etc."
-                />
-
-                <View style={styles.itemHeaderRow}>
-                  <Text style={styles.label}>Productos a pedir *</Text>
-                  <TouchableOpacity style={styles.addBtnSmall} onPress={handleAddItemRow}>
-                    <Text style={styles.addBtnSmallText}>+ Añadir</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {formItems.map((item, index) => (
-                  <View key={index} style={styles.formItemRow}>
-                    <View style={[styles.selectWrapper, { flex: 2, marginRight: 8 }]}>
-                      <select
-                        style={styles.htmlSelect}
-                        value={item.id_producto}
-                        onChange={(e) =>
-                          handleItemChange(index, 'id_producto', parseInt(e.target.value, 10))
-                        }
-                      >
-                        {products.map((p) => (
-                          <option key={p.id_producto} value={p.id_producto}>
-                            {p.nombre} ({parseFloat(p.precio_unidad.toString()).toFixed(2)}€)
-                          </option>
-                        ))}
-                      </select>
+                    <Text style={styles.label}>Productos Seleccionados</Text>
+                    <View style={styles.cartList}>
+                      {formItems.map((item) => {
+                        const p = products.find((prod) => prod.id_producto === item.id_producto);
+                        if (!p) return null;
+                        return (
+                          <View key={item.id_producto} style={styles.cartItemRow}>
+                            <View style={styles.cartItemDetails}>
+                              <Text style={styles.cartItemName} numberOfLines={1}>{p.nombre}</Text>
+                            </View>
+                            <View style={styles.cartQtyControls}>
+                              <TouchableOpacity
+                                style={styles.qtyBtn}
+                                onPress={() => handleAdjustQuantity(item.id_producto, -1)}
+                              >
+                                <Feather name="minus" size={12} color="#475569" />
+                              </TouchableOpacity>
+                              <Text style={styles.qtyText}>{item.cantidad}</Text>
+                              <TouchableOpacity
+                                style={styles.qtyBtn}
+                                onPress={() => handleAdjustQuantity(item.id_producto, 1)}
+                              >
+                                <Feather name="plus" size={12} color="#475569" />
+                              </TouchableOpacity>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.cartRemoveBtn}
+                              onPress={() => handleRemoveProduct(item.id_producto)}
+                            >
+                              <Feather name="trash-2" size={14} color="#EF4444" />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                      {formItems.length === 0 && (
+                        <Text style={styles.emptyCartText}>Haz clic en los productos para agregarlos.</Text>
+                      )}
                     </View>
+
+                    <Text style={[styles.label, { marginTop: 12 }]}>Observaciones</Text>
                     <TextInput
-                      style={[styles.modalInput, { flex: 1, marginBottom: 0, marginRight: 8 }]}
-                      keyboardType="number-pad"
-                      value={item.cantidad.toString()}
-                      onChangeText={(val) =>
-                        handleItemChange(index, 'cantidad', parseInt(val, 10) || 1)
-                      }
-                      placeholder="Cantidad"
+                      style={[styles.modalInput, { height: 50, marginBottom: 12 }]}
+                      multiline={true}
+                      value={formObservaciones}
+                      onChangeText={setFormObservaciones}
+                      placeholder="Detalles de entrega, zona especial, etc."
                     />
-                    <TouchableOpacity
-                      style={styles.removeBtn}
-                      onPress={() => handleRemoveItemRow(index)}
-                    >
-                      <Feather name="trash-2" size={16} color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </ScrollView>
+                  </ScrollView>
+                </View>
+              </View>
             )}
 
             <View style={styles.modalFooter}>
@@ -1477,5 +1666,192 @@ const styles = StyleSheet.create({
     height: 10,
     backgroundColor: '#FFFFFF',
     borderRadius: 2,
+  },
+  formContainerSplit: {
+    flexDirection: 'row',
+    flex: 1,
+    height: 500,
+    maxHeight: 600,
+  },
+  catalogColumn: {
+    flex: 3,
+    borderRightWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 20,
+    backgroundColor: '#FAFAFA',
+  },
+  catalogScroll: {
+    flex: 1,
+    marginTop: 10,
+  },
+  catalogGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingBottom: 20,
+  },
+  productCard: {
+    width: '47%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  productImagePlaceholder: {
+    height: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  addedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#10B981',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  addedBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  productCardInfo: {
+    padding: 10,
+  },
+  productCardName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+    height: 36,
+  },
+  toxicLabel: {
+    fontSize: 10,
+    color: '#EF4444',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  productCardPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#5C8E8D',
+  },
+  cartColumn: {
+    flex: 2.2,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
+  },
+  cartScroll: {
+    flex: 1,
+    marginTop: 10,
+  },
+  cartList: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    padding: 8,
+    minHeight: 120,
+    marginBottom: 12,
+  },
+  cartItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 6,
+  },
+  cartItemDetails: {
+    flex: 1.5,
+  },
+  cartItemName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  cartItemPrice: {
+    fontSize: 10,
+    color: '#64748B',
+  },
+  cartQtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    padding: 2,
+  },
+  qtyBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    paddingHorizontal: 6,
+    textAlign: 'center',
+    minWidth: 16,
+  },
+  cartItemSubtotal: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    minWidth: 44,
+    textAlign: 'right',
+  },
+  cartRemoveBtn: {
+    padding: 4,
+  },
+  emptyCartText: {
+    textAlign: 'center',
+    color: '#64748B',
+    fontSize: 12,
+    marginTop: 40,
+    fontStyle: 'italic',
+  },
+  cartTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingTop: 12,
+    marginTop: 8,
+  },
+  totalLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#5C8E8D',
+  },
+  modalSectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  modalSectionSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginBottom: 8,
   },
 });
