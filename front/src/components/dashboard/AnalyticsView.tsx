@@ -251,6 +251,240 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
     setMonthlyTrendValues(monthlyTrend);
   };
 
+  const handleDownloadPDF = () => {
+    if (Platform.OS !== 'web') {
+      alert('La exportación en PDF está disponible en la versión Web.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Por favor, permite las ventanas emergentes (pop-ups) para descargar el PDF.');
+      return;
+    }
+
+    const dateStr = new Date().toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const periodStr = analysisType === 'anual'
+      ? `Año Completo ${selectedYear}`
+      : `${MONTH_LABELS[selectedMonth]} de ${selectedYear}`;
+
+    const mockBadgeHtml = isUsingMocks
+      ? `<div style="background-color: #FEF3C7; border: 1px solid #F59E0B; color: #D97706; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; font-weight: 500;">
+          ⚠️ Vista Demo (Datos emulados sin pedidos entregados)
+         </div>`
+      : '';
+
+    const donutRows = donutData.map(item => `
+      <tr>
+        <td style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${item.color};"></span>
+          ${item.name}
+        </td>
+        <td style="text-align: right; font-weight: bold;">${item.quantity} uds</td>
+        <td style="text-align: right;">
+          <span style="font-weight: 600; margin-right: 8px;">${item.percentage}%</span>
+          <div style="background-color: #F1F5F9; border-radius: 4px; height: 6px; width: 80px; display: inline-block; vertical-align: middle; overflow: hidden; position: relative;">
+            <div style="background-color: ${item.color}; width: ${item.percentage}%; height: 100%;"></div>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    const trendRows = monthlyTrendValues.map((val, idx) => `
+      <tr>
+        <td>${MONTH_LABELS[idx]}</td>
+        <td style="text-align: right; font-weight: bold;">${val} uds</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>StockLimp - Reporte de Analítica</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            color: #1E293B;
+            margin: 0;
+            padding: 40px;
+            background-color: #FFFFFF;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .logo {
+            font-size: 26px;
+            font-weight: 800;
+            color: #5C8E8D;
+            letter-spacing: 1px;
+          }
+          .report-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1E2640;
+            text-align: right;
+            line-height: 1.4;
+          }
+          .metadata-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          .card {
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 16px;
+          }
+          .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+          }
+          .card-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1E293B;
+          }
+          .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1E2640;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #5C8E8D;
+            padding-left: 10px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+          }
+          th {
+            background-color: #F1F5F9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1.5px solid #E2E8F0;
+          }
+          td {
+            padding: 12px 14px;
+            font-size: 14px;
+            border-bottom: 1px solid #F1F5F9;
+          }
+          tr:last-child td {
+            border-bottom: none;
+          }
+          .trend-section {
+            page-break-inside: avoid;
+          }
+          .footer {
+            margin-top: 50px;
+            border-top: 1px solid #E2E8F0;
+            padding-top: 15px;
+            text-align: center;
+            font-size: 11px;
+            color: #94A3B8;
+            font-weight: 500;
+            line-height: 1.5;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">STOCKLIMP</div>
+          <div class="report-title">
+            INFORME DE ANALÍTICA DE CONSUMO<br/>
+            <span style="font-size: 12px; font-weight: 500; color: #64748B;">Generado el ${dateStr}</span>
+          </div>
+        </div>
+
+        ${mockBadgeHtml}
+
+        <div class="metadata-grid">
+          <div class="card">
+            <div class="card-title">Período de Análisis</div>
+            <div class="card-value">${periodStr}</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Total de Ventas / Consumo</div>
+            <div class="card-value">${totalUnits} uds</div>
+          </div>
+        </div>
+
+        <div class="section-title">Distribución por Categorías / Productos</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Producto / Categoría</th>
+              <th style="text-align: right;">Cantidad Vendida</th>
+              <th style="text-align: right; width: 200px;">Porcentaje de Consumo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${donutRows}
+          </tbody>
+        </table>
+
+        <div class="trend-section">
+          <div class="section-title">Evolución Mensual: ${trendProduct} (${selectedYear})</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th style="text-align: right;">Cantidad Entregada</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trendRows}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          Este informe ha sido generado automáticamente por la plataforma StockLimp.<br/>
+          Confidencial - Para uso interno exclusivamente.
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   useEffect(() => {
     fetchData();
   }, [analysisType, selectedMonth, selectedYear, trendProduct]);
@@ -284,12 +518,18 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
           <Text style={styles.viewTitle}>ANALÍTICA DE CONSUMO</Text>
           <Text style={styles.viewSub}>Visualiza la distribución de productos consumidos en la empresa</Text>
         </View>
-        {isUsingMocks && (
-          <View style={styles.mockBadge}>
-            <Feather name="info" size={12} color="#D97706" />
-            <Text style={styles.mockBadgeText}>Vista Demo (Datos emulados sin pedidos entregados)</Text>
-          </View>
-        )}
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.pdfButton} onPress={handleDownloadPDF}>
+            <Feather name="file-text" size={16} color="#FFFFFF" />
+            <Text style={styles.pdfButtonText}>Exportar PDF</Text>
+          </TouchableOpacity>
+          {isUsingMocks && (
+            <View style={styles.mockBadge}>
+              <Feather name="info" size={12} color="#D97706" />
+              <Text style={styles.mockBadgeText}>Vista Demo (Datos emulados sin pedidos entregados)</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Filter Section */}
@@ -542,6 +782,29 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 20,
     gap: 12,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  pdfButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#5C8E8D',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4A7574',
+    cursor: 'pointer',
+  } as any,
+  pdfButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   viewTitle: {
     fontSize: 22,
