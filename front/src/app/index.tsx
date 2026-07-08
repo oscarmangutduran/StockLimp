@@ -23,12 +23,13 @@ import CentersView from '@/components/dashboard/CentersView';
 import ApproveUsersView from '@/components/dashboard/ApproveUsersView';
 import ControlPanelView from '@/components/dashboard/ControlPanelView';
 import AnalyticsView from '@/components/dashboard/AnalyticsView';
+import ProfileView from '@/components/dashboard/ProfileView';
 
 const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
 
 const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
 
-type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica';
+type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const { width } = useWindowDimensions();
@@ -98,7 +99,13 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
   const changeTab = (newTab: TabType) => {
     setActiveTab(newTab);
-    router.replace(`/${newTab}`);
+    if (Platform.OS === 'web') {
+      try {
+        window.history.replaceState(null, '', `/${newTab}`);
+      } catch (e) {
+        console.error('Error updating URL history:', e);
+      }
+    }
   };
 
   const handleLogin = async () => {
@@ -225,6 +232,8 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           );
         case 'analitica':
           return <AnalyticsView baseUrl={BASE_URL} />;
+        case 'perfil':
+          return <ProfileView baseUrl={BASE_URL} user={user} onUpdateUser={saveUserSession} />;
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -233,21 +242,43 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     const sidebarView = (
       <View style={styles.sidebar}>
         {/* Profile Header */}
-        <View style={[styles.profileHeader, { justifyContent: 'space-between', alignItems: 'center' }]}>
+        <TouchableOpacity
+          style={[styles.profileHeader, { justifyContent: 'space-between', alignItems: 'center' }]}
+          onPress={() => {
+            changeTab('perfil');
+            setMobileMenuOpen(false);
+          }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-            <View style={styles.profileIconBg}>
-              <Feather name="user" size={20} color="#64748B" />
+            {user.foto_perfil ? (
+              <Image
+                source={{
+                  uri: user.foto_perfil.startsWith('http')
+                    ? user.foto_perfil
+                    : `http://localhost:8000${user.foto_perfil}`
+                }}
+                style={styles.profileAvatar}
+              />
+            ) : (
+              <View style={styles.profileIconBg}>
+                <Feather name="user" size={20} color="#64748B" />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.profileName} numberOfLines={1}>
+                {user.nombre}
+              </Text>
+              <Text style={{ color: '#94A3B8', fontSize: 11 }} numberOfLines={1}>
+                Ver / Editar Perfil
+              </Text>
             </View>
-            <Text style={styles.profileName} numberOfLines={1}>
-              {user.nombre}
-            </Text>
           </View>
           {!isDesktop && (
             <TouchableOpacity onPress={() => setMobileMenuOpen(false)} style={{ padding: 4 }}>
               <Feather name="x" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Navigation Items */}
         <View style={styles.menuList}>
@@ -666,6 +697,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profileAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    resizeMode: 'cover',
   },
   profileName: {
     color: '#FFFFFF',

@@ -64,11 +64,15 @@ class UserController extends Controller
                     'id' => $user->id_user,
                     'id_user' => $user->id_user,
                     'nombre' => $user->nombre,
+                    'apellido' => $user->apellido,
                     'name' => $user->nombre,
                     'email' => $user->email,
                     'rol' => $user->rol,
                     'role' => $user->rol,
-                    'id_centro' => $user->id_centro
+                    'id_centro' => $user->id_centro,
+                    'telefono' => $user->telefono,
+                    'direccion' => $user->direccion,
+                    'foto_perfil' => $user->foto_perfil,
                 ]
             ]);
         }
@@ -80,11 +84,15 @@ class UserController extends Controller
                 'id' => $user->id_user,
                 'id_user' => $user->id_user,
                 'nombre' => $user->nombre,
+                'apellido' => $user->apellido,
                 'name' => $user->nombre,
                 'email' => $user->email,
                 'rol' => $user->rol,
                 'role' => $user->rol,
-                'id_centro' => $user->id_centro
+                'id_centro' => $user->id_centro,
+                'telefono' => $user->telefono,
+                'direccion' => $user->direccion,
+                'foto_perfil' => $user->foto_perfil,
             ]
         ]);
     }
@@ -321,6 +329,87 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contraseña actualizada correctamente.'
+        ], 200);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+            'nombre' => 'required|string|max:255',
+            'apellido' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $request->id_user . ',id_user',
+            'telefono' => 'nullable|string|max:255',
+            'direccion' => 'nullable|string|max:255',
+            'foto_perfil_base64' => 'nullable|string',
+            'foto_perfil_clear' => 'nullable',
+        ]);
+
+        $user = User::find($request->id_user);
+        $user->nombre = $request->nombre;
+        $user->apellido = $request->apellido;
+        $user->email = $request->email;
+        $user->telefono = $request->telefono;
+        $user->direccion = $request->direccion;
+
+        if ($request->foto_perfil_clear === true || $request->foto_perfil_clear === 'true') {
+            if ($user->foto_perfil) {
+                $oldPath = public_path($user->foto_perfil);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+                $user->foto_perfil = null;
+            }
+        }
+
+        if ($request->filled('foto_perfil_base64')) {
+            $base64 = $request->foto_perfil_base64;
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
+                $data = substr($base64, strpos($base64, ',') + 1);
+                $type = strtolower($type[1]);
+
+                if (in_array($type, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
+                    $decodedData = base64_decode($data);
+                    if ($decodedData !== false) {
+                        // Delete old profile photo if it exists
+                        if ($user->foto_perfil) {
+                            $oldPath = public_path($user->foto_perfil);
+                            if (file_exists($oldPath)) {
+                                @unlink($oldPath);
+                            }
+                        }
+
+                        $filename = 'profile_' . $user->id_user . '_' . time() . '.' . $type;
+                        $dir = public_path('uploads/profiles');
+                        if (!file_exists($dir)) {
+                            mkdir($dir, 0755, true);
+                        }
+                        file_put_contents($dir . '/' . $filename, $decodedData);
+                        $user->foto_perfil = '/uploads/profiles/' . $filename;
+                    }
+                }
+            }
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente.',
+            'user' => [
+                'id' => $user->id_user,
+                'id_user' => $user->id_user,
+                'nombre' => $user->nombre,
+                'apellido' => $user->apellido,
+                'name' => $user->nombre,
+                'email' => $user->email,
+                'rol' => $user->rol,
+                'role' => $user->rol,
+                'id_centro' => $user->id_centro,
+                'telefono' => $user->telefono,
+                'direccion' => $user->direccion,
+                'foto_perfil' => $user->foto_perfil,
+            ]
         ], 200);
     }
 }
