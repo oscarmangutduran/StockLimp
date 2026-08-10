@@ -1,0 +1,41 @@
+services:
+  # Servicio Web para el Backend (Laravel con Docker)
+  - type: web
+    name: stocklimp-backend
+    env: docker
+    rootDir: back
+    dockerfilePath: Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: StockLimp
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_URL
+        value: https://stocklimp-backend.onrender.com
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 3306
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+  # Servicio Estático para el Frontend (Expo Web)
+  - type: web
+    name: stocklimp-frontend
+    env: static
+    rootDir: front
+    buildCommand: npm install && npx expo export -p web
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        value: https://stocklimp-backend.onrender.com
