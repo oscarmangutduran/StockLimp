@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite
+# Install PHP extensions (including zip required by maatwebsite/excel)
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite zip
 
 # Enable Apache mod_rewrite for Laravel
 RUN a2enmod rewrite
