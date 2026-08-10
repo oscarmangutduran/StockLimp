@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: stocklimp-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: stocklimp
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: stocklimp-back
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=stocklimp
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+
+  # Expo Frontend
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: stocklimp-front
+    restart: always
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+
+volumes:
+  dbdata:
