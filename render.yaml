@@ -1,10 +1,13 @@
 services:
-  # Servicio Web para el Backend (Laravel con Docker)
+  # Servicio Web para el Backend (Laravel - Free tier, sin Docker)
   - type: web
     name: stocklimp-backend
-    env: docker
+    env: php
+    region: frankfurt
+    plan: free
     rootDir: back
-    dockerfilePath: Dockerfile
+    buildCommand: "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache"
+    startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
     autoDeploy: true
     envVars:
       - key: APP_NAME
@@ -13,25 +16,31 @@ services:
         value: production
       - key: APP_DEBUG
         value: false
+      - key: APP_KEY
+        generateValue: true
       - key: APP_URL
         value: https://stocklimp-backend.onrender.com
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
-        sync: false
+        value: mysql-39007dc0-stocklimp.d.aivencloud.com
       - key: DB_PORT
-        value: 3306
+        value: 11323
       - key: DB_DATABASE
-        sync: false
+        value: defaultdb
       - key: DB_USERNAME
-        sync: false
+        value: avnadmin
       - key: DB_PASSWORD
         sync: false
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
 
-  # Servicio Estático para el Frontend (Expo Web)
+  # Sitio Estático para el Frontend (Expo Web - completamente GRATIS)
   - type: web
     name: stocklimp-frontend
     env: static
+    region: frankfurt
+    plan: free
     rootDir: front
     buildCommand: npm install && npx expo export -p web
     staticPublishPath: dist
