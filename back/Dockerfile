@@ -46,4 +46,9 @@ EXPOSE 80
 # Build script (to run composer install if not present)
 RUN composer install --no-dev --optimize-autoloader || true
 
-# Apache runs automatically in the background for this image
+# Copy and set executable the startup script
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+# Run migrations and start Apache on boot
+CMD ["/usr/local/bin/start.sh"]
