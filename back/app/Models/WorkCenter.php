@@ -25,4 +25,9 @@ class WorkCenter extends Model
     {
         $this->attributes['nombre_centro'] = $value;
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'centro_user', 'id_centro', 'id_user');
+    }
 }

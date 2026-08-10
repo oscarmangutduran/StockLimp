@@ -25,4 +25,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(WorkCenter::class, 'id_centro', 'id_centro');
     }
+
+    public function centros()
+    {
+        return $this->belongsToMany(WorkCenter::class, 'centro_user', 'id_user', 'id_centro');
+    }
 }
