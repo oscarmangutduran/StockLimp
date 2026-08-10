@@ -1,0 +1,285 @@
+import { BottomTabInset, MaxContentWidth, Spacing, Fonts } from '@/constants/theme';
+import { Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 24,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  viewTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    gap: 8,
+  },
+  excelBtn: {
+    backgroundColor: '#10B981',
+  },
+  newBtn: {
+    backgroundColor: '#5C8E8D',
+  },
+  btnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  searchContainer: {
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    width: 180,
+  },
+  searchInput: {
+    height: '100%',
+    fontSize: 14,
+    color: '#1E293B',
+    outlineStyle: 'none',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 300,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  tableContainer: {
+    minWidth: 920,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#5C8E8D',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  thText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  tdText: {
+    fontSize: 14,
+    color: '#334155',
+  },
+  tdView: {
+    justifyContent: 'center',
+  },
+  emptyRow: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#64748B',
+    fontSize: 16,
+  },
+  tdActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  actionIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editIcon: {
+    backgroundColor: '#F59E0B',
+  },
+  deleteIcon: {
+    backgroundColor: '#EF4444',
+  },
+  // Pagination styles
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  paginationLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  paginationLabel: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  paginationSelectWrapper: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 6,
+    height: 32,
+    width: 60,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  paginationSelect: {
+    width: '100%',
+    height: '100%',
+    borderWidth: 0,
+    paddingHorizontal: 8,
+    fontSize: 14,
+    color: '#1E293B',
+  },
+  paginationCount: {
+    fontSize: 14,
+    color: '#64748B',
+  },
+  paginationRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pageBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageBtnDisabled: {
+    backgroundColor: '#F1F5F9',
+    opacity: 0.5,
+  },
+  pageIndicator: {
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 480,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+  },
+  modalInput: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#1E293B',
+    marginBottom: 16,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    gap: 12,
+  },
+  modalBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelModalBtn: {
+    backgroundColor: '#E2E8F0',
+  },
+  cancelBtnText: {
+    color: '#475569',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  saveModalBtn: {
+    backgroundColor: '#5C8E8D',
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+});
+
