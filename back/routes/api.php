@@ -57,5 +57,6 @@ Route::get('/vacaciones/disponibles', [VacacionController::class, 'diasDisponibl
 Route::post('/vacaciones', [VacacionController::class, 'solicitar']);
 Route::get('/vacaciones/mis-vacaciones', [VacacionController::class, 'misVacaciones']);
 Route::get('/vacaciones/todas', [VacacionController::class, 'todas']);
+Route::put('/vacaciones/{id}', [VacacionController::class, 'editar']);
 Route::put('/vacaciones/{id}/estado', [VacacionController::class, 'cambiarEstado']);
-Route::put('/vacaciones/{id}/cancelar', [VacacionController::class, 'pedirCancelacion']);
+Route::put('/vacaciones/{id}/cancelar', [VacacionController::class, 'pedirCancelacion']);

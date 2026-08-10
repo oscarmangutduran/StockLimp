@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import { Feather, FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 
 // Import dashboard views
 import ProductsView from '@/components/dashboard/ProductsView';
@@ -435,7 +435,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
                 <View style={styles.socialsRow}>
                   <TouchableOpacity
                     style={styles.socialItem}
-                    onPress={() => Linking.openURL('https://instagram.com')}
+                    onPress={() => Linking.openURL('https://www.instagram.com/adarvelimpiezas/')}
                   >
                     <Feather name="instagram" size={14} color="#64748B" />
                     <Text style={styles.socialText}>INSTAGRAM</Text>
@@ -443,7 +443,15 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
                   <TouchableOpacity
                     style={styles.socialItem}
-                    onPress={() => Linking.openURL('https://linkedin.com')}
+                    onPress={() => Linking.openURL('https://www.facebook.com/profile.php?id=61578877810946&locale=es_ES')}
+                  >
+                    <Feather name="facebook" size={14} color="#64748B" />
+                    <Text style={styles.socialText}>FACEBOOK</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.socialItem}
+                    onPress={() => Linking.openURL('https://www.linkedin.com/in/adarve-limpiezas-sl-02329237a/')}
                   >
                     <Feather name="linkedin" size={14} color="#64748B" />
                     <Text style={styles.socialText}>LINKEDIN</Text>
@@ -451,18 +459,10 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
                   <TouchableOpacity
                     style={styles.socialItem}
-                    onPress={() => Linking.openURL('https://behance.net')}
+                    onPress={() => Linking.openURL('https://x.com/adarvelimpiezas')}
                   >
-                    <FontAwesome name="behance" size={14} color="#64748B" />
-                    <Text style={styles.socialText}>BEHANCE</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.socialItem}
-                    onPress={() => Linking.openURL('https://youtube.com')}
-                  >
-                    <Feather name="youtube" size={14} color="#64748B" />
-                    <Text style={styles.socialText}>YOUTUBE</Text>
+                    <FontAwesome6 name="x-twitter" size={14} color="#64748B" />
+                    <Text style={styles.socialText}>X</Text>
                   </TouchableOpacity>
                 </View>
               </View>

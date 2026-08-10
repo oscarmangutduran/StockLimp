@@ -110,6 +110,46 @@ class VacacionController extends Controller
         return response()->json(['success' => true, 'vacaciones' => $vacaciones]);
     }
 
+    public function editar(Request $request, $id)
+    {
+        $request->validate([
+            'id_user' => 'required|exists:users,id_user',
+            'fecha_inicio' => 'required|date',
+            'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+            'comentarios' => 'nullable|string'
+        ]);
+
+        $vacacion = Vacacion::where('id_vacacion', $id)->where('id_user', $request->id_user)->first();
+        if (!$vacacion) {
+            return response()->json(['success' => false, 'message' => 'No encontrada o sin permisos'], 404);
+        }
+
+        if ($vacacion->estado !== 'pendiente') {
+            return response()->json(['success' => false, 'message' => 'Solo se pueden editar vacaciones en estado pendiente'], 400);
+        }
+
+        $diasGastadosTotales = $this->getDiasGastados($request->id_user);
+        $diasViejos = $this->calcularDiasLaborables($vacacion->fecha_inicio, $vacacion->fecha_fin);
+        $diasGastadosSinEsta = $diasGastadosTotales - $diasViejos;
+        
+        $diasNuevos = $this->calcularDiasLaborables($request->fecha_inicio, $request->fecha_fin);
+        
+        if ($diasGastadosSinEsta + $diasNuevos > 22) {
+            $disponibles = max(0, 22 - $diasGastadosSinEsta);
+            return response()->json([
+                'success' => false, 
+                'message' => "No puedes solicitar {$diasNuevos} días. Solo te quedan {$disponibles} días laborables disponibles este año."
+            ], 400);
+        }
+
+        $vacacion->fecha_inicio = $request->fecha_inicio;
+        $vacacion->fecha_fin = $request->fecha_fin;
+        $vacacion->comentarios = $request->comentarios;
+        $vacacion->save();
+
+        return response()->json(['success' => true, 'vacacion' => $vacacion]);
+    }
+
     public function pedirCancelacion(Request $request, $id)
     {
         $request->validate([

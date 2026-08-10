@@ -37,6 +37,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [fechaInicio, setFechaInicio] = useState(new Date());
   const [fechaFin, setFechaFin] = useState(new Date());
   const [vacationComments, setVacationComments] = useState('');
+  const [editingVacationId, setEditingVacationId] = useState<number | null>(null);
   const [showPicker, setShowPicker] = useState<'inicio' | 'fin' | null>(null);
   const [diasDisponibles, setDiasDisponibles] = useState<number | null>(null);
 
@@ -220,11 +221,16 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
-  const requestVacation = async () => {
+  const submitVacation = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${baseUrl}/vacaciones`, {
-        method: 'POST',
+      const url = editingVacationId 
+        ? `${baseUrl}/vacaciones/${editingVacationId}`
+        : `${baseUrl}/vacaciones`;
+      const method = editingVacationId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_user: userId,
@@ -237,15 +243,26 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       if (data.success) {
         setVacationModalVisible(false);
         setVacationComments('');
+        setEditingVacationId(null);
         fetchData();
       } else {
-        showAlert(data.message || 'Error al solicitar');
+        showAlert(data.message || 'Error al procesar solicitud');
       }
     } catch (e) {
-      console.log('Error pidiendo vacaciones', e);
+      console.log('Error pidiendo/editando vacaciones', e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditVacation = (vac: any) => {
+    setEditingVacationId(vac.id_vacacion);
+    const startD = new Date(vac.fecha_inicio.split(' ')[0] + "T00:00:00");
+    const endD = new Date(vac.fecha_fin.split(' ')[0] + "T00:00:00");
+    setFechaInicio(startD);
+    setFechaFin(endD);
+    setVacationComments(vac.comentarios || '');
+    setVacationModalVisible(true);
   };
 
   const cancelVacation = async (id_vacacion: number) => {
@@ -279,6 +296,19 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const formatTime = () => {
     const d = new Date();
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDateDDMMYYYY = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split(' ')[0].split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
+  const formatDatePicker = (d: Date) => {
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   };
 
   const formatElapsed = (totalSeconds: number) => {
@@ -335,7 +365,13 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
               Días laborables disponibles: <Text style={{ color: diasDisponibles > 0 ? '#10B981' : '#EF4444' }}>{diasDisponibles} de 22</Text>
             </Text>
           )}
-          <TouchableOpacity style={[styles.requestBtn, { alignSelf: 'flex-start' }]} onPress={() => setVacationModalVisible(true)}>
+          <TouchableOpacity style={[styles.requestBtn, { alignSelf: 'flex-start' }]} onPress={() => {
+            setEditingVacationId(null);
+            setFechaInicio(new Date());
+            setFechaFin(new Date());
+            setVacationComments('');
+            setVacationModalVisible(true);
+          }}>
             <Feather name="calendar" size={16} color="#fff" />
             <Text style={styles.requestBtnText}>Solicitar Vacaciones</Text>
           </TouchableOpacity>
@@ -349,7 +385,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
               <View key={vac.id_vacacion} style={styles.vacationItem}>
                 <View>
                   <Text style={styles.vacationDates}>
-                    {vac.fecha_inicio} hasta {vac.fecha_fin}
+                    {formatDateDDMMYYYY(vac.fecha_inicio)} hasta {formatDateDDMMYYYY(vac.fecha_fin)}
                   </Text>
                   {vac.comentarios ? <Text style={styles.vacationComments}>{vac.comentarios}</Text> : null}
                 </View>
@@ -370,9 +406,16 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
                     </Text>
                   </View>
                   {(vac.estado === 'pendiente' || vac.estado === 'aprobada') && (
-                    <TouchableOpacity onPress={() => cancelVacation(vac.id_vacacion)}>
-                      <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Cancelar</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      {vac.estado === 'pendiente' && (
+                        <TouchableOpacity onPress={() => handleEditVacation(vac)}>
+                          <Text style={{ fontSize: 12, color: '#3B82F6', fontWeight: '600' }}>Editar</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity onPress={() => cancelVacation(vac.id_vacacion)}>
+                        <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               </View>
@@ -421,7 +464,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       <Modal animationType="slide" transparent={true} visible={vacationModalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Solicitar Vacaciones</Text>
+            <Text style={styles.modalTitle}>{editingVacationId ? 'Editar Vacaciones' : 'Solicitar Vacaciones'}</Text>
 
             <Text style={styles.label}>Fecha Inicio</Text>
             {Platform.OS === 'web' ? (
@@ -434,7 +477,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
             ) : (
               <>
                 <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('inicio')}>
-                  <Text>{fechaInicio.toISOString().split('T')[0]}</Text>
+                  <Text>{formatDatePicker(fechaInicio)}</Text>
                 </TouchableOpacity>
                 {showPicker === 'inicio' && (
                   <DateTimePicker value={fechaInicio} mode="date" display="default" onChange={onDateChange} />
@@ -453,7 +496,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
             ) : (
               <>
                 <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('fin')}>
-                  <Text>{fechaFin.toISOString().split('T')[0]}</Text>
+                  <Text>{formatDatePicker(fechaFin)}</Text>
                 </TouchableOpacity>
                 {showPicker === 'fin' && (
                   <DateTimePicker value={fechaFin} mode="date" display="default" onChange={onDateChange} />
@@ -472,11 +515,14 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
             />
 
             <View style={styles.modalFooter}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setVacationModalVisible(false)}>
+              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => {
+                setVacationModalVisible(false);
+                setEditingVacationId(null);
+              }}>
                 <Text style={styles.cancelBtnText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#10B981' }]} onPress={requestVacation} disabled={loading}>
-                <Text style={styles.saveBtnText}>Enviar Solicitud</Text>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#10B981' }]} onPress={submitVacation} disabled={loading}>
+                <Text style={styles.saveBtnText}>{editingVacationId ? 'Guardar Cambios' : 'Enviar Solicitud'}</Text>
               </TouchableOpacity>
             </View>
           </View>

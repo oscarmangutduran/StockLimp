@@ -16,6 +16,15 @@ export default function VacationsAdminView({ baseUrl, userId }: VacationsAdminVi
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
   const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
 
+  const formatDateDDMMYYYY = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split(' ')[0].split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   const fetchVacaciones = async () => {
     setLoading(true);
     try {
@@ -83,7 +92,7 @@ export default function VacationsAdminView({ baseUrl, userId }: VacationsAdminVi
                   </View>
                   <View>
                     <Text style={styles.userName}>{vac.user ? vac.user.nombre : 'Usuario desconocido'}</Text>
-                    <Text style={styles.datesText}>Del {vac.fecha_inicio} al {vac.fecha_fin}</Text>
+                    <Text style={styles.datesText}>Del {formatDateDDMMYYYY(vac.fecha_inicio)} al {formatDateDDMMYYYY(vac.fecha_fin)}</Text>
                   </View>
                 </View>
                 {vac.comentarios ? (
