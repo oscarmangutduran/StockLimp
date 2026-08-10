@@ -24,12 +24,13 @@ import ApproveUsersView from '@/components/dashboard/ApproveUsersView';
 import ControlPanelView from '@/components/dashboard/ControlPanelView';
 import AnalyticsView from '@/components/dashboard/AnalyticsView';
 import ProfileView from '@/components/dashboard/ProfileView';
+import TimeTrackingView from '@/components/dashboard/TimeTrackingView';
 
 const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
 
 const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
 
-type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil';
+type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const { width } = useWindowDimensions();
@@ -234,6 +235,8 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           return <AnalyticsView baseUrl={BASE_URL} />;
         case 'perfil':
           return <ProfileView baseUrl={BASE_URL} user={user} onUpdateUser={saveUserSession} />;
+        case 'fichaje':
+          return <TimeTrackingView baseUrl={BASE_URL} userId={user.id_user} />;
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -327,6 +330,20 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               </Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'fichaje' && styles.menuItemActive]}
+            onPress={() => {
+              changeTab('fichaje');
+              setMobileMenuOpen(false);
+            }}
+          >
+            {activeTab === 'fichaje' && <View style={styles.activeBar} />}
+            <Feather name="clock" size={18} color={activeTab === 'fichaje' ? '#F97316' : '#94A3B8'} />
+            <Text style={[styles.menuItemText, activeTab === 'fichaje' && styles.menuItemTextActive]}>
+              Control Horario
+            </Text>
+          </TouchableOpacity>
 
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
