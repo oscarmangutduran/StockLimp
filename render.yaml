@@ -38,7 +38,6 @@ services:
   - type: web
     name: stocklimp-frontend
     env: static
-    plan: free
     rootDir: front
     buildCommand: npm install && npx expo export -p web
     staticPublishPath: dist
