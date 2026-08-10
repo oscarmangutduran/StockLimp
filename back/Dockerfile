@@ -35,6 +35,9 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
+# Create a .env from .env.example so artisan post-install scripts work during build
+RUN cp .env.example .env
+
 # Set Composer memory limit to unlimited and install dependencies
 ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
