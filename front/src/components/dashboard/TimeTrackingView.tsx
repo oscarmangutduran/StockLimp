@@ -24,6 +24,8 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [loading, setLoading] = useState(false);
   const [activo, setActivo] = useState(false);
   const [estado, setEstado] = useState<'trabajando' | 'en_pausa' | null>(null);
+  const [horaEntrada, setHoraEntrada] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   
   const [modalVisible, setModalVisible] = useState(false);
   const [comentarios, setComentarios] = useState('');
@@ -55,9 +57,12 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       if (data.success && data.activo) {
         setActivo(true);
         setEstado(data.fichaje.estado);
+        setHoraEntrada(data.fichaje.hora_entrada);
       } else {
         setActivo(false);
         setEstado(null);
+        setHoraEntrada(null);
+        setElapsedSeconds(0);
       }
 
       // Vacaciones y días disponibles
@@ -83,6 +88,44 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let interval: any;
+    if (activo && horaEntrada) {
+      // Calculate immediately so it doesn't wait 1s to show
+      const calcElapsed = () => {
+        let start = 0;
+        
+        // Custom parse to avoid NaN on different browsers/engines
+        if (horaEntrada.includes('T')) {
+          start = new Date(horaEntrada).getTime();
+        } else {
+          const parts = horaEntrada.split(' ');
+          if (parts.length === 2) {
+            const [y, m, d] = parts[0].split('-');
+            const [h, min, s] = parts[1].split(':');
+            start = new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min), Number(s)).getTime();
+          } else {
+            const safeDate = horaEntrada.replace(/-/g, '/');
+            start = new Date(safeDate).getTime();
+          }
+        }
+
+        if (isNaN(start)) {
+          start = new Date().getTime(); // fallback
+        }
+
+        const now = new Date().getTime();
+        const diff = Math.max(0, Math.floor((now - start) / 1000));
+        setElapsedSeconds(diff);
+      };
+      calcElapsed();
+      interval = setInterval(calcElapsed, 1000);
+    } else {
+      setElapsedSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [activo, horaEntrada, estado]);
+
   const handlePlay = async () => {
     setLoading(true);
     try {
@@ -95,6 +138,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       if (data.success) {
         setActivo(true);
         setEstado('trabajando');
+        setHoraEntrada(data.fichaje.hora_entrada);
       }
     } catch (e) {
       console.log('Error iniciando', e);
@@ -163,6 +207,8 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       if (data.success) {
         setActivo(false);
         setEstado(null);
+        setHoraEntrada(null);
+        setElapsedSeconds(0);
         setModalVisible(false);
         setComentarios('');
         setDocumento(null);
@@ -235,16 +281,32 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatElapsed = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.viewTitle}>CONTROL HORARIO Y VACACIONES</Text>
       
       <View style={styles.card}>
         <View style={styles.clockContainer}>
-          <Text style={styles.clockText}>{formatTime()}</Text>
-          <Text style={styles.statusText}>
-            {estado === 'trabajando' ? 'Trabajando' : estado === 'en_pausa' ? 'En pausa' : 'Fuera de turno'}
-          </Text>
+          {activo ? (
+            <>
+              <Text style={styles.clockText}>{formatElapsed(elapsedSeconds)}</Text>
+              <Text style={styles.statusText}>
+                {estado === 'trabajando' ? 'Tiempo Trabajado' : 'En pausa'}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.clockText}>{formatTime()}</Text>
+              <Text style={styles.statusText}>Fuera de turno</Text>
+            </>
+          )}
         </View>
 
         <View style={styles.controlsRow}>
