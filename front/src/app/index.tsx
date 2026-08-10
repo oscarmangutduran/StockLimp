@@ -25,12 +25,13 @@ import ControlPanelView from '@/components/dashboard/ControlPanelView';
 import AnalyticsView from '@/components/dashboard/AnalyticsView';
 import ProfileView from '@/components/dashboard/ProfileView';
 import TimeTrackingView from '@/components/dashboard/TimeTrackingView';
+import VacationsAdminView from '@/components/dashboard/VacationsAdminView';
 
 const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
 
 const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
 
-type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje';
+type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje' | 'vacaciones';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const { width } = useWindowDimensions();
@@ -237,6 +238,8 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           return <ProfileView baseUrl={BASE_URL} user={user} onUpdateUser={saveUserSession} />;
         case 'fichaje':
           return <TimeTrackingView baseUrl={BASE_URL} userId={user.id_user} />;
+        case 'vacaciones':
+          return <VacationsAdminView baseUrl={BASE_URL} userId={user.id_user} />;
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -258,7 +261,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
                 source={{
                   uri: user.foto_perfil.startsWith('http')
                     ? user.foto_perfil
-                    : `http://localhost:8000${user.foto_perfil}`
+                    : `${BASE_URL.replace('/api', '')}${user.foto_perfil}`
                 }}
                 style={styles.profileAvatar}
               />
@@ -373,6 +376,22 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               <Feather name="grid" size={18} color={activeTab === 'control' ? '#F97316' : '#94A3B8'} />
               <Text style={[styles.menuItemText, activeTab === 'control' && styles.menuItemTextActive]}>
                 Control
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
+            <TouchableOpacity
+              style={[styles.menuItem, activeTab === 'vacaciones' && styles.menuItemActive]}
+              onPress={() => {
+                changeTab('vacaciones');
+                setMobileMenuOpen(false);
+              }}
+            >
+              {activeTab === 'vacaciones' && <View style={styles.activeBar} />}
+              <Feather name="sun" size={18} color={activeTab === 'vacaciones' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, activeTab === 'vacaciones' && styles.menuItemTextActive]}>
+                Vacaciones
               </Text>
             </TouchableOpacity>
           )}

@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface PendingUser {
   id_user: number;
@@ -39,6 +40,10 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
   const [formSuccess, setFormSuccess] = useState(false);
   const [centers, setCenters] = useState<any[]>([]);
   const [formCentroId, setFormCentroId] = useState<string>('');
+
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
 
   const fetchPendingUsers = async () => {
     if (userRole !== 'super_admin') return;
@@ -91,12 +96,12 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
       if (response.ok && data.success) {
         fetchPendingUsers();
       } else {
-        alert(data.message || 'Error al aprobar el usuario.');
+        showAlert(data.message || 'Error al aprobar el usuario.');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de conexión.');
+      showAlert('Error de conexión.');
       setLoading(false);
     }
   };
@@ -114,30 +119,26 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
         if (response.ok && data.success) {
           fetchPendingUsers();
         } else {
-          alert(data.message || 'Error al rechazar el usuario.');
+          showAlert(data.message || 'Error al rechazar el usuario.');
           setLoading(false);
         }
       } catch (error) {
         console.error(error);
-        alert('Error de conexión.');
+        showAlert('Error de conexión.');
         setLoading(false);
       }
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm('¿Estás seguro de que deseas rechazar este registro de usuario?')) {
+    setAlertConfig({
+      visible: true,
+      title: 'Confirmar rechazo',
+      message: '¿Estás seguro de que deseas rechazar este usuario?',
+      showCancel: true,
+      onConfirm: () => {
+        setAlertConfig({ visible: false, message: '' });
         executeReject();
       }
-    } else {
-      Alert.alert(
-        'Confirmar rechazo',
-        '¿Estás seguro de que deseas rechazar este usuario?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Rechazar', style: 'destructive', onPress: executeReject },
-        ]
-      );
-    }
+    });
   };
 
   // Simulation fallback for testing empty states
@@ -156,7 +157,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
   // Actions for Admin form submission
   const handleRegisterUser = async () => {
     if (!formNombre || !formEmail) {
-      alert('Por favor, completa todos los campos requeridos (Nombre y Correo).');
+      showAlert('Por favor, completa todos los campos requeridos (Nombre y Correo).');
       return;
     }
 
@@ -183,7 +184,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
         setFormRol('usuario');
         setFormCentroId('');
       } else {
-        alert(data.message || 'Error al registrar el usuario.');
+        showAlert(data.message || 'Error al registrar el usuario.');
       }
     } catch (error) {
       console.log('Offline simulation registration triggered');
@@ -289,6 +290,15 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
             </TouchableOpacity>
           </View>
         </View>
+
+        <ModalAlert 
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          showCancel={alertConfig.showCancel}
+          onConfirm={alertConfig.onConfirm}
+          onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+        />
       </View>
     );
   }
@@ -370,6 +380,15 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
           </View>
         </View>
       )}
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }

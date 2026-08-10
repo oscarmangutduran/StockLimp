@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface User {
   id_user: number;
@@ -94,6 +95,11 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   const [formPassword, setFormPassword] = useState('');
   const [formCentroId, setFormCentroId] = useState<string>('');
 
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
+
   const fetchUsersAndMetrics = async () => {
     setLoading(true);
     try {
@@ -156,7 +162,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
 
   const handleSaveUser = async () => {
     if (!formNombre || !formEmail) {
-      alert('Nombre y Email son campos obligatorios.');
+      showAlert('Nombre y Email son campos obligatorios.');
       return;
     }
 
@@ -182,12 +188,12 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         fetchUsersAndMetrics();
         setModalVisible(false);
       } else {
-        alert(resData.message || 'Error al actualizar el usuario.');
+        showAlert(resData.message || 'Error al actualizar el usuario.');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de red al guardar.');
+      showAlert('Error de red al guardar.');
       setLoading(false);
     }
   };
@@ -195,7 +201,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   const handleSaveInlineChanges = async () => {
     const entries = Object.entries(userCenters);
     if (entries.length === 0) {
-      alert('No hay cambios pendientes para guardar.');
+      showAlert('No hay cambios pendientes para guardar.');
       return;
     }
 
@@ -225,15 +231,15 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
       }
 
       if (hasError) {
-        alert('Algunos cambios no se pudieron guardar.');
+        showAlert('Algunos cambios no se pudieron guardar.');
       } else {
-        alert('Cambios guardados correctamente.');
+        showAlert('Cambios guardados correctamente.');
         setUserCenters({});
       }
       fetchUsersAndMetrics();
     } catch (err) {
       console.error(err);
-      alert('Error de conexión al guardar los cambios.');
+      showAlert('Error de conexión al guardar los cambios.');
     } finally {
       setLoading(false);
     }
@@ -250,37 +256,33 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         });
         const resData = await response.json();
         if (response.ok && resData.success) {
-          alert('Se ha enviado un correo con la nueva contraseña temporal al usuario.');
+          showAlert('Se ha enviado un correo con la nueva contraseña temporal al usuario.');
         } else {
-          alert(resData.message || 'No se pudo restablecer la contraseña.');
+          showAlert(resData.message || 'No se pudo restablecer la contraseña.');
         }
       } catch (error) {
         console.error(error);
-        alert('Error de conexión.');
+        showAlert('Error de conexión.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm(`¿Deseas restablecer la contraseña de ${user.nombre}? Se le enviará una temporal por correo.`)) {
+    setAlertConfig({
+      visible: true,
+      title: 'Restablecer Contraseña',
+      message: `¿Deseas restablecer la contraseña de ${user.nombre}?`,
+      showCancel: true,
+      onConfirm: () => {
+        setAlertConfig({ visible: false, message: '' });
         executeReset();
       }
-    } else {
-      Alert.alert(
-        'Restablecer Contraseña',
-        `¿Deseas restablecer la contraseña de ${user.nombre}?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Restablecer', onPress: executeReset },
-        ]
-      );
-    }
+    });
   };
 
   const handleDeleteUser = async (user: User) => {
     if (user.id_user === currentUser?.id_user) {
-      alert('No puedes eliminarte a ti mismo del sistema.');
+      showAlert('No puedes eliminarte a ti mismo del sistema.');
       return;
     }
 
@@ -296,30 +298,26 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         if (response.ok && data.success) {
           fetchUsersAndMetrics();
         } else {
-          alert(data.message || 'No se pudo eliminar el usuario.');
+          showAlert(data.message || 'No se pudo eliminar el usuario.');
           setLoading(false);
         }
       } catch (error) {
         console.error(error);
-        alert('Error de conexión.');
+        showAlert('Error de conexión.');
         setLoading(false);
       }
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente a ${user.nombre}?`)) {
+    setAlertConfig({
+      visible: true,
+      title: 'Eliminar Usuario',
+      message: `¿Estás seguro de que deseas eliminar a ${user.nombre}?`,
+      showCancel: true,
+      onConfirm: () => {
+        setAlertConfig({ visible: false, message: '' });
         executeDelete();
       }
-    } else {
-      Alert.alert(
-        'Eliminar Usuario',
-        `¿Estás seguro de que deseas eliminar a ${user.nombre}?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: executeDelete },
-        ]
-      );
-    }
+    });
   };
 
   const getRoleStyle = (rol: string) => {
@@ -684,6 +682,15 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
           </View>
         </View>
       </Modal>
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }

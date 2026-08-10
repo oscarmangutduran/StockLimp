@@ -49,4 +49,13 @@ use App\Http\Controllers\TimeTrackingController;
 Route::post('/fichajes/actual', [TimeTrackingController::class, 'actual']);
 Route::post('/fichajes/iniciar', [TimeTrackingController::class, 'iniciar']);
 Route::post('/fichajes/pausar', [TimeTrackingController::class, 'pausar']);
-Route::post('/fichajes/finalizar', [TimeTrackingController::class, 'finalizar']);
+Route::post('/fichajes/finalizar', [TimeTrackingController::class, 'finalizar']);
+
+// Endpoints de Vacaciones
+use App\Http\Controllers\VacacionController;
+Route::get('/vacaciones/disponibles', [VacacionController::class, 'diasDisponibles']);
+Route::post('/vacaciones', [VacacionController::class, 'solicitar']);
+Route::get('/vacaciones/mis-vacaciones', [VacacionController::class, 'misVacaciones']);
+Route::get('/vacaciones/todas', [VacacionController::class, 'todas']);
+Route::put('/vacaciones/{id}/estado', [VacacionController::class, 'cambiarEstado']);
+Route::put('/vacaciones/{id}/cancelar', [VacacionController::class, 'pedirCancelacion']);

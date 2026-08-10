@@ -16,6 +16,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface Product {
   id_producto: number;
@@ -88,6 +89,11 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   const [formPrecio, setFormPrecio] = useState('');
   const [formStock, setFormStock] = useState('');
   const [formEsToxico, setFormEsToxico] = useState(false);
+  
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -156,7 +162,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
 
   const handleSave = async () => {
     if (!formNombre || !formPrecio || !formStock) {
-      alert('Por favor, completa los campos requeridos (Nombre, Precio, Stock).');
+      showAlert('Por favor, completa los campos requeridos (Nombre, Precio, Stock).');
       return;
     }
 
@@ -194,12 +200,12 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
           setSuccessMessage(null);
         }, 1500);
       } else {
-        alert(resData.message || 'Error al guardar el producto.');
+        showAlert(resData.message || 'Error al guardar el producto.');
         setLoading(false);
       }
     } catch (error) {
       console.error(error);
-      alert('Ocurrió un error al conectar con el servidor.');
+      showAlert('Ocurrió un error al conectar con el servidor.');
       setLoading(false);
     }
   };
@@ -217,38 +223,34 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
           if (data.success) {
             fetchProducts();
           } else {
-            alert(data.message || 'No se pudo eliminar el producto.');
+            showAlert(data.message || 'No se pudo eliminar el producto.');
             setLoading(false);
           }
         })
         .catch((err) => {
           console.error(err);
-          alert('Error de conexión con el servidor.');
+          showAlert('Error de conexión con el servidor.');
           setLoading(false);
         });
     };
 
-    if (Platform.OS === 'web') {
-      if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+    setAlertConfig({
+      visible: true,
+      title: 'Confirmar eliminación',
+      message: '¿Estás seguro de que deseas eliminar este producto?',
+      showCancel: true,
+      onConfirm: () => {
+        setAlertConfig({ visible: false, message: '' });
         confirmDelete();
       }
-    } else {
-      Alert.alert(
-        'Confirmar eliminación',
-        '¿Estás seguro de que deseas eliminar este producto?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: confirmDelete },
-        ]
-      );
-    }
+    });
   };
 
   const handleExportExcel = () => {
     if (Platform.OS === 'web') {
       window.open(`${baseUrl}/productos/exportar`, '_blank');
     } else {
-      alert('La descarga de Excel está disponible en la versión Web.');
+      showAlert('La descarga de Excel está disponible en la versión Web.');
     }
   };
 
@@ -651,6 +653,15 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
           </View>
         </View>
       </Modal>
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }

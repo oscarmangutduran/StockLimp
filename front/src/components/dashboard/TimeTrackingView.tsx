@@ -8,9 +8,12 @@ import {
   TextInput,
   Modal,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface TimeTrackingViewProps {
   baseUrl: string;
@@ -26,9 +29,23 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [comentarios, setComentarios] = useState('');
   const [documento, setDocumento] = useState<any>(null);
 
-  const checkStatus = async () => {
+  // Vacaciones state
+  const [vacaciones, setVacaciones] = useState<any[]>([]);
+  const [vacationModalVisible, setVacationModalVisible] = useState(false);
+  const [fechaInicio, setFechaInicio] = useState(new Date());
+  const [fechaFin, setFechaFin] = useState(new Date());
+  const [vacationComments, setVacationComments] = useState('');
+  const [showPicker, setShowPicker] = useState<'inicio' | 'fin' | null>(null);
+  const [diasDisponibles, setDiasDisponibles] = useState<number | null>(null);
+
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
+
+  const fetchData = async () => {
     setLoading(true);
     try {
+      // Estado de fichaje
       const res = await fetch(`${baseUrl}/fichajes/actual`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,15 +59,28 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         setActivo(false);
         setEstado(null);
       }
+
+      // Vacaciones y días disponibles
+      const vacRes = await fetch(`${baseUrl}/vacaciones/mis-vacaciones?id_user=${userId}`);
+      const vacData = await vacRes.json();
+      if (vacData.success) {
+        setVacaciones(vacData.vacaciones);
+      }
+      
+      const diasRes = await fetch(`${baseUrl}/vacaciones/disponibles?id_user=${userId}`);
+      const diasData = await diasRes.json();
+      if (diasData.success) {
+        setDiasDisponibles(diasData.dias_disponibles);
+      }
     } catch (e) {
-      console.log('Error fetching status', e);
+      console.log('Error fetching data', e);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    checkStatus();
+    fetchData();
   }, []);
 
   const handlePlay = async () => {
@@ -144,14 +174,71 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
+  const requestVacation = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/vacaciones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_user: userId,
+          fecha_inicio: fechaInicio.toISOString().split('T')[0],
+          fecha_fin: fechaFin.toISOString().split('T')[0],
+          comentarios: vacationComments
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setVacationModalVisible(false);
+        setVacationComments('');
+        fetchData();
+      } else {
+        showAlert(data.message || 'Error al solicitar');
+      }
+    } catch (e) {
+      console.log('Error pidiendo vacaciones', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelVacation = async (id_vacacion: number) => {
+    try {
+      const res = await fetch(`${baseUrl}/vacaciones/${id_vacacion}/cancelar`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_user: userId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchData();
+      } else {
+        showAlert(data.message || 'Error al cancelar');
+      }
+    } catch (e) {
+      console.log('Error cancelando', e);
+    }
+  };
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS !== 'web') {
+      setShowPicker(null);
+    }
+    if (selectedDate) {
+      if (showPicker === 'inicio') setFechaInicio(selectedDate);
+      if (showPicker === 'fin') setFechaFin(selectedDate);
+    }
+  };
+
   const formatTime = () => {
     const d = new Date();
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.viewTitle}>CONTROL HORARIO</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.viewTitle}>CONTROL HORARIO Y VACACIONES</Text>
+      
       <View style={styles.card}>
         <View style={styles.clockContainer}>
           <Text style={styles.clockText}>{formatTime()}</Text>
@@ -178,6 +265,61 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         </View>
       </View>
 
+      <View style={[styles.card, { marginTop: 24, padding: 24 }]}>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.cardTitle, { marginBottom: 4 }]}>Mis Vacaciones</Text>
+          {diasDisponibles !== null && (
+            <Text style={{ color: '#64748B', marginBottom: 12, fontWeight: '500' }}>
+              Días laborables disponibles: <Text style={{ color: diasDisponibles > 0 ? '#10B981' : '#EF4444' }}>{diasDisponibles} de 22</Text>
+            </Text>
+          )}
+          <TouchableOpacity style={[styles.requestBtn, { alignSelf: 'flex-start' }]} onPress={() => setVacationModalVisible(true)}>
+            <Feather name="calendar" size={16} color="#fff" />
+            <Text style={styles.requestBtnText}>Solicitar Vacaciones</Text>
+          </TouchableOpacity>
+        </View>
+
+        {vacaciones.length === 0 ? (
+          <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>No tienes solicitudes de vacaciones.</Text>
+        ) : (
+          <View style={{ width: '100%' }}>
+            {vacaciones.map((vac) => (
+              <View key={vac.id_vacacion} style={styles.vacationItem}>
+                <View>
+                  <Text style={styles.vacationDates}>
+                    {vac.fecha_inicio} hasta {vac.fecha_fin}
+                  </Text>
+                  {vac.comentarios ? <Text style={styles.vacationComments}>{vac.comentarios}</Text> : null}
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                  <View style={[
+                    styles.statusBadge,
+                    vac.estado === 'aprobada' ? styles.statusApproved : 
+                    vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.statusRejected : 
+                    vac.estado === 'solicita_cancelacion' ? { backgroundColor: '#E0E7FF' } : styles.statusPending
+                  ]}>
+                    <Text style={[
+                      styles.statusBadgeText,
+                      vac.estado === 'aprobada' ? styles.statusApprovedText : 
+                      vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.statusRejectedText : 
+                      vac.estado === 'solicita_cancelacion' ? { color: '#4338CA' } : styles.statusPendingText
+                    ]}>
+                      {vac.estado === 'solicita_cancelacion' ? 'PIDIENDO CANCELAR' : vac.estado.toUpperCase()}
+                    </Text>
+                  </View>
+                  {(vac.estado === 'pendiente' || vac.estado === 'aprobada') && (
+                    <TouchableOpacity onPress={() => cancelVacation(vac.id_vacacion)}>
+                      <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Cancelar</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Modal Fichaje */}
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -212,139 +354,127 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
           </View>
         </View>
       </Modal>
-    </View>
+
+      {/* Modal Vacaciones */}
+      <Modal animationType="slide" transparent={true} visible={vacationModalVisible}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Solicitar Vacaciones</Text>
+
+            <Text style={styles.label}>Fecha Inicio</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}
+                value={fechaInicio.toISOString().split('T')[0]}
+                onChange={(e) => setFechaInicio(new Date(e.target.value))}
+              />
+            ) : (
+              <>
+                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('inicio')}>
+                  <Text>{fechaInicio.toISOString().split('T')[0]}</Text>
+                </TouchableOpacity>
+                {showPicker === 'inicio' && (
+                  <DateTimePicker value={fechaInicio} mode="date" display="default" onChange={onDateChange} />
+                )}
+              </>
+            )}
+
+            <Text style={styles.label}>Fecha Fin</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}
+                value={fechaFin.toISOString().split('T')[0]}
+                onChange={(e) => setFechaFin(new Date(e.target.value))}
+              />
+            ) : (
+              <>
+                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('fin')}>
+                  <Text>{fechaFin.toISOString().split('T')[0]}</Text>
+                </TouchableOpacity>
+                {showPicker === 'fin' && (
+                  <DateTimePicker value={fechaFin} mode="date" display="default" onChange={onDateChange} />
+                )}
+              </>
+            )}
+
+            <Text style={styles.label}>Comentarios</Text>
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={3}
+              value={vacationComments}
+              onChangeText={setVacationComments}
+              placeholder="Ej: Viaje familiar..."
+            />
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setVacationModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: '#10B981' }]} onPress={requestVacation} disabled={loading}>
+                <Text style={styles.saveBtnText}>Enviar Solicitud</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-  },
-  viewTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  clockContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  clockText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#1E293B',
-  },
-  statusText: {
-    fontSize: 18,
-    color: '#64748B',
-    marginTop: 8,
-  },
-  controlsRow: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  controlBtn: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  playBtn: {
-    backgroundColor: '#10B981',
-  },
-  pauseBtn: {
-    backgroundColor: '#F59E0B',
-  },
-  stopBtn: {
-    backgroundColor: '#EF4444',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 12,
-    padding: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    color: '#475569',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 8,
-    padding: 12,
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  uploadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    gap: 12,
-  },
-  uploadBtnText: {
-    color: '#64748B',
-    flex: 1,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 24,
-  },
-  modalBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  cancelBtn: {
-    backgroundColor: '#F1F5F9',
-  },
-  cancelBtnText: {
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  saveBtn: {
-    backgroundColor: '#EF4444',
-  },
-  saveBtnText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  container: { flex: 1, padding: 24 },
+  viewTitle: { fontSize: 24, fontWeight: '700', color: '#334155', marginBottom: 24 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 32, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  cardTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
+  clockContainer: { alignItems: 'center', marginBottom: 40 },
+  clockText: { fontSize: 48, fontWeight: 'bold', color: '#1E293B' },
+  statusText: { fontSize: 18, color: '#64748B', marginTop: 8 },
+  controlsRow: { flexDirection: 'row', gap: 24 },
+  controlBtn: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
+  playBtn: { backgroundColor: '#10B981' },
+  pauseBtn: { backgroundColor: '#F59E0B' },
+  stopBtn: { backgroundColor: '#EF4444' },
+  
+  requestBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#3B82F6', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, gap: 8 },
+  requestBtnText: { color: '#fff', fontWeight: '600' },
+  
+  vacationItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  vacationDates: { fontSize: 14, fontWeight: '600', color: '#334155' },
+  vacationComments: { fontSize: 13, color: '#64748B', marginTop: 2 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  statusPending: { backgroundColor: '#FEF3C7' },
+  statusApproved: { backgroundColor: '#D1FAE5' },
+  statusRejected: { backgroundColor: '#FEE2E2' },
+  statusBadgeText: { fontSize: 11, fontWeight: '700' },
+  statusPendingText: { color: '#D97706' },
+  statusApprovedText: { color: '#059669' },
+  statusRejectedText: { color: '#DC2626' },
+
+  dateBtn: { padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16, backgroundColor: '#F8FAFC' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', width: '100%', maxWidth: 400, borderRadius: 12, padding: 24 },
+  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  label: { fontSize: 14, color: '#475569', marginBottom: 8, marginTop: 16 },
+  textArea: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, height: 100, textAlignVertical: 'top' },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: '#E2E8F0', borderStyle: 'dashed', borderRadius: 8, gap: 12 },
+  uploadBtnText: { color: '#64748B', flex: 1 },
+  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 24 },
+  modalBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
+  cancelBtn: { backgroundColor: '#F1F5F9' },
+  cancelBtnText: { color: '#64748B', fontWeight: '600' },
+  saveBtn: { backgroundColor: '#EF4444' },
+  saveBtnText: { color: '#fff', fontWeight: '600' },
 });

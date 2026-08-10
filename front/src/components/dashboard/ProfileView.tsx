@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface UserData {
   id_user: number;
@@ -45,13 +46,17 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
 
   const fileInputRef = useRef<any>(null);
 
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
+
   const handleChooseImage = () => {
     if (Platform.OS === 'web') {
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
     } else {
-      alert('La selección de fotos está disponible en la versión Web.');
+      showAlert('La selección de fotos está disponible en la versión Web.');
     }
   };
 
@@ -60,7 +65,7 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
     if (files && files[0]) {
       const file = files[0];
       if (file.size > 5 * 1024 * 1024) {
-        alert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
+        showAlert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
         return;
       }
 
@@ -149,7 +154,7 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
     }
     if (fotoPerfil) {
       return {
-        uri: fotoPerfil.startsWith('http') ? fotoPerfil : `http://localhost:8000${fotoPerfil}`,
+        uri: fotoPerfil.startsWith('http') ? fotoPerfil : `${baseUrl.replace('/api', '')}${fotoPerfil}`,
       };
     }
     return null;
@@ -309,6 +314,15 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
           </View>
         </View>
       </View>
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
+import ModalAlert from '@/components/common/ModalAlert';
 
 interface Product {
   id_producto: number;
@@ -100,6 +101,10 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
   const [totalUnits, setTotalUnits] = useState<number>(0);
   const [monthlyTrendValues, setMonthlyTrendValues] = useState<number[]>(new Array(12).fill(0));
   const [isUsingMocks, setIsUsingMocks] = useState(false);
+
+  // Custom Alert state
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
+  const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
 
   const fetchData = async () => {
     setLoading(true);
@@ -253,13 +258,13 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
 
   const handleDownloadPDF = () => {
     if (Platform.OS !== 'web') {
-      alert('La exportación en PDF está disponible en la versión Web.');
+      showAlert('La exportación en PDF está disponible en la versión Web.');
       return;
     }
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Por favor, permite las ventanas emergentes (pop-ups) para descargar el PDF.');
+      showAlert('Por favor, permite las ventanas emergentes (pop-ups) para descargar el PDF.');
       return;
     }
 
@@ -767,6 +772,15 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
 
         </View>
       )}
+
+      <ModalAlert 
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </View>
   );
 }
