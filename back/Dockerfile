@@ -35,8 +35,9 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Install dependencies FIRST (before setting permissions)
-RUN composer install --no-dev --optimize-autoloader
+# Set Composer memory limit to unlimited and install dependencies
+ENV COMPOSER_MEMORY_LIMIT=-1
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Now set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
