@@ -43,12 +43,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Copy and set executable the startup script
-COPY start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
 # Expose port 80 (Apache default)
 EXPOSE 80
 
 # Run migrations and start Apache on boot
-CMD ["/usr/local/bin/start.sh"]
+CMD bash -c "php artisan migrate --force && php artisan config:cache && php artisan route:cache && apache2-foreground"
