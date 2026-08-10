@@ -10,10 +10,68 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+import Svg, { Circle } from 'react-native-svg';
+
+LocaleConfig.locales['es'] = {
+  monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+  monthNamesShort: ['Ene.', 'Feb.', 'Mar.', 'Abr.', 'May.', 'Jun.', 'Jul.', 'Ago.', 'Sept.', 'Oct.', 'Nov.', 'Dic.'],
+  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+};
+LocaleConfig.defaultLocale = 'es';
 import ModalAlert from '@/components/common/ModalAlert';
+
+const CircularProgress = ({ label, current, total }: { label: string, current: number, total: number }) => {
+  const radius = 35;
+  const strokeWidth = 8;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total > 0 ? Math.min(current / total, 1) : 0;
+  const strokeDashoffset = circumference - progress * circumference;
+
+  const h = Math.floor(current / 3600).toString().padStart(2, '0');
+  const m = Math.floor((current % 3600) / 60).toString().padStart(2, '0');
+
+  const totalH = Math.floor(total / 3600).toString().padStart(2, '0');
+  const totalM = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
+
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Text style={{ fontSize: 13, color: '#5C8E8D', marginBottom: 12, fontWeight: '600' }}>{label}</Text>
+      <View style={{ position: 'relative', width: (radius + strokeWidth) * 2, height: (radius + strokeWidth) * 2, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={(radius + strokeWidth) * 2} height={(radius + strokeWidth) * 2} style={{ position: 'absolute' }}>
+          <Circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            stroke="#D4E4E4"
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          <Circle
+            cx={radius + strokeWidth}
+            cy={radius + strokeWidth}
+            r={radius}
+            stroke="#5C8E8D"
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            rotation="-90"
+            origin={`${radius + strokeWidth}, ${radius + strokeWidth}`}
+          />
+        </Svg>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#1E293B' }}>{h}:{m}</Text>
+          <Text style={{ fontSize: 10, color: '#94A3B8' }}>{totalH}:{totalM}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
 
 interface TimeTrackingViewProps {
   baseUrl: string;
@@ -38,7 +96,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [fechaFin, setFechaFin] = useState(new Date());
   const [vacationComments, setVacationComments] = useState('');
   const [editingVacationId, setEditingVacationId] = useState<number | null>(null);
-  const [showPicker, setShowPicker] = useState<'inicio' | 'fin' | null>(null);
+  const [selectionStep, setSelectionStep] = useState<'start' | 'end' | 'complete'>('complete');
   const [diasDisponibles, setDiasDisponibles] = useState<number | null>(null);
 
   // Custom Alert state
@@ -234,8 +292,8 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_user: userId,
-          fecha_inicio: fechaInicio.toISOString().split('T')[0],
-          fecha_fin: fechaFin.toISOString().split('T')[0],
+          fecha_inicio: formatDateYYYYMMDD(fechaInicio),
+          fecha_fin: formatDateYYYYMMDD(fechaFin),
           comentarios: vacationComments
         }),
       });
@@ -261,6 +319,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     const endD = new Date(vac.fecha_fin.split(' ')[0] + "T00:00:00");
     setFechaInicio(startD);
     setFechaFin(endD);
+    setSelectionStep('complete');
     setVacationComments(vac.comentarios || '');
     setVacationModalVisible(true);
   };
@@ -283,19 +342,13 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS !== 'web') {
-      setShowPicker(null);
-    }
-    if (selectedDate) {
-      if (showPicker === 'inicio') setFechaInicio(selectedDate);
-      if (showPicker === 'fin') setFechaFin(selectedDate);
-    }
-  };
-
   const formatTime = () => {
     const d = new Date();
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDateYYYYMMDD = (d: Date) => {
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
   };
 
   const formatDateDDMMYYYY = (dateStr: string) => {
@@ -311,112 +364,198 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
   };
 
-  const formatElapsed = (totalSeconds: number) => {
-    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-    const s = (totalSeconds % 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
+  const handleDayPress = (day: any) => {
+    const selectedDate = new Date(day.dateString + "T00:00:00");
+    if (selectionStep === 'complete' || selectionStep === 'end') {
+      setFechaInicio(selectedDate);
+      setFechaFin(selectedDate);
+      setSelectionStep('start');
+    } else if (selectionStep === 'start') {
+      if (selectedDate < fechaInicio) {
+        setFechaInicio(selectedDate);
+        setFechaFin(selectedDate);
+      } else {
+        setFechaFin(selectedDate);
+        setSelectionStep('complete');
+      }
+    }
+  };
+
+  const generateMarkedDates = () => {
+    let marked: any = {};
+    
+    const markPeriod = (startStr: string, endStr: string, color: string) => {
+      const start = new Date(startStr.split(' ')[0] + "T00:00:00");
+      const end = new Date(endStr.split(' ')[0] + "T00:00:00");
+      
+      let current = new Date(start);
+      while (current <= end) {
+        const dateString = formatDateYYYYMMDD(current);
+        marked[dateString] = {
+          color: color,
+          textColor: 'white',
+          startingDay: current.getTime() === start.getTime(),
+          endingDay: current.getTime() === end.getTime(),
+        };
+        current.setDate(current.getDate() + 1);
+      }
+    };
+
+    vacaciones.forEach((vac: any) => {
+      if (vac.id_vacacion === editingVacationId) return;
+      if (vac.estado === 'aprobada') {
+        markPeriod(vac.fecha_inicio, vac.fecha_fin, '#10B981');
+      } else if (vac.estado === 'pendiente') {
+        markPeriod(vac.fecha_inicio, vac.fecha_fin, '#F59E0B');
+      }
+    });
+
+    if (fechaInicio) {
+       const start = new Date(fechaInicio);
+       const end = new Date(fechaFin || fechaInicio);
+       
+       let current = new Date(start);
+       while (current <= end) {
+         const dateString = formatDateYYYYMMDD(current);
+         marked[dateString] = {
+           color: '#3B82F6',
+           textColor: 'white',
+           startingDay: current.getTime() === start.getTime(),
+           endingDay: current.getTime() === end.getTime(),
+         };
+         current.setDate(current.getDate() + 1);
+       }
+    }
+    return marked;
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.viewTitle}>CONTROL HORARIO Y VACACIONES</Text>
-      
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* RINGS CARD */}
       <View style={styles.card}>
-        <View style={styles.clockContainer}>
-          {activo ? (
-            <>
-              <Text style={styles.clockText}>{formatElapsed(elapsedSeconds)}</Text>
-              <Text style={styles.statusText}>
-                {estado === 'trabajando' ? 'Tiempo Trabajado' : 'En pausa'}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.clockText}>{formatTime()}</Text>
-              <Text style={styles.statusText}>Fuera de turno</Text>
-            </>
-          )}
-        </View>
-
-        <View style={styles.controlsRow}>
-          {!activo ? (
-            <TouchableOpacity style={[styles.controlBtn, styles.playBtn]} onPress={handlePlay} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Feather name="play" size={32} color="#fff" />}
-            </TouchableOpacity>
-          ) : (
-            <>
-              <TouchableOpacity style={[styles.controlBtn, estado === 'en_pausa' ? styles.playBtn : styles.pauseBtn]} onPress={handlePause} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Feather name={estado === 'en_pausa' ? 'play' : 'pause'} size={32} color="#fff" />}
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.controlBtn, styles.stopBtn]} onPress={() => setModalVisible(true)} disabled={loading}>
-                <Feather name="square" size={32} color="#fff" />
-              </TouchableOpacity>
-            </>
-          )}
+        <View style={styles.ringsRow}>
+          <CircularProgress label="Hoy" current={elapsedSeconds} total={8 * 3600} />
+          <CircularProgress label="Semana" current={14 * 3600 + 59 * 60} total={40 * 3600} />
+          <CircularProgress label="Mes" current={14 * 3600 + 59 * 60} total={160 * 3600} />
         </View>
       </View>
 
-      <View style={[styles.card, { marginTop: 24, padding: 24 }]}>
-        <View style={{ marginBottom: 20 }}>
-          <Text style={[styles.cardTitle, { marginBottom: 4 }]}>Mis Vacaciones</Text>
-          {diasDisponibles !== null && (
-            <Text style={{ color: '#64748B', marginBottom: 12, fontWeight: '500' }}>
-              Días laborables disponibles: <Text style={{ color: diasDisponibles > 0 ? '#10B981' : '#EF4444' }}>{diasDisponibles} de 22</Text>
-            </Text>
-          )}
-          <TouchableOpacity style={[styles.requestBtn, { alignSelf: 'flex-start' }]} onPress={() => {
+      {/* CUENTA DE HORAS CARD */}
+      <View style={[styles.card, { marginTop: 16 }]}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.cardTitle}>Cuenta de horas</Text>
+          <TouchableOpacity>
+            <Text style={styles.cardLinkText}>Ver detalles</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statColumn}>
+            <Text style={styles.statLabel}>Periodo pasado</Text>
+            <Text style={[styles.statValue, { color: '#10B981' }]}>05:30</Text>
+            <Text style={styles.statSub}>1/24/23</Text>
+          </View>
+          <View style={styles.statColumn}>
+            <Text style={styles.statLabel}>Actual</Text>
+            <Text style={[styles.statValue, { color: '#EF4444' }]}>-00:25</Text>
+            <Text style={styles.statSub}>Desde 1/25/23</Text>
+          </View>
+          <View style={styles.statColumn}>
+            <Text style={styles.statLabel}>Total</Text>
+            <Text style={[styles.statValue, { color: '#10B981' }]}>05:05</Text>
+          </View>
+        </View>
+        
+        <TouchableOpacity 
+          style={[styles.previewBtn, activo ? styles.previewBtnActive : {}]} 
+          onPress={activo ? () => setModalVisible(true) : handlePlay} 
+          disabled={loading}
+        >
+          {loading ? <ActivityIndicator color="#fff" /> : 
+            <Text style={styles.previewBtnText}>{activo ? 'Detener Turno' : 'Comenzar (Fichar)'}</Text>
+          }
+        </TouchableOpacity>
+      </View>
+
+      {/* CUENTA DE VACACIONES CARD */}
+      <View style={[styles.card, { marginTop: 16 }]}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.cardTitle}>Cuenta de vacaciones</Text>
+          <Text style={styles.cardDateRange}>1/1/24 - 31/12/24 &gt;</Text>
+        </View>
+        
+        <View style={styles.statsRow}>
+           <View style={styles.statColumn}>
+             <Text style={styles.statLabel}>Consumido</Text>
+             <Text style={[styles.statValue, { color: '#1E293B' }]}>
+               {vacaciones.filter(v => v.estado === 'aprobada').length * 2} días
+             </Text>
+           </View>
+           <View style={styles.statColumn}>
+             <Text style={styles.statLabel}>Planeado</Text>
+             <Text style={[styles.statValue, { color: '#1E293B' }]}>
+               {vacaciones.filter(v => v.estado === 'pendiente').length * 2} días
+             </Text>
+           </View>
+           <View style={styles.statColumn}>
+             <Text style={styles.statLabel}>Restantes</Text>
+             <Text style={[styles.statValue, { color: '#10B981' }]}>{diasDisponibles ?? 22} días</Text>
+           </View>
+        </View>
+      </View>
+
+      {/* SOLICITUDES Y AUSENCIAS */}
+      <View style={[styles.card, { marginTop: 16, marginBottom: 40 }]}>
+        <View style={[styles.cardHeaderRow, { marginBottom: 16 }]}>
+          <Text style={styles.cardTitle}>Solicitudes y ausencias</Text>
+          <TouchableOpacity onPress={() => {
             setEditingVacationId(null);
             setFechaInicio(new Date());
             setFechaFin(new Date());
+            setSelectionStep('complete');
             setVacationComments('');
             setVacationModalVisible(true);
           }}>
-            <Feather name="calendar" size={16} color="#fff" />
-            <Text style={styles.requestBtnText}>Solicitar Vacaciones</Text>
+            <Feather name="plus" size={24} color="#3B82F6" />
           </TouchableOpacity>
         </View>
 
         {vacaciones.length === 0 ? (
-          <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>No tienes solicitudes de vacaciones.</Text>
+          <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>No tienes solicitudes.</Text>
         ) : (
           <View style={{ width: '100%' }}>
             {vacaciones.map((vac) => (
-              <View key={vac.id_vacacion} style={styles.vacationItem}>
+              <View key={vac.id_vacacion} style={styles.timrVacationItem}>
                 <View>
-                  <Text style={styles.vacationDates}>
-                    {formatDateDDMMYYYY(vac.fecha_inicio)} hasta {formatDateDDMMYYYY(vac.fecha_fin)}
+                  <Text style={styles.timrVacationTitle}>Vacaciones</Text>
+                  <Text style={styles.timrVacationDates}>
+                    {formatDateDDMMYYYY(vac.fecha_inicio)} - {formatDateDDMMYYYY(vac.fecha_fin)}
                   </Text>
-                  {vac.comentarios ? <Text style={styles.vacationComments}>{vac.comentarios}</Text> : null}
-                </View>
-                <View style={{ alignItems: 'flex-end', gap: 8 }}>
-                  <View style={[
-                    styles.statusBadge,
-                    vac.estado === 'aprobada' ? styles.statusApproved : 
-                    vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.statusRejected : 
-                    vac.estado === 'solicita_cancelacion' ? { backgroundColor: '#E0E7FF' } : styles.statusPending
-                  ]}>
-                    <Text style={[
-                      styles.statusBadgeText,
-                      vac.estado === 'aprobada' ? styles.statusApprovedText : 
-                      vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.statusRejectedText : 
-                      vac.estado === 'solicita_cancelacion' ? { color: '#4338CA' } : styles.statusPendingText
-                    ]}>
-                      {vac.estado === 'solicita_cancelacion' ? 'PIDIENDO CANCELAR' : vac.estado.toUpperCase()}
-                    </Text>
-                  </View>
-                  {(vac.estado === 'pendiente' || vac.estado === 'aprobada') && (
-                    <View style={{ flexDirection: 'row', gap: 12 }}>
-                      {vac.estado === 'pendiente' && (
-                        <TouchableOpacity onPress={() => handleEditVacation(vac)}>
-                          <Text style={{ fontSize: 12, color: '#3B82F6', fontWeight: '600' }}>Editar</Text>
-                        </TouchableOpacity>
-                      )}
-                      <TouchableOpacity onPress={() => cancelVacation(vac.id_vacacion)}>
-                        <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </View>
+                  {vac.estado === 'pendiente' && (
+                    <TouchableOpacity onPress={() => handleEditVacation(vac)} style={{ marginTop: 4 }}>
+                      <Text style={{ fontSize: 12, color: '#3B82F6', fontWeight: '600' }}>Editar</Text>
+                    </TouchableOpacity>
                   )}
+                  {vac.estado === 'aprobada' && (
+                    <TouchableOpacity onPress={() => cancelVacation(vac.id_vacacion)} style={{ marginTop: 4 }}>
+                      <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Solicitar Cancelación</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View style={[
+                    styles.timrBadge,
+                    vac.estado === 'aprobada' ? styles.timrBadgeApproved : 
+                    vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.timrBadgeRejected : 
+                    styles.timrBadgePending
+                  ]}>
+                  <Text style={[
+                      styles.timrBadgeText,
+                      vac.estado === 'aprobada' ? styles.timrBadgeApprovedText : 
+                      vac.estado === 'rechazada' || vac.estado === 'cancelada' ? styles.timrBadgeRejectedText : 
+                      styles.timrBadgePendingText
+                    ]}>
+                      {vac.estado === 'solicita_cancelacion' ? 'Cancelando' : vac.estado.charAt(0).toUpperCase() + vac.estado.slice(1)}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -463,48 +602,60 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       {/* Modal Vacaciones */}
       <Modal animationType="slide" transparent={true} visible={vacationModalVisible}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { width: Platform.OS === 'web' ? 500 : '95%' }]}>
             <Text style={styles.modalTitle}>{editingVacationId ? 'Editar Vacaciones' : 'Solicitar Vacaciones'}</Text>
 
-            <Text style={styles.label}>Fecha Inicio</Text>
-            {Platform.OS === 'web' ? (
-              <input
-                type="date"
-                style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}
-                value={fechaInicio.toISOString().split('T')[0]}
-                onChange={(e) => setFechaInicio(new Date(e.target.value))}
-              />
-            ) : (
-              <>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('inicio')}>
-                  <Text>{formatDatePicker(fechaInicio)}</Text>
-                </TouchableOpacity>
-                {showPicker === 'inicio' && (
-                  <DateTimePicker value={fechaInicio} mode="date" display="default" onChange={onDateChange} />
-                )}
-              </>
-            )}
+            <View style={{ marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Text style={styles.label}>Selecciona los días en el calendario</Text>
+                <Text style={{ fontSize: 12, color: '#64748B' }}>
+                  {selectionStep === 'start' ? 'Selecciona fin' : ''}
+                </Text>
+              </View>
+              
+              <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                <Calendar
+                  markingType={'period'}
+                  markedDates={generateMarkedDates()}
+                  onDayPress={handleDayPress}
+                  firstDay={1}
+                  theme={{
+                    todayTextColor: '#3B82F6',
+                    arrowColor: '#3B82F6',
+                    textMonthFontWeight: 'bold',
+                    textDayFontSize: 14,
+                    textMonthFontSize: 16,
+                  }}
+                />
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 12, height: 12, backgroundColor: '#10B981', borderRadius: 2 }} />
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Aprobadas</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 12, height: 12, backgroundColor: '#F59E0B', borderRadius: 2 }} />
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Pendientes</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 12, height: 12, backgroundColor: '#3B82F6', borderRadius: 2 }} />
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Selección</Text>
+                </View>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Fecha Fin</Text>
-            {Platform.OS === 'web' ? (
-              <input
-                type="date"
-                style={{ padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16 }}
-                value={fechaFin.toISOString().split('T')[0]}
-                onChange={(e) => setFechaFin(new Date(e.target.value))}
-              />
-            ) : (
-              <>
-                <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker('fin')}>
-                  <Text>{formatDatePicker(fechaFin)}</Text>
-                </TouchableOpacity>
-                {showPicker === 'fin' && (
-                  <DateTimePicker value={fechaFin} mode="date" display="default" onChange={onDateChange} />
-                )}
-              </>
-            )}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+              <View>
+                <Text style={styles.label}>Inicio</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaInicio)}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.label}>Fin</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaFin)}</Text>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Comentarios</Text>
+            <Text style={styles.label}>Comentarios (Opcional)</Text>
             <TextInput
               style={styles.textArea}
               multiline
@@ -542,36 +693,53 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  viewTitle: { fontSize: 24, fontWeight: '700', color: '#334155', marginBottom: 24 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 32, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  container: { flex: 1, backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingTop: 16 },
+  
+  // Tabs Header
+  tabsContainer: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginBottom: 8 },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: '#5C8E8D', paddingBottom: 8 },
+  tabActiveText: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
+  tabInactive: { paddingBottom: 8 },
+  tabInactiveText: { fontSize: 15, fontWeight: '500', color: '#64748B' },
+
+  // Cards
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 20, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
   cardTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
-  clockContainer: { alignItems: 'center', marginBottom: 40 },
-  clockText: { fontSize: 48, fontWeight: 'bold', color: '#1E293B' },
-  statusText: { fontSize: 18, color: '#64748B', marginTop: 8 },
-  controlsRow: { flexDirection: 'row', gap: 24 },
-  controlBtn: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
-  playBtn: { backgroundColor: '#10B981' },
-  pauseBtn: { backgroundColor: '#F59E0B' },
-  stopBtn: { backgroundColor: '#EF4444' },
-  
-  requestBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#3B82F6', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, gap: 8 },
-  requestBtnText: { color: '#fff', fontWeight: '600' },
-  
-  vacationItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  vacationDates: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  vacationComments: { fontSize: 13, color: '#64748B', marginTop: 2 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  statusPending: { backgroundColor: '#FEF3C7' },
-  statusApproved: { backgroundColor: '#D1FAE5' },
-  statusRejected: { backgroundColor: '#FEE2E2' },
-  statusBadgeText: { fontSize: 11, fontWeight: '700' },
-  statusPendingText: { color: '#D97706' },
-  statusApprovedText: { color: '#059669' },
-  statusRejectedText: { color: '#DC2626' },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  cardLinkText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
+  cardDateRange: { color: '#94A3B8', fontSize: 13, fontWeight: '500' },
 
-  dateBtn: { padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 16, backgroundColor: '#F8FAFC' },
+  // Rings
+  ringsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8 },
 
+  // Stats
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  statColumn: { alignItems: 'center', flex: 1 },
+  statLabel: { fontSize: 12, color: '#64748B', fontWeight: '600', marginBottom: 4 },
+  statValue: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  statSub: { fontSize: 11, color: '#94A3B8' },
+
+  // Buttons
+  previewBtn: { backgroundColor: '#EAF1F1', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  previewBtnActive: { backgroundColor: '#FEF2F2' },
+  previewBtnText: { color: '#5C8E8D', fontWeight: '700', fontSize: 15 },
+  
+  // Vacations List
+  timrVacationItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  timrVacationTitle: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
+  timrVacationDates: { fontSize: 13, color: '#64748B', marginTop: 4 },
+  
+  timrBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1 },
+  timrBadgePending: { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' },
+  timrBadgeApproved: { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
+  timrBadgeRejected: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
+  
+  timrBadgeText: { fontSize: 12, fontWeight: '600' },
+  timrBadgePendingText: { color: '#D97706' },
+  timrBadgeApprovedText: { color: '#16A34A' },
+  timrBadgeRejectedText: { color: '#DC2626' },
+
+  // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalContent: { backgroundColor: '#fff', width: '100%', maxWidth: 400, borderRadius: 12, padding: 24 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
