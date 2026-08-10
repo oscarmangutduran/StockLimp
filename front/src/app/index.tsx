@@ -30,7 +30,9 @@ import { styles } from '../css/index.styles';
 
 const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
 
-const BASE_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
+const PROD_URL = 'https://stocklimp-backend.onrender.com/api';
+const DEV_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
+const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 
 type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje' | 'vacaciones';
 
