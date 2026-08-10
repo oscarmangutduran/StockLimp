@@ -32,23 +32,23 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy existing application directory contents
+# Copy application files
 COPY . /var/www/html
 
-# Ensure correct permissions for Laravel
+# Install dependencies FIRST (before setting permissions)
+RUN composer install --no-dev --optimize-autoloader
+
+# Now set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Expose port 80 (Apache default)
-EXPOSE 80
-
-# Build script (to run composer install if not present)
-RUN composer install --no-dev --optimize-autoloader || true
-
 # Copy and set executable the startup script
 COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
+
+# Expose port 80 (Apache default)
+EXPOSE 80
 
 # Run migrations and start Apache on boot
 CMD ["/usr/local/bin/start.sh"]
