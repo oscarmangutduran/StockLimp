@@ -1,13 +1,12 @@
 services:
-  # Servicio Web para el Backend (Laravel - Free tier, sin Docker)
+  # Servicio Web para el Backend (Laravel con Docker)
   - type: web
     name: stocklimp-backend
-    env: php
+    env: docker
     region: frankfurt
     plan: free
     rootDir: back
-    buildCommand: "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache"
-    startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
+    dockerfilePath: Dockerfile
     autoDeploy: true
     envVars:
       - key: APP_NAME
@@ -39,7 +38,6 @@ services:
   - type: web
     name: stocklimp-frontend
     env: static
-    region: frankfurt
     plan: free
     rootDir: front
     buildCommand: npm install && npx expo export -p web
