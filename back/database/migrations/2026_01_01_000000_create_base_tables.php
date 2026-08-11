@@ -53,7 +53,11 @@ return new class extends Migration
             $table->id('id_producto');
             $table->string('nombre');
             $table->text('descripcion')->nullable();
-            $table->boolean('es_toxico')->default(0);
+            $table->string('sku', 50)->unique()->nullable();
+            $table->boolean('es_toxico')->default(0)->nullable();
+            $table->decimal('precio_unidad', 10, 2)->default(0);
+            $table->decimal('stock_actual', 10, 2)->default(0)->nullable();
+            $table->timestamp('fecha_registro')->useCurrent();
             $table->string('imagen')->nullable();
         });
 
