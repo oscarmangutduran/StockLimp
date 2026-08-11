@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     sqlite3 \
     libsqlite3-dev \
-    libzip-dev
+    libzip-dev \
+    ca-certificates
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -52,4 +53,4 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 80
 
 # Run migrations (best effort) then ALWAYS start Apache
-CMD ["bash", "-c", "php artisan migrate --force; php artisan config:cache; apache2-foreground"]
+CMD ["bash", "-c", "php artisan migrate --force; php artisan config:cache; chown -R www-data:www-data /var/www/html/storage; apache2-foreground"]
