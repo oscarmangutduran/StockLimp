@@ -20,14 +20,18 @@ return new class extends Migration
         // 2. users
         Schema::create('users', function (Blueprint $table) {
             $table->id('id_user');
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->string('estado', 20)->default('activo');
-            $table->boolean('solicita_restablecimiento')->default(0);
+            $table->string('nombre', 100);
+            $table->string('apellido', 255)->nullable();
+            $table->string('email', 100)->unique();
+            $table->string('telefono', 255)->nullable();
+            $table->string('direccion', 255)->nullable();
+            $table->string('foto_perfil', 255)->nullable();
+            $table->string('password_hash', 255);
+            $table->string('rol', 20)->default('usuario');
             $table->unsignedBigInteger('id_centro')->nullable();
+            $table->timestamp('fecha_creacion')->useCurrent();
+            $table->string('estado', 20)->default('activo');
+            $table->boolean('solicita_restablecimiento')->default(0)->nullable();
             
             $table->foreign('id_centro')->references('id_centro')->on('centros_trabajo')->onDelete('set null');
         });
