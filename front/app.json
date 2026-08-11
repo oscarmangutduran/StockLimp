@@ -1,16 +1,17 @@
 {
   "expo": {
-    "name": "front",
-    "slug": "front",
+    "name": "StockLimp",
+    "slug": "stocklimp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "front",
+    "scheme": "stocklimp",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.stocklimp.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
