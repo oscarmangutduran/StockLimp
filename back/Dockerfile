@@ -41,7 +41,7 @@ RUN cp .env.example .env
 
 # Set Composer memory limit to unlimited and install dependencies
 ENV COMPOSER_MEMORY_LIMIT=-1
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
 
 # Now set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
