@@ -602,70 +602,75 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       {/* Modal Vacaciones */}
       <Modal animationType="slide" transparent={true} visible={vacationModalVisible}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: Platform.OS === 'web' ? 500 : '95%' }]}>
-            <Text style={styles.modalTitle}>{editingVacationId ? 'Editar Vacaciones' : 'Solicitar Vacaciones'}</Text>
+          <View style={[styles.modalContent, { width: Platform.OS === 'web' ? 500 : '95%', maxHeight: '95%', display: 'flex' }]}>
+            <Text style={[styles.modalTitle, { marginBottom: 12 }]}>{editingVacationId ? 'Editar Vacaciones' : 'Solicitar Vacaciones'}</Text>
 
-            <View style={{ marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={styles.label}>Selecciona los días en el calendario</Text>
-                <Text style={{ fontSize: 12, color: '#64748B' }}>
-                  {selectionStep === 'start' ? 'Selecciona fin' : ''}
-                </Text>
-              </View>
-              
-              <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
-                <Calendar
-                  markingType={'period'}
-                  markedDates={generateMarkedDates()}
-                  onDayPress={handleDayPress}
-                  firstDay={1}
-                  theme={{
-                    todayTextColor: '#3B82F6',
-                    arrowColor: '#3B82F6',
-                    textMonthFontWeight: 'bold',
-                    textDayFontSize: 14,
-                    textMonthFontSize: 16,
-                  }}
-                />
-              </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={{ width: 12, height: 12, backgroundColor: '#10B981', borderRadius: 2 }} />
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Aprobadas</Text>
+            <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+              <View style={{ marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={[styles.label, { marginTop: 0 }]}>Selecciona los días en el calendario</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>
+                    {selectionStep === 'start' ? 'Selecciona fin' : ''}
+                  </Text>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={{ width: 12, height: 12, backgroundColor: '#F59E0B', borderRadius: 2 }} />
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Pendientes</Text>
+                
+                <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, overflow: 'hidden' }}>
+                  <Calendar
+                    markingType={'period'}
+                    markedDates={generateMarkedDates()}
+                    onDayPress={handleDayPress}
+                    firstDay={1}
+                    theme={{
+                      todayTextColor: '#3B82F6',
+                      arrowColor: '#3B82F6',
+                      textMonthFontWeight: 'bold',
+                      textDayFontSize: 13,
+                      textMonthFontSize: 15,
+                      'stylesheet.calendar.header': {
+                        header: { flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 10, paddingRight: 10, marginTop: 4, alignItems: 'center' }
+                      }
+                    }}
+                  />
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <View style={{ width: 12, height: 12, backgroundColor: '#3B82F6', borderRadius: 2 }} />
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Selección</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginTop: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <View style={{ width: 12, height: 12, backgroundColor: '#10B981', borderRadius: 2 }} />
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Aprobadas</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <View style={{ width: 12, height: 12, backgroundColor: '#F59E0B', borderRadius: 2 }} />
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Pendientes</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <View style={{ width: 12, height: 12, backgroundColor: '#3B82F6', borderRadius: 2 }} />
+                    <Text style={{ fontSize: 12, color: '#64748B' }}>Selección</Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <View>
-                <Text style={styles.label}>Inicio</Text>
-                <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaInicio)}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                <View>
+                  <Text style={[styles.label, { marginTop: 0 }]}>Inicio</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaInicio)}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={[styles.label, { marginTop: 0 }]}>Fin</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaFin)}</Text>
+                </View>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.label}>Fin</Text>
-                <Text style={{ fontSize: 14, fontWeight: '600' }}>{formatDatePicker(fechaFin)}</Text>
-              </View>
-            </View>
 
-            <Text style={styles.label}>Comentarios (Opcional)</Text>
-            <TextInput
-              style={styles.textArea}
-              multiline
-              numberOfLines={3}
-              value={vacationComments}
-              onChangeText={setVacationComments}
-              placeholder="Ej: Viaje familiar..."
-            />
+              <Text style={[styles.label, { marginTop: 0 }]}>Comentarios (Opcional)</Text>
+              <TextInput
+                style={[styles.textArea, { height: 80 }]}
+                multiline
+                numberOfLines={3}
+                value={vacationComments}
+                onChangeText={setVacationComments}
+                placeholder="Ej: Viaje familiar..."
+              />
+            </ScrollView>
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { marginTop: 16 }]}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => {
                 setVacationModalVisible(false);
                 setEditingVacationId(null);
@@ -741,8 +746,8 @@ const styles = StyleSheet.create({
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#fff', width: '100%', maxWidth: 400, borderRadius: 12, padding: 24 },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
+  modalContent: { backgroundColor: '#fff', width: '100%', maxWidth: 400, borderRadius: 12, padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
   label: { fontSize: 14, color: '#475569', marginBottom: 8, marginTop: 16 },
   textArea: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, height: 100, textAlignVertical: 'top' },
   uploadBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderWidth: 1, borderColor: '#E2E8F0', borderStyle: 'dashed', borderRadius: 8, gap: 12 },
