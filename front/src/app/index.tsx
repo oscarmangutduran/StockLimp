@@ -28,7 +28,7 @@ import TimeTrackingView from '@/components/dashboard/TimeTrackingView';
 import VacationsAdminView from '@/components/dashboard/VacationsAdminView';
 import { styles } from '../css/index.styles';
 
-const cleaningWorkerImg = require('@/assets/images/cleaning_worker.png');
+const cleaningWorkerImg = require('@/assets/images/cleaning_worker.jpg');
 
 const PROD_URL = 'https://stocklimp-backend.onrender.com/api';
 const DEV_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
