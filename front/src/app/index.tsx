@@ -46,6 +46,14 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const [showPassword, setShowPassword] = useState(false);
   const [solicitaRestablecimiento, setSolicitaRestablecimiento] = useState(false);
   
+  // Chat states
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{text: string, isUser: boolean}[]>([
+    { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatUserName, setChatUserName] = useState('');
+  
   // App states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +96,20 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   }, []);
 
+  // Clear chat after 2 minutes of inactivity
+  useEffect(() => {
+    if (chatMessages.length > 1) {
+      const timer = setTimeout(() => {
+        setChatUserName('');
+        setChatMessages([
+          { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
+        ]);
+        setChatOpen(false); // Cerramos el chat para limpiar la pantalla
+      }, 120000);
+      return () => clearTimeout(timer);
+    }
+  }, [chatMessages]);
+
   const saveUserSession = (userData: any) => {
     setUser(userData);
     if (!initialTab) {
@@ -111,6 +133,65 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         console.error('Error updating URL history:', e);
       }
     }
+  };
+
+  const handleSendChat = (presetText?: string) => {
+    const textToSend = typeof presetText === 'string' ? presetText : chatInput;
+    if (!textToSend.trim()) return;
+    
+    const isFirstMessage = !chatUserName;
+    if (isFirstMessage) {
+      setChatUserName(textToSend.trim());
+    }
+
+    const newUserMsg = { text: textToSend, isUser: true };
+    setChatMessages(prev => [...prev, newUserMsg]);
+    if (typeof presetText !== 'string') setChatInput('');
+    
+    setTimeout(() => {
+      if (isFirstMessage) {
+        setChatMessages(prev => [...prev, {
+          text: `¡Encantado, ${textToSend.trim()}!\n¿En qué puedo ayudarte?\n1. Contraseña olvidada\n2. Fechas de pedidos\n3. Falta un producto\n4. Pedir vacaciones\n5. Hasta pronto (cerrar)`,
+          isUser: false
+        }]);
+        return;
+      }
+
+      const lowerInput = newUserMsg.text.toLowerCase();
+      
+      let responseText = "No he entendido bien tu pregunta. Por favor, escribe un número del 1 al 5, o descríbeme tu duda (contraseñas, pedidos, faltas, vacaciones).";
+      
+      if (lowerInput === '1' || lowerInput.includes('contraseña') || lowerInput.includes('password') || lowerInput.includes('olvid') || lowerInput.includes('recordar')) {
+        responseText = "Si no recuerdas tu contraseña, debes escribir un correo a mangutduranoscar@gmail.com con el asunto 'Olvidado'.";
+      } else if (lowerInput === '2' || (lowerInput.includes('pedido') && (lowerInput.includes('dia') || lowerInput.includes('fecha') || lowerInput.includes('modificar') || lowerInput.includes('cuando')))) {
+        responseText = "Puedes hacer y modificar tus pedidos del 2 al 8 de cada mes.";
+      } else if (lowerInput === '3' || (lowerInput.includes('falta') && (lowerInput.includes('producto') || lowerInput.includes('material')))) {
+        responseText = "Si te falta algún producto, debes escribir a la persona encargada de entregar el pedido.";
+      } else if (lowerInput === '4' || lowerInput.includes('vacacion') || lowerInput.includes('vacaciones') || lowerInput.includes('descanso')) {
+        responseText = "Para pedir tus vacaciones, debes ir a la sección de 'Control Horario' (fichaje) dentro de la aplicación una vez inicies sesión.";
+      } else if (lowerInput === '5' || lowerInput.includes('hasta pronto') || lowerInput.includes('adios') || lowerInput.includes('adiós') || lowerInput.includes('cerrar')) {
+        setChatMessages(prev => [...prev, {
+          text: "¡Hasta pronto! Que tengas un excelente día.",
+          isUser: false
+        }]);
+        
+        setTimeout(() => {
+          setChatUserName('');
+          setChatMessages([
+            { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
+          ]);
+          setChatOpen(false);
+        }, 1500);
+        return;
+      } else if (lowerInput.includes('pedido') || lowerInput.includes('producto')) {
+        responseText = "Sobre pedidos: los puedes hacer del 2 al 8 de cada mes. Si falta algún producto, avisa a la persona encargada de entregarlo.";
+      }
+
+      setChatMessages(prev => [...prev, {
+        text: responseText,
+        isUser: false
+      }]);
+    }, 1000);
   };
 
   const handleLogin = async () => {
@@ -574,6 +655,45 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             )}
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Live Chat Widget */}
+      <View style={styles.chatWidgetContainer}>
+        {chatOpen ? (
+          <View style={styles.chatWindow}>
+            <View style={styles.chatHeader}>
+              <Text style={styles.chatTitle}>Chat de Soporte</Text>
+              <TouchableOpacity onPress={() => setChatOpen(false)}>
+                <Feather name="x" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.chatMessages} contentContainerStyle={{ padding: 12 }}>
+              {chatMessages.map((msg, i) => (
+                <View key={i} style={[styles.chatBubble, msg.isUser ? styles.chatBubbleUser : styles.chatBubbleBot]}>
+                  <Text style={[styles.chatText, msg.isUser ? styles.chatTextUser : styles.chatTextBot]}>{msg.text}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.chatInputContainer}>
+              <TextInput
+                style={styles.chatTextInput}
+                placeholder="Escribe un mensaje..."
+                placeholderTextColor="#94A3B8"
+                value={chatInput}
+                onChangeText={setChatInput}
+                onSubmitEditing={() => handleSendChat()}
+              />
+              <TouchableOpacity style={styles.chatSendBtn} onPress={() => handleSendChat()}>
+                <Feather name="send" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.chatFab} onPress={() => setChatOpen(true)}>
+            <Feather name="message-circle" size={28} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
