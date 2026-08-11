@@ -8,6 +8,7 @@
     "scheme": "stocklimp",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.stocklimp.app",
       "icon": "./assets/expo.icon"
     },
     "android": {
