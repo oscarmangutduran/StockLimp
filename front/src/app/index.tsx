@@ -37,8 +37,11 @@ const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje' | 'vacaciones';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === 'web' && width >= 1024;
+  const isDesktop = mounted && Platform.OS === 'web' && width >= 1024;
 
   // Form states
   const [email, setEmail] = useState('');
