@@ -12,6 +12,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import ModalAlert from '@/components/common/ModalAlert';
+import { styles } from '../../css/AnalyticsView.styles';
 
 interface Product {
   id_producto: number;
@@ -317,7 +318,6 @@ export default function AnalyticsView({ baseUrl }: AnalyticsViewProps) {
         <title>StockLimp - Reporte de Analítica</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-import { styles } from '../../css/AnalyticsView.styles';
           body {
             font-family: 'Inter', sans-serif;
             color: #1E293B;

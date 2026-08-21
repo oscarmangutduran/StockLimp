@@ -28,7 +28,7 @@ import TimeTrackingView from '@/components/dashboard/TimeTrackingView';
 import VacationsAdminView from '@/components/dashboard/VacationsAdminView';
 import { styles } from '../css/index.styles';
 
-const cleaningWorkerImg = require('@/assets/images/cleaning_worker.jpg');
+const cleaningWorkerImg = require('../images/equipo.jpg');
 
 const PROD_URL = 'https://stocklimp-backend.onrender.com/api';
 const DEV_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
@@ -81,11 +81,11 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   }, [user, initialTab]);
 
-  // Restore session from localStorage on mount (Web only)
+  // Restore session from sessionStorage on mount (Web only)
   useEffect(() => {
     if (Platform.OS === 'web') {
       try {
-        const savedUser = localStorage.getItem('user');
+        const savedUser = sessionStorage.getItem('user');
         if (savedUser) {
           const parsed = JSON.parse(savedUser);
           setUser(parsed);
@@ -94,7 +94,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           }
         }
       } catch (e) {
-        console.error('Error restoring session from localStorage:', e);
+        console.error('Error restoring session from sessionStorage:', e);
       }
     }
   }, []);
@@ -120,9 +120,9 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
     if (Platform.OS === 'web') {
       try {
-        localStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('user', JSON.stringify(userData));
       } catch (e) {
-        console.error('Error saving session to localStorage:', e);
+        console.error('Error saving session to sessionStorage:', e);
       }
     }
   };
@@ -291,9 +291,9 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     setMobileMenuOpen(false);
     if (Platform.OS === 'web') {
       try {
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
       } catch (e) {
-        console.error('Error clearing session from localStorage:', e);
+        console.error('Error clearing session from sessionStorage:', e);
       }
     }
     router.replace({
