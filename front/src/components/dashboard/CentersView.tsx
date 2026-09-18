@@ -16,6 +16,13 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { styles } from '../../css/CentersView.styles';
 
+interface CenterUser {
+  id_user: number;
+  nombre: string;
+  apellido?: string;
+  email?: string;
+}
+
 interface Center {
   id_centro: number;
   nombre: string;
@@ -24,17 +31,41 @@ interface Center {
   numero_ruta?: number | string;
   fecha_registro?: string;
   created_at?: string;
+  users?: CenterUser[];
 }
 
 interface CentersViewProps {
   baseUrl: string;
 }
 
+const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return '';
+  const trimmed = dateStr.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) return trimmed;
+
+  const match = trimmed.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+
+  try {
+    const d = new Date(trimmed.replace(' ', 'T'));
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  } catch {}
+
+  return trimmed;
+};
+
 const mockCenters: Center[] = [
-  { id_centro: 1, nombre: "Almacén Central Cáceres", direccion: "Polígono Industrial Las Capellanías, Nave 5", ciudad: "N/A", numero_ruta: 1, fecha_registro: "2026-06-17" },
-  { id_centro: 2, nombre: "Sede Administrativa", direccion: "Avenida de la Montaña 12, 10004 Cáceres", ciudad: "N/A", numero_ruta: 2, fecha_registro: "2026-06-17" },
-  { id_centro: 3, nombre: "Centro Logístico Norte", direccion: "Calle de la Industria 45, Plasencia", ciudad: "N/A", numero_ruta: 3, fecha_registro: "2026-06-17" },
-  { id_centro: 4, nombre: "Casa", direccion: "Torrente Ballester", ciudad: "Moraleja", numero_ruta: 4, fecha_registro: "2026-06-17" }
+  { id_centro: 1, nombre: "Almacén Central Cáceres", direccion: "Polígono Industrial Las Capellanías, Nave 5", ciudad: "N/A", numero_ruta: 1, fecha_registro: "17/06/2026" },
+  { id_centro: 2, nombre: "Sede Administrativa", direccion: "Avenida de la Montaña 12, 10004 Cáceres", ciudad: "N/A", numero_ruta: 2, fecha_registro: "17/06/2026" },
+  { id_centro: 3, nombre: "Centro Logístico Norte", direccion: "Calle de la Industria 45, Plasencia", ciudad: "N/A", numero_ruta: 3, fecha_registro: "17/06/2026" },
+  { id_centro: 4, nombre: "Casa", direccion: "Torrente Ballester", ciudad: "Moraleja", numero_ruta: 4, fecha_registro: "17/06/2026" }
 ];
 
 export default function CentersView({ baseUrl }: CentersViewProps) {
@@ -231,14 +262,17 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
       return;
     }
 
-    const headers = ['ID Centro', 'Nombre', 'Direccion', 'Ciudad', 'Numero Ruta', 'Fecha Registro'];
+    const headers = ['ID Centro', 'Nombre', 'Operario Asignado', 'Direccion', 'Ciudad', 'Numero Ruta', 'Fecha Registro'];
     const rows = filteredCenters.map((c) => [
       c.id_centro,
       c.nombre,
+      c.users && c.users.length > 0
+        ? c.users.map((u) => `${u.nombre} ${u.apellido || ''}`.trim()).join(', ')
+        : 'Sin asignar',
       c.direccion || 'N/A',
       c.ciudad || 'N/A',
       c.numero_ruta || 'N/A',
-      c.fecha_registro || '2026-06-17',
+      formatDate(c.fecha_registro || '17/06/2026'),
     ]);
 
     const csvContent =
@@ -259,7 +293,11 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
     (c) =>
       c.nombre.toLowerCase().includes(search.toLowerCase()) ||
       (c.direccion && c.direccion.toLowerCase().includes(search.toLowerCase())) ||
-      (c.ciudad && c.ciudad.toLowerCase().includes(search.toLowerCase()))
+      (c.ciudad && c.ciudad.toLowerCase().includes(search.toLowerCase())) ||
+      (c.users &&
+        c.users.some((u) =>
+          `${u.nombre} ${u.apellido || ''}`.toLowerCase().includes(search.toLowerCase())
+        ))
   );
 
   // Paginated centers
@@ -320,6 +358,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
               <View style={styles.tableHeader}>
                 <Text style={[styles.thText, { width: 80 }]}>ID Centro</Text>
                 <Text style={[styles.thText, { width: 220 }]}>Nombre</Text>
+                <Text style={[styles.thText, { width: 180 }]}>Operario Asignado</Text>
                 <Text style={[styles.thText, { width: 280 }]}>Dirección</Text>
                 <Text style={[styles.thText, { width: 120 }]}>Ciudad</Text>
                 <Text style={[styles.thText, { width: 140 }]}>Fecha de registro</Text>
@@ -347,6 +386,28 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                       <Text style={[styles.tdText, { width: 220, fontWeight: '500' }]}>
                         {center.nombre}
                       </Text>
+                      <View style={[styles.tdView, { width: 180, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}>
+                        <Feather
+                          name="user"
+                          size={13}
+                          color={center.users && center.users.length > 0 ? '#10B981' : '#94A3B8'}
+                        />
+                        <Text
+                          style={[
+                            styles.tdText,
+                            {
+                              flex: 1,
+                              color: center.users && center.users.length > 0 ? '#0F172A' : '#94A3B8',
+                              fontWeight: center.users && center.users.length > 0 ? '600' : '400',
+                            },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {center.users && center.users.length > 0
+                            ? center.users.map((u) => `${u.nombre} ${u.apellido || ''}`.trim()).join(', ')
+                            : 'Sin asignar'}
+                        </Text>
+                      </View>
                       <TouchableOpacity
                         style={[styles.tdView, { width: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}
                         onPress={() => {
@@ -377,8 +438,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                         {center.ciudad || 'N/A'}
                       </Text>
                       <Text style={[styles.tdText, { width: 140 }]}>
-                        {center.fecha_registro ||
-                          (center.created_at ? center.created_at.substring(0, 10) : '2026-06-17')}
+                        {formatDate(center.fecha_registro || center.created_at || '17/06/2026')}
                       </Text>
                       <View style={[styles.tdActions, { width: 120 }]}>
                         <TouchableOpacity

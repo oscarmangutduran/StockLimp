@@ -17,17 +17,23 @@ import { Feather } from '@expo/vector-icons';
 import ModalAlert from '@/components/common/ModalAlert';
 import { styles } from '../../css/ControlPanelView.styles';
 
+interface CenterRef {
+  id_centro: number;
+  nombre: string;
+  direccion?: string;
+  ciudad?: string;
+}
+
 interface User {
   id_user: number;
   nombre: string;
+  apellido?: string;
   email: string;
   rol: string;
   estado: string;
   id_centro?: number | null;
-  centro?: {
-    id_centro: number;
-    nombre: string;
-  } | null;
+  centro?: CenterRef | null;
+  centros?: CenterRef[];
   fecha_creacion?: string;
   created_at?: string;
 }
@@ -49,7 +55,6 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   const isDesktop = width >= 768;
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<any[]>([]);
-  const [userCenters, setUserCenters] = useState<{[key: number]: number | null}>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -64,7 +69,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   const handleSearchFocus = () => {
     setIsSearchFocused(true);
     Animated.timing(searchWidth, {
-      toValue: 300,
+      toValue: 320,
       duration: 250,
       useNativeDriver: false,
     }).start();
@@ -157,7 +162,10 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     setFormEmail(user.email);
     setFormRol(user.rol);
     setFormPassword('');
-    setFormCentroId(user.id_centro ? user.id_centro.toString() : '');
+    const currentCentroId = user.id_centro
+      ? user.id_centro.toString()
+      : (user.centros && user.centros.length > 0 ? user.centros[0].id_centro.toString() : '');
+    setFormCentroId(currentCentroId);
     setModalVisible(true);
   };
 
@@ -195,53 +203,6 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     } catch (error) {
       console.error(error);
       showAlert('Error de red al guardar.');
-      setLoading(false);
-    }
-  };
-
-  const handleSaveInlineChanges = async () => {
-    const entries = Object.entries(userCenters);
-    if (entries.length === 0) {
-      showAlert('No hay cambios pendientes para guardar.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let hasError = false;
-      for (const [userIdStr, centerId] of entries) {
-        const userId = parseInt(userIdStr, 10);
-        const u = users.find(user => user.id_user === userId);
-        if (!u) continue;
-
-        const response = await fetch(`${baseUrl}/usuarios/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_user: u.id_user,
-            nombre: u.nombre,
-            email: u.email,
-            rol: u.rol,
-            id_centro: centerId
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok || !data.success) {
-          hasError = true;
-        }
-      }
-
-      if (hasError) {
-        showAlert('Algunos cambios no se pudieron guardar.');
-      } else {
-        showAlert('Cambios guardados correctamente.');
-        setUserCenters({});
-      }
-      fetchUsersAndMetrics();
-    } catch (err) {
-      console.error(err);
-      showAlert('Error de conexión al guardar los cambios.');
-    } finally {
       setLoading(false);
     }
   };
@@ -321,6 +282,42 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     });
   };
 
+  const handleExportCSV = () => {
+    if (Platform.OS !== 'web') {
+      showAlert('La exportación de datos está disponible en la versión Web.');
+      return;
+    }
+
+    const headers = ['ID Usuario', 'Nombre', 'Apellidos', 'Email', 'Rol', 'Centro(s) Asignado(s)', 'Estado', 'Fecha Creación'];
+    const rows = filteredUsers.map((u) => {
+      const centrosStr = (u.centros && u.centros.length > 0)
+        ? u.centros.map(c => c.nombre).join(' | ')
+        : (u.centro?.nombre || 'Sin centro asignado');
+      return [
+        u.id_user,
+        `"${(u.nombre || '').replace(/"/g, '""')}"`,
+        `"${(u.apellido || '').replace(/"/g, '""')}"`,
+        `"${(u.email || '').replace(/"/g, '""')}"`,
+        u.rol,
+        `"${centrosStr.replace(/"/g, '""')}"`,
+        u.estado || 'activo',
+        u.fecha_creacion || (u.created_at ? u.created_at.substring(0, 10) : '17/06/2026')
+      ];
+    });
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' +
+      [headers.join(';'), ...rows.map((e) => e.join(';'))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'personal_usuarios.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const getRoleStyle = (rol: string) => {
     const r = rol.toLowerCase();
     if (r === 'super_admin') return { bg: '#FFEBEF', text: '#EF4444', label: 'SUPER ADMINISTRADOR' };
@@ -329,11 +326,26 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     return { bg: '#EFF6FF', text: '#3B82F6', label: 'USUARIO' };
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredUsers = users.filter((u) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    const fullName = `${u.nombre || ''} ${u.apellido || ''}`.toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const role = (u.rol || '').toLowerCase();
+    const centerNames = [
+      ...(u.centros || []).map((c) => c.nombre || ''),
+      u.centro?.nombre || '',
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return (
+      fullName.includes(q) ||
+      email.includes(q) ||
+      role.includes(q) ||
+      centerNames.includes(q)
+    );
+  });
 
   // Paginated users
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -350,10 +362,17 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
       <View style={[styles.topActionsRow, { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }]}>
         <TouchableOpacity
           style={styles.saveChangesBtn}
-          onPress={handleSaveInlineChanges}
+          onPress={fetchUsersAndMetrics}
         >
-          <Feather name="save" size={16} color="#475569" />
-          <Text style={styles.saveChangesBtnText}>Guardar Cambios</Text>
+          <Feather name="refresh-cw" size={16} color="#475569" />
+          <Text style={styles.saveChangesBtnText}>Actualizar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.saveChangesBtn, { backgroundColor: '#F8FAFC' }]}
+          onPress={handleExportCSV}
+        >
+          <Feather name="download" size={16} color="#475569" />
+          <Text style={styles.saveChangesBtnText}>Exportar CSV</Text>
         </TouchableOpacity>
         <Animated.View
           style={[
@@ -373,7 +392,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         >
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar usuarios..."
+            placeholder="Buscar por nombre, correo o centro asignado..."
             placeholderTextColor="#94A3B8"
             value={search}
             onChangeText={setSearch}
@@ -441,15 +460,15 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         ) : (
           <View style={{ flex: 1 }}>
             <ScrollView horizontal={true} style={styles.scrollContainer}>
-              <View style={[styles.tableContainer, { minWidth: 1040 }]}>
+              <View style={[styles.tableContainer, { minWidth: 1140 }]}>
                 {/* Table Header */}
                 <View style={styles.tableHeader}>
-                  <Text style={[styles.thText, { width: 60 }]}>ID Usuario</Text>
-                  <Text style={[styles.thText, { width: 160 }]}>Nombre Completo</Text>
-                  <Text style={[styles.thText, { width: 200 }]}>Correo Electrónico</Text>
-                  <Text style={[styles.thText, { width: 180 }]}>Rol Asignado</Text>
-                  <Text style={[styles.thText, { width: 180 }]}>Centro Asignado</Text>
-                  <Text style={[styles.thText, { width: 100 }]}>Estado</Text>
+                  <Text style={[styles.thText, { width: 60 }]}>ID</Text>
+                  <Text style={[styles.thText, { width: 170 }]}>Nombre Completo</Text>
+                  <Text style={[styles.thText, { width: 190 }]}>Correo Electrónico</Text>
+                  <Text style={[styles.thText, { width: 150 }]}>Rol Asignado</Text>
+                  <Text style={[styles.thText, { width: 240 }]}>Centro Asignado</Text>
+                  <Text style={[styles.thText, { width: 90 }]}>Estado</Text>
                   <Text style={[styles.thText, { width: 120 }]}>Fecha de Registro</Text>
                   <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
                 </View>
@@ -464,6 +483,11 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                     paginatedUsers.map((user, idx) => {
                       const roleStyle = getRoleStyle(user.rol);
                       const isSelf = user.id_user === currentUser?.id_user;
+                      const hasCentros = (user.centros && user.centros.length > 0) || !!user.centro;
+                      const assignedCentros = (user.centros && user.centros.length > 0)
+                        ? user.centros
+                        : (user.centro ? [user.centro] : []);
+                      const centerNamesText = assignedCentros.map((c) => c.nombre).join(', ');
 
                       return (
                         <View
@@ -474,52 +498,67 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                           ]}
                         >
                           <Text style={[styles.tdText, { width: 60, fontWeight: '600' }]}>#{user.id_user}</Text>
-                          <Text style={[styles.tdText, { width: 160, fontWeight: '500' }]}>{user.nombre}</Text>
-                          <Text style={[styles.tdText, { width: 200 }]}>{user.email}</Text>
-                          <View style={{ width: 180 }}>
+                          <Text style={[styles.tdText, { width: 170, fontWeight: '500' }]} numberOfLines={2}>
+                            {`${user.nombre} ${user.apellido || ''}`.trim()}
+                          </Text>
+                          <Text style={[styles.tdText, { width: 190 }]} numberOfLines={1}>{user.email}</Text>
+                          <View style={{ width: 150 }}>
                             <View style={[styles.roleTag, { backgroundColor: roleStyle.bg }]}>
                               <Text style={[styles.roleText, { color: roleStyle.text }]}>{roleStyle.label}</Text>
                             </View>
                           </View>
-                          <View style={{ width: 180 }}>
-                            <View style={[styles.selectWrapper, { height: 36, width: 170, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1, backgroundColor: '#FFFFFF' }]}>
-                              <select
-                                style={{
-                                  ...styles.htmlSelect,
-                                  height: '100%',
-                                  fontSize: 13,
-                                  paddingHorizontal: 8,
-                                  outlineStyle: 'none',
-                                  appearance: 'none',
-                                  WebkitAppearance: 'none',
-                                  MozAppearance: 'none',
-                                } as any}
-                                value={userCenters[user.id_user] !== undefined ? (userCenters[user.id_user] ?? '') : (user.id_centro ?? '')}
-                                onChange={(e) => {
-                                  const val = e.target.value ? parseInt(e.target.value, 10) : null;
-                                  setUserCenters({
-                                    ...userCenters,
-                                    [user.id_user]: val
-                                  });
-                                }}
-                              >
-                                <option value="">Sin centro asignado</option>
-                                {centers.map((c) => (
-                                  <option key={c.id_centro} value={c.id_centro}>
-                                    {c.nombre}
-                                  </option>
-                                ))}
-                              </select>
-                            </View>
+                          <View style={{ width: 240, paddingRight: 10 }}>
+                            {hasCentros ? (
+                              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                                <Feather name="map-pin" size={13} color="#5C8E8D" style={{ marginTop: 2 }} />
+                                <View style={{ flex: 1 }}>
+                                  <Text
+                                    style={[
+                                      styles.tdText,
+                                      { width: '100%', color: '#0F172A', fontWeight: '500', fontSize: 13, lineHeight: 18 }
+                                    ]}
+                                    numberOfLines={2}
+                                    // @ts-ignore
+                                    title={centerNamesText}
+                                  >
+                                    {centerNamesText}
+                                  </Text>
+                                  {assignedCentros.length > 1 && (
+                                    <View
+                                      style={{
+                                        alignSelf: 'flex-start',
+                                        backgroundColor: '#E6F4EA',
+                                        paddingHorizontal: 6,
+                                        paddingVertical: 2,
+                                        borderRadius: 6,
+                                        marginTop: 3,
+                                      }}
+                                    >
+                                      <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '600' }}>
+                                        {assignedCentros.length} centros asignados
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                              </View>
+                            ) : (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <Feather name="map-pin" size={13} color="#94A3B8" />
+                                <Text style={[styles.tdText, { color: '#94A3B8', fontStyle: 'italic', fontSize: 12 }]}>
+                                  Sin centro asignado
+                                </Text>
+                              </View>
+                            )}
                           </View>
-                          <View style={{ width: 100 }}>
+                          <View style={{ width: 90 }}>
                             <View style={styles.statusTag}>
-                              <Text style={styles.statusText}>ACTIVO</Text>
+                              <Text style={styles.statusText}>{user.estado ? user.estado.toUpperCase() : 'ACTIVO'}</Text>
                             </View>
                           </View>
                           <Text style={[styles.tdText, { width: 120 }]}>
-                            {user.fecha_creacion ||
-                              (user.created_at ? user.created_at.substring(0, 10) : '2026-06-17')}
+                            {user.fecha_creacion
+                              ? user.fecha_creacion.substring(0, 10)
+                              : (user.created_at ? user.created_at.substring(0, 10) : '17/06/2026')}
                           </Text>
                           <View style={[styles.tdActions, { width: 120 }]}>
                             <TouchableOpacity
@@ -695,5 +734,3 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     </View>
   );
 }
-
-

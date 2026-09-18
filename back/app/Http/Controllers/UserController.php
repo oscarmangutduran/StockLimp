@@ -265,6 +265,16 @@ class UserController extends Controller
 
         $user->save();
 
+        if ($request->has('id_centro')) {
+            if ($request->id_centro) {
+                $user->centros()->sync([$request->id_centro]);
+            } else {
+                $user->centros()->detach();
+            }
+        }
+
+        $user->load(['centro', 'centros']);
+
         return response()->json([
             'success' => true,
             'message' => 'Usuario actualizado correctamente.',

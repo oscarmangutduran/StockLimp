@@ -30,4 +30,16 @@ class WorkCenter extends Model
     {
         return $this->belongsToMany(User::class, 'centro_user', 'id_centro', 'id_user');
     }
+
+    public function getFechaRegistroAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+        try {
+            return \Carbon\Carbon::parse($value)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    }
 }

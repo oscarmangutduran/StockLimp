@@ -19,7 +19,7 @@ class User extends Authenticatable
         'password_hash',
     ];
 
-    public $with = ['centro'];
+    public $with = ['centro', 'centros'];
 
     public function centro()
     {
