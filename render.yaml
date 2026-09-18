@@ -21,19 +21,9 @@ services:
       - key: APP_URL
         value: https://stocklimp-backend.onrender.com
       - key: DB_CONNECTION
-        value: mysql
-      - key: DB_HOST
-        value: mysql-39007dc0-stocklimp.d.aivencloud.com
-      - key: DB_PORT
-        value: 11323
+        value: sqlite
       - key: DB_DATABASE
-        value: defaultdb
-      - key: DB_USERNAME
-        value: avnadmin
-      - key: DB_PASSWORD
-        sync: false
-      - key: MYSQL_ATTR_SSL_CA
-        value: /etc/ssl/certs/ca-certificates.crt
+        value: /var/www/html/database/database.sqlite
       - key: MAIL_MAILER
         value: smtp
       - key: MAIL_HOST

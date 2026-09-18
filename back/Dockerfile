@@ -47,10 +47,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # Now set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
-    && chmod -R 775 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/database
 
 # Expose port 80 (Apache default)
 EXPOSE 80
 
-# Run migrations (best effort) then ALWAYS start Apache
-CMD ["bash", "-c", "php artisan migrate --force; php artisan config:cache; chown -R www-data:www-data /var/www/html/storage; apache2-foreground"]
+# Run migrations and seeder, then start Apache
+CMD ["bash", "-c", "mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite && chown -R www-data:www-data /var/www/html/database /var/www/html/storage && chmod -R 775 /var/www/html/database /var/www/html/storage && chmod 664 /var/www/html/database/database.sqlite && php artisan migrate --force && php artisan db:seed --force; php artisan config:cache; apache2-foreground"]
