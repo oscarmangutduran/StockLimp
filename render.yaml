@@ -2,6 +2,7 @@ services:
   # Servicio Web para el Backend (Laravel con Docker)
   - type: web
     name: stocklimp-backend
+    branch: APP-Android-IOS-Web
     env: docker
     region: frankfurt
     plan: free
@@ -37,6 +38,7 @@ services:
   # Sitio Estático para el Frontend (Expo Web - completamente GRATIS)
   - type: web
     name: stocklimp-frontend
+    branch: APP-Android-IOS-Web
     env: static
     rootDir: front
     buildCommand: npm install && npx expo export -p web
