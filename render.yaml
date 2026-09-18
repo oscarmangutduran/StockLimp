@@ -34,6 +34,22 @@ services:
         sync: false
       - key: MYSQL_ATTR_SSL_CA
         value: /etc/ssl/certs/ca-certificates.crt
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USERNAME
+        value: mangutduranoscar@gmail.com
+      - key: MAIL_PASSWORD
+        value: "onlc rzpn vagw fftr"
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: "direccion@adarvelimpiezas.net"
+      - key: MAIL_FROM_NAME
+        value: StockLimp
 
   # Sitio Estático para el Frontend (Expo Web - completamente GRATIS)
   - type: web
