@@ -165,7 +165,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
       let responseText = "No he entendido bien tu pregunta. Por favor, escribe un número del 1 al 5, o descríbeme tu duda (contraseñas, pedidos, faltas, vacaciones).";
       
       if (lowerInput === '1' || lowerInput.includes('contraseña') || lowerInput.includes('password') || lowerInput.includes('olvid') || lowerInput.includes('recordar')) {
-        responseText = "Si no recuerdas tu contraseña, debes escribir un correo a mangutduranoscar@gmail.com con el asunto 'Olvidado'.";
+        responseText = "Si no recuerdas tu contraseña, debes escribir un correo a direccion@adarvelimpiezas.net con el asunto 'Olvidado'.";
       } else if (lowerInput === '2' || (lowerInput.includes('pedido') && (lowerInput.includes('dia') || lowerInput.includes('fecha') || lowerInput.includes('modificar') || lowerInput.includes('cuando')))) {
         responseText = "Puedes hacer y modificar tus pedidos del 2 al 8 de cada mes.";
       } else if (lowerInput === '3' || (lowerInput.includes('falta') && (lowerInput.includes('producto') || lowerInput.includes('material')))) {
