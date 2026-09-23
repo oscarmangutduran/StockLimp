@@ -20,7 +20,8 @@ class ProductController extends Controller
             'precio_unidad' => 'required|numeric',
             'stock_actual' => 'required|integer|min:0',
             'es_toxico' => 'nullable|boolean',
-            'imagen' => 'nullable|string|max:255'
+            'imagen' => 'nullable|string|max:255',
+            'ficha_tecnica' => 'nullable|string|max:255'
         ]);
 
         $product = Product::create($validated);
