@@ -357,7 +357,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                     <Text style={[styles.thText, { width: 100 }]}>Precio Unidad</Text>
                     <Text style={[styles.thText, { width: 100 }]}>Stock Actual</Text>
                     <Text style={[styles.thText, { width: 120 }]}>Fecha de registro</Text>
-                    <Text style={[styles.thText, { width: 140, textAlign: 'center' }]}>Acciones</Text>
+                    <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
                   </>
                 )}
               </View>
@@ -424,7 +424,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                             {product.fecha_registro ||
                               (product.created_at ? product.created_at.substring(0, 10) : '2026-06-17')}
                           </Text>
-                          <View style={[styles.tdActions, { width: 140 }]}>
+                          <View style={[styles.tdActions, { width: 120 }]}>
                             {product.ficha_tecnica ? (
                               <TouchableOpacity
                                 style={[styles.actionIcon, { backgroundColor: '#2563EB' }]}
@@ -440,12 +440,6 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                                 <Feather name="file-text" size={14} color="#FFFFFF" />
                               </TouchableOpacity>
                             ) : null}
-                            <TouchableOpacity
-                              style={[styles.actionIcon, styles.infoIcon]}
-                              onPress={() => handleOpenInfo(product)}
-                            >
-                              <Feather name="info" size={14} color="#FFFFFF" />
-                            </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.actionIcon, styles.editIcon]}
                               onPress={() => handleOpenEdit(product)}
