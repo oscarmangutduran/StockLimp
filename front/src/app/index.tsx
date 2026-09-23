@@ -48,6 +48,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [solicitaRestablecimiento, setSolicitaRestablecimiento] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   
   // Chat states
   const [chatOpen, setChatOpen] = useState(false);
@@ -81,7 +82,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   }, [user, initialTab]);
 
-  // Restore session from sessionStorage on mount (Web only)
+  // Restore session from sessionStorage on mount and remembered credentials from localStorage (Web only)
   useEffect(() => {
     if (Platform.OS === 'web') {
       try {
@@ -95,6 +96,18 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         }
       } catch (e) {
         console.error('Error restoring session from sessionStorage:', e);
+      }
+
+      try {
+        const savedCreds = localStorage.getItem('stocklimp_remember_creds');
+        if (savedCreds) {
+          const parsed = JSON.parse(savedCreds);
+          if (parsed.email) setEmail(parsed.email);
+          if (parsed.password) setPassword(parsed.password);
+          setRememberMe(true);
+        }
+      } catch (e) {
+        console.error('Error restoring credentials from localStorage:', e);
       }
     }
   }, []);
@@ -113,6 +126,18 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   }, [chatMessages]);
 
+  const handleToggleRememberMe = () => {
+    const nextVal = !rememberMe;
+    setRememberMe(nextVal);
+    if (!nextVal && Platform.OS === 'web') {
+      try {
+        localStorage.removeItem('stocklimp_remember_creds');
+      } catch (e) {
+        console.error('Error removing credentials from localStorage:', e);
+      }
+    }
+  };
+
   const saveUserSession = (userData: any) => {
     setUser(userData);
     if (!initialTab) {
@@ -121,8 +146,13 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     if (Platform.OS === 'web') {
       try {
         sessionStorage.setItem('user', JSON.stringify(userData));
+        if (rememberMe) {
+          localStorage.setItem('stocklimp_remember_creds', JSON.stringify({ email, password }));
+        } else {
+          localStorage.removeItem('stocklimp_remember_creds');
+        }
       } catch (e) {
-        console.error('Error saving session to sessionStorage:', e);
+        console.error('Error saving session to sessionStorage / localStorage:', e);
       }
     }
   };
@@ -284,17 +314,33 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
   const handleLogout = () => {
     setUser(null);
-    setEmail('');
-    setPassword('');
     setSolicitaRestablecimiento(false);
     setActiveTab('centros');
     setMobileMenuOpen(false);
     if (Platform.OS === 'web') {
       try {
         sessionStorage.removeItem('user');
+        const savedCreds = localStorage.getItem('stocklimp_remember_creds');
+        if (savedCreds) {
+          const parsed = JSON.parse(savedCreds);
+          setEmail(parsed.email || '');
+          setPassword(parsed.password || '');
+          setRememberMe(true);
+        } else {
+          setEmail('');
+          setPassword('');
+          setRememberMe(false);
+        }
       } catch (e) {
         console.error('Error clearing session from sessionStorage:', e);
+        setEmail('');
+        setPassword('');
+        setRememberMe(false);
       }
+    } else {
+      setEmail('');
+      setPassword('');
+      setRememberMe(false);
     }
     router.replace({
       pathname: '/',
@@ -634,6 +680,17 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={[styles.checkboxContainer, { marginBottom: 12 }]}
+            activeOpacity={0.8}
+            onPress={handleToggleRememberMe}
+          >
+            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+              {rememberMe && <View style={styles.checkboxInner} />}
+            </View>
+            <Text style={styles.checkboxLabel}>Recordar usuario y contraseña</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.checkboxContainer}
