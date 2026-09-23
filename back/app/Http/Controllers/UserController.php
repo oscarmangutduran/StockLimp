@@ -55,45 +55,27 @@ class UserController extends Controller
             ], 403);
         }
 
+        $user->load(['centro', 'centros']);
+        $userData = array_merge($user->toArray(), [
+            'id' => $user->id_user,
+            'id_user' => $user->id_user,
+            'name' => $user->nombre,
+            'role' => $user->rol,
+        ]);
+
         if ($credentials['password'] === '12345') {
             return response()->json([
                 'success' => true,
                 'debe_cambiar_password' => true,
                 'message' => 'Debes cambiar la contraseña por defecto para poder ingresar.',
-                'user' => [
-                    'id' => $user->id_user,
-                    'id_user' => $user->id_user,
-                    'nombre' => $user->nombre,
-                    'apellido' => $user->apellido,
-                    'name' => $user->nombre,
-                    'email' => $user->email,
-                    'rol' => $user->rol,
-                    'role' => $user->rol,
-                    'id_centro' => $user->id_centro,
-                    'telefono' => $user->telefono,
-                    'direccion' => $user->direccion,
-                    'foto_perfil' => $user->foto_perfil,
-                ]
+                'user' => $userData
             ]);
         }
 
         return response()->json([
             'success' => true,
             'message' => 'Login correcto',
-            'user' => [
-                'id' => $user->id_user,
-                'id_user' => $user->id_user,
-                'nombre' => $user->nombre,
-                'apellido' => $user->apellido,
-                'name' => $user->nombre,
-                'email' => $user->email,
-                'rol' => $user->rol,
-                'role' => $user->rol,
-                'id_centro' => $user->id_centro,
-                'telefono' => $user->telefono,
-                'direccion' => $user->direccion,
-                'foto_perfil' => $user->foto_perfil,
-            ]
+            'user' => $userData
         ]);
     }
 
@@ -257,15 +239,12 @@ class UserController extends Controller
         $user->nombre = $request->nombre;
         $user->email = $request->email;
         $user->rol = $request->rol;
-        $user->id_centro = $request->id_centro;
 
-        if ($request->filled('password')) {
-            $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);
-        }
-
-        $user->save();
-
-        if ($request->has('id_centro')) {
+        if ($request->has('id_centros') && is_array($request->id_centros)) {
+            $user->centros()->sync($request->id_centros);
+            $user->id_centro = !empty($request->id_centros) ? $request->id_centros[0] : null;
+        } elseif ($request->has('id_centro')) {
+            $user->id_centro = $request->id_centro;
             if ($request->id_centro) {
                 $user->centros()->sync([$request->id_centro]);
             } else {
@@ -273,6 +252,11 @@ class UserController extends Controller
             }
         }
 
+        if ($request->filled('password')) {
+            $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->save();
         $user->load(['centro', 'centros']);
 
         return response()->json([

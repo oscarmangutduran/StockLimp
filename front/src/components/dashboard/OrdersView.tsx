@@ -47,21 +47,29 @@ interface Order {
   };
 }
 
+interface Center {
+  id_centro: number;
+  nombre: string;
+  direccion?: string;
+  ciudad?: string;
+  numero_ruta?: number;
+}
+
 interface User {
   id_user: number;
   nombre: string;
   rol: string;
-}
-
-interface Center {
-  id_centro: number;
-  nombre: string;
+  id_centro?: number | null;
+  centro?: Center;
+  centros?: Center[];
+  assigned_centros?: Center[];
 }
 
 interface Product {
   id_producto: number;
   nombre: string;
   precio_unidad: number;
+  es_toxico?: boolean | number;
 }
 
 interface OrdersViewProps {
@@ -69,6 +77,7 @@ interface OrdersViewProps {
   userRole?: string;
   userId?: number;
   idCentro?: number | null;
+  currentUser?: any;
 }
 
 const mockOrders: Order[] = [
@@ -142,7 +151,7 @@ const mockOrders: Order[] = [
   }
 ];
 
-export default function OrdersView({ baseUrl, userRole, userId, idCentro }: OrdersViewProps) {
+export default function OrdersView({ baseUrl, userRole, userId, idCentro, currentUser }: OrdersViewProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
@@ -187,6 +196,12 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Multi-center states
+  const [centerSelectionModalVisible, setCenterSelectionModalVisible] = useState(false);
+  const [nextCenterModalVisible, setNextCenterModalVisible] = useState(false);
+  const [justSavedCenterName, setJustSavedCenterName] = useState('');
+  const [pendingCentersForNext, setPendingCentersForNext] = useState<Center[]>([]);
+
   // Form states (Create/Edit order)
   const [formUserId, setFormUserId] = useState('');
   const [formCenterId, setFormCenterId] = useState('');
@@ -218,6 +233,57 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
     setCustomAlertType(type);
     setCustomAlertConfirmAction(() => onConfirm);
     setCustomAlertVisible(true);
+  };
+
+  // Helper to obtain all assigned centers for a user
+  const getUserAssignedCenters = (targetUserId?: number): Center[] => {
+    const uid = targetUserId || (userRole === 'usuario' ? userId : parseInt(formUserId, 10));
+    const targetUser = users.find((u) => u.id_user === uid) || (uid === userId ? currentUser : null);
+
+    const list: Center[] = [];
+    if (targetUser) {
+      const rawList = targetUser.assigned_centros || targetUser.centros || [];
+      rawList.forEach((c: any) => {
+        if (c && c.id_centro && !list.some((existing) => existing.id_centro === c.id_centro)) {
+          list.push(c);
+        }
+      });
+      if (targetUser.centro && !list.some((existing) => existing.id_centro === targetUser.centro.id_centro)) {
+        list.push(targetUser.centro);
+      }
+      if (list.length === 0 && targetUser.id_centro) {
+        const match = centers.find((c) => c.id_centro === targetUser.id_centro);
+        if (match) list.push(match);
+      }
+    } else if (uid === userId && idCentro) {
+      const match = centers.find((c) => c.id_centro === idCentro);
+      if (match) list.push(match);
+    }
+
+    if (list.length === 0 && (userRole === 'super_admin' || userRole === 'admin')) {
+      return centers;
+    }
+    return list;
+  };
+
+  // Check if an order already exists for a specific center
+  const getOrderForCenter = (centerId: number, targetUserId?: number): Order | undefined => {
+    const uid = targetUserId || (userRole === 'usuario' ? userId : parseInt(formUserId, 10));
+    return orders.find((o) => o.id_centro === centerId && (!uid || o.id_user === uid));
+  };
+
+  // Start order creation for a specific center
+  const handleStartCreateForCenter = (centerId: number) => {
+    setSelectedOrder(null);
+    setFormUserId(userRole === 'usuario' && userId ? userId.toString() : (users[0]?.id_user?.toString() || '1'));
+    setFormCenterId(centerId.toString());
+    setFormObservaciones('');
+    setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
+    setModalType('create');
+    setSuccessMessage(null);
+    setCenterSelectionModalVisible(false);
+    setNextCenterModalVisible(false);
+    setModalVisible(true);
   };
 
   // Fetch all orders and support lists
@@ -264,8 +330,10 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
 
   const handleOpenCreate = () => {
     setSelectedOrder(null);
-    setFormUserId(userRole === 'usuario' && userId ? userId.toString() : (users[0]?.id_user?.toString() || '1'));
-    setFormCenterId(userRole === 'usuario' && idCentro ? idCentro.toString() : (centers[0]?.id_centro?.toString() || '1'));
+    const initialUser = userRole === 'usuario' && userId ? userId.toString() : (users[0]?.id_user?.toString() || '1');
+    setFormUserId(initialUser);
+    const assigned = getUserAssignedCenters(parseInt(initialUser, 10));
+    setFormCenterId(assigned[0]?.id_centro?.toString() || centers[0]?.id_centro?.toString() || '1');
     setFormObservaciones('');
     setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
     setModalType('create');
@@ -278,7 +346,17 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
       showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 8 de cada mes.', 'info');
       return;
     }
-    handleOpenCreate();
+    const myCenters = getUserAssignedCenters(userId);
+    if (myCenters.length === 0) {
+      showCustomAlert('Sin Centro Asignado', 'No tienes ningún centro de trabajo asignado. Por favor, contacta con tu administrador.', 'info');
+      return;
+    }
+    if (myCenters.length === 1) {
+      handleStartCreateForCenter(myCenters[0].id_centro);
+      return;
+    }
+    // Employee with more than 1 center: must pick which center to make the order for!
+    setCenterSelectionModalVisible(true);
   };
 
   const handleOpenEdit = (order: Order) => {
@@ -399,7 +477,36 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
       const resData = await response.json();
       if (response.ok && resData.success) {
         setSuccessMessage('Se han guardado los datos correctamente.');
-        fetchData();
+        await fetchData();
+
+        const currentSavedCenterId = parseInt(formCenterId, 10);
+        const savedCenterObj = centers.find(c => c.id_centro === currentSavedCenterId);
+        const myCenters = getUserAssignedCenters(userId);
+
+        if (userRole === 'usuario' && myCenters.length > 1 && modalType === 'create') {
+          // Calculate remaining centers without orders (excluding the one just saved)
+          const remaining = myCenters.filter(
+            (c) => c.id_centro !== currentSavedCenterId && !orders.some((o) => o.id_centro === c.id_centro && o.id_user === userId)
+          );
+
+          setLoading(false);
+          setModalVisible(false);
+          setSuccessMessage(null);
+
+          if (remaining.length > 0) {
+            setJustSavedCenterName(savedCenterObj?.nombre || 'Centro');
+            setPendingCentersForNext(remaining);
+            setNextCenterModalVisible(true);
+          } else {
+            showCustomAlert(
+              '¡Todos los pedidos completados!',
+              `Has completado los pedidos para todos tus centros asignados (${myCenters.map((c) => c.nombre).join(', ')}).`,
+              'info'
+            );
+          }
+          return;
+        }
+
         setTimeout(() => {
           setModalVisible(false);
           setSuccessMessage(null);
@@ -590,16 +697,16 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
   const colWidths = {
     id: 80,
     operario: isTabletOrDesktop ? 140 : 120,
-    productos: isTabletOrDesktop ? (userRole === 'usuario' ? 320 : 260) : 200,
-    fecha: isTabletOrDesktop ? (userRole === 'usuario' ? 180 : 160) : 150,
-    centro: 160,
+    productos: isTabletOrDesktop ? (userRole === 'usuario' ? 260 : 240) : 180,
+    fecha: isTabletOrDesktop ? (userRole === 'usuario' ? 160 : 150) : 130,
+    centro: isTabletOrDesktop ? 180 : 150,
     estado: isTabletOrDesktop ? 140 : 110,
     acciones: 140,
   };
 
   const tableMinWidth = isDesktop
-    ? (userRole === 'usuario' ? 860 : 1120)
-    : (isTablet ? (userRole === 'usuario' ? 860 : 960) : 660);
+    ? (userRole === 'usuario' ? 980 : 1120)
+    : (isTablet ? (userRole === 'usuario' ? 920 : 960) : 700);
 
   return (
     <View style={styles.container}>
@@ -742,6 +849,91 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
         </View>
       )}
 
+      {/* Multi-center banner for employees */}
+      {userRole === 'usuario' && getUserAssignedCenters(userId).length > 1 && (
+        <View style={styles.employeeCentersBanner}>
+          <View style={styles.employeeCentersHeader}>
+            <View>
+              <Text style={styles.employeeCentersTitle}>
+                Tus Centros de Trabajo Asignados ({getUserAssignedCenters(userId).length})
+              </Text>
+              <Text style={styles.employeeCentersSubtitle}>
+                Debes realizar un pedido individual para cada uno de tus centros asignados:
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.newBtn, { height: 34, paddingHorizontal: 14 }]}
+              onPress={handleOpenCreateForUser}
+            >
+              <Feather name="plus" size={14} color="#FFFFFF" />
+              <Text style={[styles.btnText, { fontSize: 13 }]}>Hacer Pedido</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.employeeCentersList}>
+            {getUserAssignedCenters(userId).map((c) => {
+              const existing = getOrderForCenter(c.id_centro, userId);
+              return (
+                <View
+                  key={c.id_centro}
+                  style={[
+                    styles.employeeCenterCard,
+                    existing ? { borderColor: '#BBF7D0' } : { borderColor: '#FDE68A' }
+                  ]}
+                >
+                  <View style={styles.employeeCenterCardHeader}>
+                    <Feather name="map-pin" size={15} color={existing ? '#16A34A' : '#D97706'} />
+                    <Text style={styles.employeeCenterName} numberOfLines={1}>
+                      {c.nombre}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.employeeCenterStatusBadge,
+                      { backgroundColor: existing ? '#DCFCE7' : '#FEF3C7' }
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.employeeCenterStatusText,
+                        { color: existing ? '#15803D' : '#B45309' }
+                      ]}
+                    >
+                      {existing ? `✓ Pedido #${existing.id_pedido} (${existing.estado})` : '⚠️ Pedido pendiente'}
+                    </Text>
+                  </View>
+
+                  {!existing ? (
+                    <TouchableOpacity
+                      style={styles.employeeCenterActionBtn}
+                      onPress={() => {
+                        if (!isPeriodActive()) {
+                          showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 8 de cada mes.', 'info');
+                          return;
+                        }
+                        handleStartCreateForCenter(c.id_centro);
+                      }}
+                    >
+                      <Feather name="shopping-cart" size={13} color="#FFFFFF" />
+                      <Text style={styles.employeeCenterActionBtnText}>Hacer Pedido para este Centro</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.employeeCenterActionBtn, { backgroundColor: '#F1F5F9' }]}
+                      onPress={() => handleOpenInfo(existing)}
+                    >
+                      <Feather name="eye" size={13} color="#475569" />
+                      <Text style={[styles.employeeCenterActionBtnText, { color: '#475569' }]}>Ver Pedido</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
       {/* Main Table Content */}
       {loading && orders.length === 0 ? (
         <View style={styles.loadingContainer}>
@@ -773,7 +965,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                 {userRole !== 'usuario' && <Text style={[styles.thText, { width: colWidths.operario }]}>Operario</Text>}
                 <Text style={[styles.thText, { width: colWidths.productos }]}>Productos Pedidos</Text>
                 <Text style={[styles.thText, { width: colWidths.fecha }]}>Fecha de pedido</Text>
-                {isDesktop && userRole !== 'usuario' && <Text style={[styles.thText, { width: colWidths.centro }]}>Centro Destino</Text>}
+                {isDesktop && <Text style={[styles.thText, { width: colWidths.centro }]}>Centro Destino</Text>}
                 <Text style={[styles.thText, { width: colWidths.estado }]}>Estado</Text>
                 {isTabletOrDesktop && <Text style={[styles.thText, { width: colWidths.acciones, textAlign: 'center' }]}>Acciones</Text>}
               </View>
@@ -834,7 +1026,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                         <Text style={[styles.tdText, { width: colWidths.fecha, color: '#475569' }]}>
                           {order.fecha_creacion}
                         </Text>
-                        {isDesktop && userRole !== 'usuario' && (
+                        {isDesktop && (
                           <Text style={[styles.tdText, { width: colWidths.centro, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
                             {order.centro?.nombre || 'N/A'}
                           </Text>
@@ -1077,7 +1269,31 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                 </View>
               </View>
             ) : (
-              <View style={styles.formContainerSplit}>
+              <View style={{ flex: 1 }}>
+                <View style={styles.centerBannerActive}>
+                  <View style={styles.centerBannerLeft}>
+                    <Feather name="map-pin" size={18} color="#0F766E" />
+                    <View>
+                      <Text style={styles.centerBannerLabel}>Pedido para el centro:</Text>
+                      <Text style={styles.centerBannerTitle}>
+                        {centers.find((c) => c.id_centro.toString() === formCenterId)?.nombre || 'Centro no seleccionado'}
+                      </Text>
+                    </View>
+                  </View>
+                  {userRole === 'usuario' && getUserAssignedCenters(userId).length > 1 && modalType === 'create' && (
+                    <TouchableOpacity
+                      style={styles.centerChangeBtn}
+                      onPress={() => {
+                        setModalVisible(false);
+                        setCenterSelectionModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.centerChangeBtnText}>Cambiar centro</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <View style={styles.formContainerSplit}>
                 {/* Left Side: Product Catalog */}
                 <View style={styles.catalogColumn}>
                   <Text style={styles.modalSectionTitle}>Catálogo de Productos</Text>
@@ -1104,7 +1320,7 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                             </View>
                             <View style={styles.productCardInfo}>
                               <Text style={styles.productCardName} numberOfLines={2}>{p.nombre}</Text>
-                              {p.es_toxico === 1 && (
+                              {Boolean(p.es_toxico) && (
                                 <Text style={styles.toxicLabel}>⚠️ Tóxico</Text>
                               )}
                             </View>
@@ -1126,7 +1342,14 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                           <select
                             style={styles.htmlSelect}
                             value={formUserId}
-                            onChange={(e) => setFormUserId(e.target.value)}
+                            onChange={(e) => {
+                              const nextUid = e.target.value;
+                              setFormUserId(nextUid);
+                              const assigned = getUserAssignedCenters(parseInt(nextUid, 10));
+                              if (assigned.length > 0) {
+                                setFormCenterId(assigned[0].id_centro.toString());
+                              }
+                            }}
                           >
                             {users.map((u) => (
                               <option key={u.id_user} value={u.id_user}>
@@ -1145,13 +1368,16 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                         value={formCenterId}
                         onChange={(e) => setFormCenterId(e.target.value)}
                       >
-                        {centers
-                          .filter((c) => userRole !== 'usuario' || !idCentro || c.id_centro === idCentro)
-                          .map((c) => (
-                            <option key={c.id_centro} value={c.id_centro}>
-                              {c.nombre}
-                            </option>
-                          ))}
+                        {(userRole === 'usuario'
+                          ? getUserAssignedCenters(userId)
+                          : (getUserAssignedCenters(parseInt(formUserId, 10)).length > 0
+                              ? getUserAssignedCenters(parseInt(formUserId, 10))
+                              : centers)
+                        ).map((c) => (
+                          <option key={c.id_centro} value={c.id_centro}>
+                            {c.nombre}
+                          </option>
+                        ))}
                       </select>
                     </View>
 
@@ -1205,7 +1431,8 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                   </ScrollView>
                 </View>
               </View>
-            )}
+            </View>
+          )}
 
             <View style={styles.modalFooter}>
               <TouchableOpacity
@@ -1222,6 +1449,177 @@ export default function OrdersView({ baseUrl, userRole, userId, idCentro }: Orde
                   <Text style={styles.saveBtnText}>Guardar</Text>
                 </TouchableOpacity>
               )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Selección de Centro para Empleados con varios centros */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={centerSelectionModalVisible}
+        onRequestClose={() => setCenterSelectionModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxWidth: 580 }]}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#E0F2FE', justifyContent: 'center', alignItems: 'center' }}>
+                  <Feather name="map-pin" size={18} color="#0284C7" />
+                </View>
+                <View>
+                  <Text style={styles.modalTitle}>¿Para qué centro es el pedido?</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                    Debes realizar un pedido individual para cada uno de tus centros asignados.
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setCenterSelectionModalVisible(false)}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ padding: 20, maxHeight: 420 }}>
+              {getUserAssignedCenters(userId).map((c) => {
+                const existingOrder = getOrderForCenter(c.id_centro, userId);
+                const isSelected = formCenterId === c.id_centro.toString();
+
+                return (
+                  <TouchableOpacity
+                    key={c.id_centro}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.centerSelectionCard,
+                      isSelected && styles.centerSelectionCardActive,
+                      existingOrder ? styles.centerSelectionCardCompleted : styles.centerSelectionCardPending,
+                    ]}
+                    onPress={() => handleStartCreateForCenter(c.id_centro)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                          <Feather name="briefcase" size={16} color={existingOrder ? '#10B981' : '#F59E0B'} />
+                          <Text style={{ fontSize: 15, fontWeight: '700', color: '#0F172A' }}>
+                            {c.nombre}
+                          </Text>
+                        </View>
+                        {c.direccion && (
+                          <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>
+                            📍 {c.direccion} {c.ciudad ? `(${c.ciudad})` : ''}
+                          </Text>
+                        )}
+                        {existingOrder ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                            <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: '#DCFCE7' }}>
+                              <Text style={{ fontSize: 11, fontWeight: '600', color: '#15803D' }}>
+                                ✓ Pedido #{existingOrder.id_pedido} registrado ({existingOrder.estado})
+                              </Text>
+                            </View>
+                          </View>
+                        ) : (
+                          <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: '#FEF3C7', alignSelf: 'flex-start', marginTop: 4 }}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#B45309' }}>
+                              ⚠️ Pendiente de realizar pedido
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <View style={{ justifyContent: 'center' }}>
+                        <View style={[styles.actionBtn, { height: 34, paddingHorizontal: 12, backgroundColor: existingOrder ? '#E2E8F0' : '#5C8E8D' }]}>
+                          <Text style={[styles.btnText, { fontSize: 12, color: existingOrder ? '#475569' : '#FFFFFF' }]}>
+                            {existingOrder ? 'Ver / Modificar' : 'Hacer Pedido'}
+                          </Text>
+                          <Feather name="arrow-right" size={14} color={existingOrder ? '#475569' : '#FFFFFF'} />
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={[styles.modalFooter, { justifyContent: 'flex-end', backgroundColor: '#F8FAFC' }]}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.cancelModalBtn]}
+                onPress={() => setCenterSelectionModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Siguiente Centro ("y luego hará los siguientes") */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={nextCenterModalVisible}
+        onRequestClose={() => setNextCenterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxWidth: 520 }]}>
+            <View style={[styles.modalHeader, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+              <TouchableOpacity onPress={() => setNextCenterModalVisible(false)} style={{ marginLeft: 'auto' }}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ paddingHorizontal: 24, paddingBottom: 24, alignItems: 'center' }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
+                <Feather name="check" size={32} color="#16A34A" />
+              </View>
+
+              <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', textAlign: 'center' }}>
+                ¡Pedido de {justSavedCenterName} guardado!
+              </Text>
+
+              <Text style={{ fontSize: 14, color: '#475569', textAlign: 'center', marginTop: 8, lineHeight: 20 }}>
+                Recuerda que debes realizar <Text style={{ fontWeight: '700', color: '#0F172A' }}>un pedido por cada centro</Text> de trabajo asignado.
+              </Text>
+
+              <View style={[styles.nextCenterModalCard, { width: '100%' }]}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Centros restantes pendientes ({pendingCentersForNext.length}):
+                </Text>
+                {pendingCentersForNext.map((c) => (
+                  <View key={c.id_centro} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderColor: '#E2E8F0' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <Feather name="map-pin" size={14} color="#F97316" />
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E293B' }} numberOfLines={1}>
+                        {c.nombre}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: '#FFF7ED', borderWidth: 1, borderColor: '#FDBA74' }}
+                      onPress={() => handleStartCreateForCenter(c.id_centro)}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#C2410C' }}>Pedir ahora ➔</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+
+              {pendingCentersForNext.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.nextCenterPrimaryBtn, { width: '100%' }]}
+                  onPress={() => handleStartCreateForCenter(pendingCentersForNext[0].id_centro)}
+                >
+                  <Text style={styles.nextCenterPrimaryBtnText}>
+                    Hacer Pedido para {pendingCentersForNext[0].nombre}
+                  </Text>
+                  <Feather name="arrow-right" size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.nextCenterSecondaryBtn}
+                onPress={() => setNextCenterModalVisible(false)}
+              >
+                <Text style={styles.nextCenterSecondaryBtnText}>Dejar para más tarde y ver pedidos</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

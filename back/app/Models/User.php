@@ -21,6 +21,8 @@ class User extends Authenticatable
 
     public $with = ['centro', 'centros'];
 
+    protected $appends = ['assigned_centros'];
+
     public function centro()
     {
         return $this->belongsTo(WorkCenter::class, 'id_centro', 'id_centro');
@@ -29,5 +31,14 @@ class User extends Authenticatable
     public function centros()
     {
         return $this->belongsToMany(WorkCenter::class, 'centro_user', 'id_user', 'id_centro');
+    }
+
+    public function getAssignedCentrosAttribute()
+    {
+        $list = collect($this->centros ?? []);
+        if ($this->centro && !$list->contains('id_centro', $this->centro->id_centro)) {
+            $list->push($this->centro);
+        }
+        return $list->values();
     }
 }

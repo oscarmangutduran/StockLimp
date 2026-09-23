@@ -100,6 +100,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   const [formRol, setFormRol] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formCentroId, setFormCentroId] = useState<string>('');
+  const [formCentroIds, setFormCentroIds] = useState<number[]>([]);
 
   // Custom Alert state
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
@@ -166,6 +167,11 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
       ? user.id_centro.toString()
       : (user.centros && user.centros.length > 0 ? user.centros[0].id_centro.toString() : '');
     setFormCentroId(currentCentroId);
+
+    const initialCenterIds = (user.centros && user.centros.length > 0)
+      ? user.centros.map((c) => c.id_centro)
+      : (user.id_centro ? [user.id_centro] : []);
+    setFormCentroIds(initialCenterIds);
     setModalVisible(true);
   };
 
@@ -181,7 +187,8 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
       email: formEmail,
       rol: formRol,
       password: formPassword || null,
-      id_centro: formCentroId ? parseInt(formCentroId, 10) : null
+      id_centros: formCentroIds,
+      id_centro: formCentroIds.length > 0 ? formCentroIds[0] : null
     };
 
     setLoading(true);
@@ -679,20 +686,42 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                 </select>
               </View>
 
-              <Text style={styles.label}>Centro Asignado</Text>
-              <View style={styles.selectWrapper}>
-                <select
-                  style={styles.htmlSelect}
-                  value={formCentroId}
-                  onChange={(e) => setFormCentroId(e.target.value)}
-                >
-                  <option value="">Sin centro asignado</option>
-                  {centers.map((c) => (
-                    <option key={c.id_centro} value={c.id_centro}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </select>
+              <Text style={styles.label}>Centros Asignados ({formCentroIds.length} seleccionados)</Text>
+              <View style={{ maxHeight: 150, borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, padding: 8, backgroundColor: '#F8FAFC', marginBottom: 12 }}>
+                <ScrollView nestedScrollEnabled={true}>
+                  {centers.map((c) => {
+                    const isChecked = formCentroIds.includes(c.id_centro);
+                    return (
+                      <TouchableOpacity
+                        key={c.id_centro}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingVertical: 6,
+                          paddingHorizontal: 8,
+                          borderRadius: 6,
+                          backgroundColor: isChecked ? '#EFF6FF' : 'transparent',
+                          marginBottom: 4,
+                          gap: 8,
+                        }}
+                        onPress={() => {
+                          if (isChecked) {
+                            setFormCentroIds(formCentroIds.filter((id) => id !== c.id_centro));
+                          } else {
+                            setFormCentroIds([...formCentroIds, c.id_centro]);
+                          }
+                        }}
+                      >
+                        <View style={{ width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: isChecked ? '#2563EB' : '#94A3B8', backgroundColor: isChecked ? '#2563EB' : '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
+                          {isChecked && <Feather name="check" size={12} color="#FFFFFF" />}
+                        </View>
+                        <Text style={{ fontSize: 13, color: isChecked ? '#1D4ED8' : '#334155', fontWeight: isChecked ? '600' : '400', flex: 1 }}>
+                          {c.nombre}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
               </View>
 
               <Text style={styles.label}>Cambiar Contraseña (Dejar en blanco si no se cambia)</Text>
