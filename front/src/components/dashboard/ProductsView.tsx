@@ -94,7 +94,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'info' | 'create' | 'edit' | 'image'>('info');
+  const [modalType, setModalType] = useState<'info' | 'create' | 'edit' | 'image' | 'document'>('info');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
@@ -171,6 +171,13 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   const handleOpenImage = (product: Product) => {
     setSelectedProduct(product);
     setModalType('image');
+    setSuccessMessage(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenDocument = (product: Product) => {
+    setSelectedProduct(product);
+    setModalType('document');
     setSuccessMessage(null);
     setModalVisible(true);
   };
@@ -428,14 +435,8 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                             {product.ficha_tecnica ? (
                               <TouchableOpacity
                                 style={[styles.actionIcon, { backgroundColor: '#2563EB' }]}
-                                onPress={() => {
-                                  const fileUrl = `${baseUrl.replace('/api', '')}/uploads/fichas_tecnicas/${encodeURIComponent(product.ficha_tecnica!)}`;
-                                  if (Platform.OS === 'web') {
-                                    window.open(fileUrl, '_blank');
-                                  } else {
-                                    Linking.openURL(fileUrl);
-                                  }
-                                }}
+                                onPress={() => handleOpenDocument(product)}
+                                activeOpacity={0.8}
                               >
                                 <Feather name="file-text" size={14} color="#FFFFFF" />
                               </TouchableOpacity>
@@ -503,7 +504,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
         </View>
       )}
 
-      {/* Modal View for Info / Create / Edit */}
+      {/* Modal View for Info / Create / Edit / Document */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -511,17 +512,51 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View
+            style={[
+              styles.modalContent,
+              modalType === 'document' && {
+                maxWidth: 1000,
+                width: '95%',
+                height: '88%',
+                maxHeight: 850,
+              },
+            ]}
+          >
             {modalType !== 'image' && (
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    modalType === 'document' && { fontSize: 16, flex: 1, marginRight: 12 },
+                  ]}
+                  numberOfLines={1}
+                >
                   {modalType === 'info' && 'Detalles del Producto'}
                   {modalType === 'create' && 'Nuevo Producto'}
                   {modalType === 'edit' && 'Editar Producto'}
+                  {modalType === 'document' && `Ficha Técnica: ${selectedProduct?.nombre || ''}`}
                 </Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
-                  <Feather name="x" size={20} color="#64748B" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  {modalType === 'document' && selectedProduct?.ficha_tecnica && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        const fileUrl = `${baseUrl.replace('/api', '')}/uploads/fichas_tecnicas/${encodeURIComponent(selectedProduct.ficha_tecnica!)}`;
+                        if (Platform.OS === 'web') {
+                          window.open(fileUrl, '_blank');
+                        } else {
+                          Linking.openURL(fileUrl);
+                        }
+                      }}
+                      style={{ padding: 4 }}
+                    >
+                      <Feather name="external-link" size={18} color="#64748B" />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity onPress={() => setModalVisible(false)} style={{ padding: 4 }}>
+                    <Feather name="x" size={20} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
 
@@ -567,7 +602,37 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
               </View>
             )}
 
-            {modalType === 'info' && selectedProduct ? (
+            {modalType === 'document' && selectedProduct ? (
+              <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#F8FAFC' }}>
+                {Platform.OS === 'web' ? (
+                  React.createElement('iframe', {
+                    src: `${baseUrl.replace('/api', '')}/uploads/fichas_tecnicas/${encodeURIComponent(selectedProduct.ficha_tecnica || '')}#toolbar=1`,
+                    style: {
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                    },
+                    title: `Ficha Técnica - ${selectedProduct.nombre}`,
+                  })
+                ) : (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                    <Feather name="file-text" size={48} color="#2563EB" />
+                    <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '600', color: '#1E293B', textAlign: 'center' }}>
+                      {selectedProduct.ficha_tecnica}
+                    </Text>
+                    <TouchableOpacity
+                      style={{ marginTop: 16, backgroundColor: '#2563EB', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 8 }}
+                      onPress={() => {
+                        const url = `${baseUrl.replace('/api', '')}/uploads/fichas_tecnicas/${encodeURIComponent(selectedProduct.ficha_tecnica || '')}`;
+                        Linking.openURL(url);
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Abrir Documento</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ) : modalType === 'info' && selectedProduct ? (
               <View style={styles.modalBody}>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>ID Producto:</Text>
@@ -617,14 +682,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                         paddingHorizontal: 12,
                         borderRadius: 8,
                       }}
-                      onPress={() => {
-                        const fileUrl = `${baseUrl.replace('/api', '')}/uploads/fichas_tecnicas/${encodeURIComponent(selectedProduct.ficha_tecnica!)}`;
-                        if (Platform.OS === 'web') {
-                          window.open(fileUrl, '_blank');
-                        } else {
-                          Linking.openURL(fileUrl);
-                        }
-                      }}
+                      onPress={() => handleOpenDocument(selectedProduct)}
                       activeOpacity={0.8}
                     >
                       <Feather name="file-text" size={15} color="#2563EB" />
@@ -686,7 +744,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
               </View>
             )}
 
-            {modalType !== 'image' && (
+            {modalType !== 'image' && modalType !== 'document' && (
               <View style={styles.modalFooter}>
                 <TouchableOpacity
                   style={[styles.modalBtn, styles.cancelModalBtn]}
