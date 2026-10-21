@@ -13,7 +13,9 @@ echo "--- Actualizando catálogo estándar para pedidos (26 productos) ---\n";
 // 1. Asegurar columna es_estandar_pedido
 if (!Schema::hasColumn('productos', 'es_estandar_pedido')) {
     echo "Añadiendo columna 'es_estandar_pedido' a la tabla 'productos'...\n";
-    DB::statement("ALTER TABLE `productos` ADD COLUMN `es_estandar_pedido` TINYINT(1) NOT NULL DEFAULT 0 AFTER `es_toxico`");
+    Schema::table('productos', function ($table) {
+        $table->boolean('es_estandar_pedido')->default(0)->nullable();
+    });
     echo "Columna creada correctamente.\n";
 } else {
     echo "Columna 'es_estandar_pedido' ya existe.\n";

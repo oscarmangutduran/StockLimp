@@ -58,6 +58,9 @@ class DatabaseSeeder extends Seeder
             DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
         }
 
+        // Sembrar productos estándar para pedidos
+        $this->call(StandardProductsSeeder::class);
+
         $this->command->info("Seeding completed successfully!");
     }
 }

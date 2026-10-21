@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('foto_perfil', 255)->nullable();
             $table->string('password_hash', 255);
             $table->string('rol', 20)->default('usuario');
+            $table->string('api_token', 80)->unique()->nullable();
             $table->unsignedBigInteger('id_centro')->nullable();
             $table->timestamp('fecha_creacion')->useCurrent();
             $table->string('estado', 20)->default('activo');
@@ -55,6 +56,7 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->string('sku', 50)->unique()->nullable();
             $table->boolean('es_toxico')->default(0)->nullable();
+            $table->boolean('es_estandar_pedido')->default(0)->nullable();
             $table->decimal('precio_unidad', 10, 2)->default(0);
             $table->decimal('stock_actual', 10, 2)->default(0)->nullable();
             $table->timestamp('fecha_registro')->useCurrent();

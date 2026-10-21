@@ -50,8 +50,8 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/database
 
-# Expose port 80 (Apache default)
-EXPOSE 80
+# Expose default port
+EXPOSE 80 10000
 
-# Run migrations and seeder, then start Apache
-CMD ["bash", "-c", "mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite && chown -R www-data:www-data /var/www/html/database /var/www/html/storage && chmod -R 775 /var/www/html/database /var/www/html/storage && chmod 664 /var/www/html/database/database.sqlite && php artisan migrate --force && php artisan db:seed --force; php artisan config:cache; apache2-foreground"]
+# Run migrations and seeder, bind Apache to $PORT (for Render), then start Apache
+CMD ["bash", "-c", "PORT=${PORT:-80}; sed -ri -e \"s/Listen 80/Listen ${PORT}/g\" /etc/apache2/ports.conf; sed -ri -e \"s/:80/:${PORT}/g\" /etc/apache2/sites-available/*.conf; mkdir -p /var/www/html/database && touch /var/www/html/database/database.sqlite && chown -R www-data:www-data /var/www/html/database /var/www/html/storage && chmod -R 775 /var/www/html/database /var/www/html/storage && chmod 664 /var/www/html/database/database.sqlite && php artisan migrate --force && php artisan db:seed --force; php artisan config:cache; apache2-foreground"]

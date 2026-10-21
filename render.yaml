@@ -3,7 +3,7 @@ services:
   - type: web
     name: stocklimp-backend
     branch: APP-Android-IOS-Web
-    env: docker
+    runtime: docker
     region: frankfurt
     plan: free
     rootDir: back
@@ -41,15 +41,20 @@ services:
       - key: MAIL_FROM_NAME
         value: StockLimp
 
-  # Sitio Estático para el Frontend (Expo Web - completamente GRATIS)
+  # Sitio Estático para el Frontend (Expo Web)
   - type: web
     name: stocklimp-frontend
     branch: APP-Android-IOS-Web
-    env: static
+    runtime: static
     rootDir: front
     buildCommand: npm install && npx expo export -p web
     staticPublishPath: dist
     autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://stocklimp-backend.onrender.com
+
