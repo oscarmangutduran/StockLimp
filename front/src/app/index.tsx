@@ -138,14 +138,18 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   };
 
-  const saveUserSession = (userData: any) => {
-    setUser(userData);
+  const saveUserSession = (userData: any, token?: string) => {
+    const userWithToken = token ? { ...userData, token } : userData;
+    setUser(userWithToken);
     if (!initialTab) {
-      setActiveTab(userData.rol === 'super_admin' || userData.rol === 'admin' ? 'centros' : 'pedidos');
+      setActiveTab(userWithToken.rol === 'super_admin' || userWithToken.rol === 'admin' ? 'centros' : 'pedidos');
     }
     if (Platform.OS === 'web') {
       try {
-        sessionStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('user', JSON.stringify(userWithToken));
+        if (token || userWithToken.token) {
+          sessionStorage.setItem('token', token || userWithToken.token);
+        }
         if (rememberMe) {
           localStorage.setItem('stocklimp_remember_creds', JSON.stringify({ email, password }));
         } else {
@@ -283,7 +287,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        saveUserSession(data.user);
+        saveUserSession(data.user, data.token || data.access_token);
       } else {
         setError(data.message || 'Las credenciales no coinciden.');
       }
@@ -320,6 +324,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     if (Platform.OS === 'web') {
       try {
         sessionStorage.removeItem('user');
+        sessionStorage.removeItem('token');
         const savedCreds = localStorage.getItem('stocklimp_remember_creds');
         if (savedCreds) {
           const parsed = JSON.parse(savedCreds);

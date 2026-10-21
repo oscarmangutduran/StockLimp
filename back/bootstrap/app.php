@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Habilitamos el control de CORS global para el Preflight de Vite
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        $middleware->alias([
+            'auth.token' => \App\Http\Middleware\AuthenticateWithApiToken::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

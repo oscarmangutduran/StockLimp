@@ -43,6 +43,8 @@ Route::post('/usuarios/update-profile', [UserController::class, 'updateProfile']
 Route::post('/usuarios/solicitar-restablecimiento', [UserController::class, 'solicitarRestablecimiento']);
 Route::post('/usuarios/enviar-restablecimiento', [UserController::class, 'enviarRestablecimiento']);
 Route::post('/usuarios/cambiar-password-obligatorio', [UserController::class, 'cambiarPasswordObligatorio']);
+Route::post('/usuarios/logout', [UserController::class, 'logout']);
+Route::get('/usuarios/me', [UserController::class, 'me']);
 
 // Endpoints de Control Horario
 use App\Http\Controllers\TimeTrackingController;

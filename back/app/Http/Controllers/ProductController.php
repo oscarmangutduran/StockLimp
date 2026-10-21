@@ -5,35 +5,48 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
+
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Product::all(), 200);
+        $query = Product::with('componentes');
+
+        if ($request->has('search') && !empty($request->input('search'))) {
+            $s = $request->input('search');
+            $query->where(function ($q) use ($s) {
+                $q->where('nombre', 'like', "%{$s}%")
+                  ->orWhere('sku', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->has('es_toxico')) {
+            $query->where('es_toxico', $request->input('es_toxico'));
+        }
+
+        if ($request->has('page') || $request->has('per_page')) {
+            $perPage = (int) $request->input('per_page', 12);
+            return response()->json($query->paginate($perPage), 200);
+        }
+
+        return response()->json($query->get(), 200);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:100',
-            'sku' => 'nullable|string|max:100',
-            'precio_unidad' => 'required|numeric',
-            'stock_actual' => 'required|integer|min:0',
-            'es_toxico' => 'nullable|boolean',
-            'imagen' => 'nullable|string|max:255',
-            'ficha_tecnica' => 'nullable|string|max:255'
-        ]);
-
+        $validated = $request->validated();
         $product = Product::create($validated);
         return response()->json(['success' => true, 'product' => $product], 201);
     }
 
-    public function update(Request $request)
+    public function update(UpdateProductRequest $request)
     {
-        $request->validate(['id_producto' => 'required|exists:productos,id_producto']);
+        $validated = $request->validated();
         
-        $product = Product::find($request->id_producto);
-        $product->update($request->all());
+        $product = Product::find($validated['id_producto']);
+        $product->update($validated);
 
         return response()->json(['success' => true, 'product' => $product], 200);
     }

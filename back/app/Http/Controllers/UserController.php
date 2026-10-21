@@ -11,14 +11,29 @@ use App\Mail\UserApproved;
 use App\Mail\UserRejected;
 use App\Mail\PasswordResetMail;
 
+use App\Http\Requests\LoginRequest;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
 class UserController extends Controller
 {
-    public function login(Request $request)
+    public function __construct()
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        // Auto-sanación de la tabla users para asegurar la columna api_token
+        try {
+            if (Schema::hasTable('users')) {
+                if (!Schema::hasColumn('users', 'api_token')) {
+                    DB::statement("ALTER TABLE users ADD COLUMN api_token VARCHAR(80) NULL UNIQUE AFTER password_hash");
+                }
+            }
+        } catch (\Exception $e) {
+            // Evitamos bloquear la aplicación si la base de datos no está disponible temporalmente
+        }
+    }
+
+    public function login(LoginRequest $request)
+    {
+        $credentials = $request->validated();
 
         $user = User::where('email', $credentials['email'])->first();
 
@@ -55,12 +70,18 @@ class UserController extends Controller
             ], 403);
         }
 
+        // Generar o refrescar token de sesión Bearer
+        $token = bin2hex(random_bytes(32));
+        $user->api_token = $token;
+        $user->save();
+
         $user->load(['centro', 'centros']);
         $userData = array_merge($user->toArray(), [
             'id' => $user->id_user,
             'id_user' => $user->id_user,
             'name' => $user->nombre,
             'role' => $user->rol,
+            'token' => $token,
         ]);
 
         if ($credentials['password'] === '12345') {
@@ -68,6 +89,9 @@ class UserController extends Controller
                 'success' => true,
                 'debe_cambiar_password' => true,
                 'message' => 'Debes cambiar la contraseña por defecto para poder ingresar.',
+                'token' => $token,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
                 'user' => $userData
             ]);
         }
@@ -75,13 +99,77 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Login correcto',
+            'token' => $token,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
             'user' => $userData
         ]);
     }
 
-    public function index()
+    public function logout(Request $request)
     {
-        return response()->json(User::all(), 200);
+        $token = $request->bearerToken() ?? $request->header('X-Auth-Token') ?? $request->input('api_token');
+        if ($token) {
+            User::where('api_token', $token)->update(['api_token' => null]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sesión cerrada correctamente.'
+        ], 200);
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user() ?? $request->attributes->get('authenticated_user');
+        if (!$user) {
+            $token = $request->bearerToken() ?? $request->input('api_token');
+            if ($token) {
+                $user = User::where('api_token', $token)->first();
+            }
+        }
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'No autenticado'], 401);
+        }
+
+        $user->load(['centro', 'centros']);
+        return response()->json([
+            'success' => true,
+            'user' => array_merge($user->toArray(), [
+                'id' => $user->id_user,
+                'id_user' => $user->id_user,
+                'name' => $user->nombre,
+                'role' => $user->rol,
+            ])
+        ], 200);
+    }
+
+    public function index(Request $request)
+    {
+        $query = User::with(['centro', 'centros']);
+
+        if ($request->has('rol')) {
+            $query->where('rol', $request->input('rol'));
+        }
+        if ($request->has('estado')) {
+            $query->where('estado', $request->input('estado'));
+        }
+        if ($request->has('search')) {
+            $s = $request->input('search');
+            $query->where(function($q) use ($s) {
+                $q->where('nombre', 'like', "%{$s}%")
+                  ->orWhere('email', 'like', "%{$s}%");
+            });
+        }
+
+        // Soporte de paginación si se solicita explícitamente
+        if ($request->has('page') || $request->has('per_page')) {
+            $perPage = (int) $request->input('per_page', 15);
+            return response()->json($query->paginate($perPage), 200);
+        }
+
+        return response()->json($query->get(), 200);
     }
 
     public function updateRole(Request $request)

@@ -7,40 +7,68 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderStatusRequest;
+
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with('detalles.producto');
+        $query = Order::with(['detalles.producto', 'usuario', 'centro']);
         
         if ($request->has('id_user')) {
             $query->where('id_user', $request->input('id_user'));
         }
 
-        $pedidos = $query->orderBy('fecha_creacion', 'desc')->get();
+        if ($request->has('id_centro')) {
+            $query->where('id_centro', $request->input('id_centro'));
+        }
+
+        if ($request->has('estado') && !empty($request->input('estado'))) {
+            $query->where('estado', strtoupper($request->input('estado')));
+        }
+
+        if ($request->has('search') && !empty($request->input('search'))) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('id_pedido', 'like', "%{$search}%")
+                  ->orWhere('observaciones', 'like', "%{$search}%")
+                  ->orWhereHas('usuario', function ($u) use ($search) {
+                      $u->where('nombre', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('centro', function ($c) use ($search) {
+                      $c->where('nombre_centro', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $query->orderBy('fecha_creacion', 'desc');
+
+        // Soporte de paginación opcional para optimizar consultas grandes
+        if ($request->has('page') || $request->has('per_page')) {
+            $perPage = (int) $request->input('per_page', 15);
+            return response()->json($query->paginate($perPage), 200);
+        }
+
+        $pedidos = $query->get();
         return response()->json($pedidos, 200);
     }
 
-    public function storeMultiple(Request $request)
+    public function storeMultiple(StoreOrderRequest $request)
     {
-        $request->validate([
-            'id_user' => 'required|exists:users,id_user',
-            'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
-            'productos' => 'required|array', // Array de objetos con id_producto y cantidad
-            'observaciones' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Usamos una transacción para asegurarnos de que si falla un detalle, no se cree el pedido a medias
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($validated) {
             $pedido = Order::create([
-                'id_user' => $request->id_user,
-                'id_centro' => $request->input('id_centro', 1), // Centro especificado o predeterminado
+                'id_user' => $validated['id_user'],
+                'id_centro' => $validated['id_centro'] ?? 1, // Centro especificado o predeterminado
                 'fecha_creacion' => now()->format('Y-m-d H:i:s'),
                 'estado' => 'PENDIENTE',
-                'observaciones' => $request->observaciones
+                'observaciones' => $validated['observaciones'] ?? null
             ]);
 
-            foreach ($request->productos as $item) {
+            foreach ($validated['productos'] as $item) {
                 $product = \App\Models\Product::find($item['id_producto']);
                 $precio_total = $product ? ($product->precio_unidad * $item['cantidad']) : 0;
 
@@ -56,15 +84,12 @@ class OrderController extends Controller
         return response()->json(['success' => true, 'message' => 'Pedido registrado correctamente'], 201);
     }
 
-    public function updateStatus(Request $request)
+    public function updateStatus(UpdateOrderStatusRequest $request)
     {
-        $request->validate([
-            'id_pedido' => 'required|exists:pedidos,id_pedido',
-            'estado' => 'required|string'
-        ]);
+        $validated = $request->validated();
 
-        $order = Order::with('usuario', 'centro')->find($request->id_pedido);
-        $order->update(['estado' => strtoupper($request->estado)]);
+        $order = Order::with('usuario', 'centro')->find($validated['id_pedido']);
+        $order->update(['estado' => strtoupper($validated['estado'])]);
 
         // Si el usuario es de rol 'usuario', enviar correo después de enviar la respuesta
         if ($order->usuario && $order->usuario->rol === 'usuario') {
