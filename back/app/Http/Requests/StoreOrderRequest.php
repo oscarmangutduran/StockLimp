@@ -18,11 +18,23 @@ class StoreOrderRequest extends FormRequest
         return [
             'id_user' => 'required|exists:users,id_user',
             'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
-            'productos' => 'required|array|min:1',
+            'productos' => 'nullable|array',
             'productos.*.id_producto' => 'required|exists:productos,id_producto',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
             'observaciones' => 'nullable|string|max:1000',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $hasProducts = !empty($this->productos) && count($this->productos) > 0;
+            $hasObservaciones = !empty(trim($this->observaciones ?? ''));
+
+            if (!$hasProducts && !$hasObservaciones) {
+                $validator->errors()->add('productos', 'Debes seleccionar al menos un producto estándar o indicar tu petición excepcional en observaciones.');
+            }
+        });
     }
 
     public function messages(): array

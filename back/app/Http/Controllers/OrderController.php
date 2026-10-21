@@ -68,16 +68,18 @@ class OrderController extends Controller
                 'observaciones' => $validated['observaciones'] ?? null
             ]);
 
-            foreach ($validated['productos'] as $item) {
-                $product = \App\Models\Product::find($item['id_producto']);
-                $precio_total = $product ? ($product->precio_unidad * $item['cantidad']) : 0;
+            if (!empty($validated['productos'])) {
+                foreach ($validated['productos'] as $item) {
+                    $product = \App\Models\Product::find($item['id_producto']);
+                    $precio_total = $product ? ($product->precio_unidad * $item['cantidad']) : 0;
 
-                OrderDetail::create([
-                    'id_pedido' => $pedido->id_pedido,
-                    'id_producto' => $item['id_producto'],
-                    'cantidad_solicitada' => $item['cantidad'],
-                    'precio_total_linea' => $precio_total
-                ]);
+                    OrderDetail::create([
+                        'id_pedido' => $pedido->id_pedido,
+                        'id_producto' => $item['id_producto'],
+                        'cantidad_solicitada' => $item['cantidad'],
+                        'precio_total_linea' => $precio_total
+                    ]);
+                }
             }
         });
 

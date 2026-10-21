@@ -13,4 +13,9 @@ class Product extends Model
     public $timestamps = false; 
 
     protected $guarded = [];
+
+    public function componentes()
+    {
+        return $this->hasMany(ProductComponent::class, 'id_producto', 'id_producto');
+    }
 }

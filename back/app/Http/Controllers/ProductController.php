@@ -26,6 +26,10 @@ class ProductController extends Controller
             $query->where('es_toxico', $request->input('es_toxico'));
         }
 
+        if ($request->has('es_estandar_pedido')) {
+            $query->where('es_estandar_pedido', $request->input('es_estandar_pedido'));
+        }
+
         if ($request->has('page') || $request->has('per_page')) {
             $perPage = (int) $request->input('per_page', 12);
             return response()->json($query->paginate($perPage), 200);

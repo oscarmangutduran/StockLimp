@@ -69,6 +69,8 @@ const mockOrders: Order[] = [
   },
 ];
 
+import { STANDARD_PRODUCTS_LIST } from './orders/standardProductsList';
+
 export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCentro, currentUser }: OrdersViewProps) {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
@@ -79,7 +81,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(STANDARD_PRODUCTS_LIST);
   const [loading, setLoading] = useState(false);
 
   // Filters & Search
@@ -177,7 +179,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     setFormUserId(userId ? userId.toString() : '1');
     setFormCenterId(centerId.toString());
     setFormObservaciones('');
-    setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
+    setFormItems([]);
     setModalType('create');
     setSuccessMessage(null);
     setCenterSelectionModalVisible(false);
@@ -208,7 +210,13 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
       if (centersRes.ok) setCenters(await centersRes.json());
 
       const productsRes = await authFetch(`${baseUrl}/productos`);
-      if (productsRes.ok) setProducts(await productsRes.json());
+      if (productsRes.ok) {
+        const prodData = await productsRes.json();
+        const prodList = Array.isArray(prodData) ? prodData : (prodData.data || []);
+        if (prodList && prodList.length > 0) {
+          setProducts(prodList);
+        }
+      }
 
     } catch (error) {
       console.log('Error fetching data, loading mocks:', error);
@@ -234,7 +242,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     const assigned = getUserAssignedCenters(parseInt(initialUser, 10));
     setFormCenterId(assigned[0]?.id_centro?.toString() || centers[0]?.id_centro?.toString() || '1');
     setFormObservaciones('');
-    setFormItems([{ id_producto: products[0]?.id_producto || 1, cantidad: 1 }]);
+    setFormItems([]);
     setModalType('create');
     setSuccessMessage(null);
     setModalVisible(true);
@@ -281,29 +289,95 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
   };
 
   const getProductColor = (p: Product) => {
+    const name = p.nombre.toUpperCase();
+    if (name.includes('LEJIA') || name.includes('CLORO')) return '#FEF3C7';
+    if (name.includes('AMONIACO')) return '#F3E8FF';
+    if (name.includes('FREGASUELO')) return '#ECFDF5';
+    if (name.includes('AMBIENTADOR')) return '#ECFEFF';
+    if (name.includes('BAYETA')) return '#EFF6FF';
+    if (name.includes('FREGONA')) return '#EEF2FF';
+    if (name.includes('MICROFIBRA')) return '#FDF2F8';
+    if (name.includes('SACO')) return '#F1F5F9';
+    if (name.includes('BOLSA')) return '#F8FAFC';
+    if (name.includes('CEPILLO')) return '#FEF2F2';
+    if (name.includes('PALO')) return '#FFFBEB';
+    if (name.includes('RECOGEDOR')) return '#E0F2FE';
+    if (name.includes('FLOTA')) return '#FEF9C3';
+    if (name.includes('ARRIXACA')) return '#FEE2E2';
+    if (name.includes('PAPEL') || name.includes('WC')) return '#F8FAFC';
+    if (name.includes('CRISTASOL') || name.includes('CRISTAL')) return '#E0F2FE';
+    if (name.includes('CENTELLA')) return '#FEF9C3';
+    if (name.includes('SUPERBRILLO')) return '#FEF08A';
+    if (name.includes('MADERA')) return '#FDF8F6';
+    if (name.includes('GAMUZA')) return '#FEF3C7';
+    if (name.includes('PLUMERO')) return '#F5F3FF';
+    if (name.includes('SUPER FLAX')) return '#ECFCCB';
+    if (name.includes('CUBO')) return '#DBEAFE';
+    if (name.includes('ESTROPAJO')) return '#D1FAE5';
+    if (name.includes('MOPA')) return '#CCFBF1';
     if (p.es_toxico) return '#FEE2E2';
-    const name = p.nombre.toLowerCase();
-    if (name.includes('cristal') || name.includes('limpia')) return '#ECFEFF';
-    if (name.includes('ambient') || name.includes('bosque')) return '#ECFDF5';
-    if (name.includes('lejia') || name.includes('cloro')) return '#FEF3C7';
     return '#EFF6FF';
   };
 
   const getProductIconColor = (p: Product) => {
+    const name = p.nombre.toUpperCase();
+    if (name.includes('LEJIA') || name.includes('CLORO')) return '#D97706';
+    if (name.includes('AMONIACO')) return '#9333EA';
+    if (name.includes('FREGASUELO')) return '#059669';
+    if (name.includes('AMBIENTADOR')) return '#0891B2';
+    if (name.includes('BAYETA')) return '#2563EB';
+    if (name.includes('FREGONA')) return '#4F46E5';
+    if (name.includes('MICROFIBRA')) return '#DB2777';
+    if (name.includes('SACO')) return '#334155';
+    if (name.includes('BOLSA')) return '#475569';
+    if (name.includes('CEPILLO')) return '#DC2626';
+    if (name.includes('PALO')) return '#B45309';
+    if (name.includes('RECOGEDOR')) return '#0284C7';
+    if (name.includes('FLOTA')) return '#CA8A04';
+    if (name.includes('ARRIXACA')) return '#DC2626';
+    if (name.includes('PAPEL') || name.includes('WC')) return '#64748B';
+    if (name.includes('CRISTASOL') || name.includes('CRISTAL')) return '#0284C7';
+    if (name.includes('CENTELLA')) return '#EAB308';
+    if (name.includes('SUPERBRILLO')) return '#D97706';
+    if (name.includes('MADERA')) return '#854D0E';
+    if (name.includes('GAMUZA')) return '#D97706';
+    if (name.includes('PLUMERO')) return '#7C3AED';
+    if (name.includes('SUPER FLAX')) return '#65A30D';
+    if (name.includes('CUBO')) return '#1D4ED8';
+    if (name.includes('ESTROPAJO')) return '#047857';
+    if (name.includes('MOPA')) return '#0D9488';
     if (p.es_toxico) return '#EF4444';
-    const name = p.nombre.toLowerCase();
-    if (name.includes('cristal') || name.includes('limpia')) return '#0891B2';
-    if (name.includes('ambient') || name.includes('bosque')) return '#059669';
-    if (name.includes('lejia') || name.includes('cloro')) return '#D97706';
     return '#2563EB';
   };
 
   const getProductIcon = (p: Product) => {
+    const name = p.nombre.toUpperCase();
+    if (name.includes('LEJIA') || name.includes('CLORO')) return 'shield';
+    if (name.includes('AMONIACO')) return 'alert-circle';
+    if (name.includes('FREGASUELO')) return 'droplet';
+    if (name.includes('AMBIENTADOR')) return 'feather';
+    if (name.includes('BAYETA')) return 'layers';
+    if (name.includes('FREGONA')) return 'disc';
+    if (name.includes('MICROFIBRA')) return 'sun';
+    if (name.includes('SACO')) return 'archive';
+    if (name.includes('BOLSA')) return 'shopping-bag';
+    if (name.includes('CEPILLO')) return 'scissors';
+    if (name.includes('PALO')) return 'maximize-2';
+    if (name.includes('RECOGEDOR')) return 'inbox';
+    if (name.includes('FLOTA')) return 'sun';
+    if (name.includes('ARRIXACA')) return 'shield';
+    if (name.includes('PAPEL') || name.includes('WC')) return 'file-text';
+    if (name.includes('CRISTASOL') || name.includes('CRISTAL')) return 'eye';
+    if (name.includes('CENTELLA')) return 'star';
+    if (name.includes('SUPERBRILLO')) return 'zap';
+    if (name.includes('MADERA')) return 'coffee';
+    if (name.includes('GAMUZA')) return 'grid';
+    if (name.includes('PLUMERO')) return 'feather';
+    if (name.includes('SUPER FLAX')) return 'check-circle';
+    if (name.includes('CUBO')) return 'box';
+    if (name.includes('ESTROPAJO')) return 'activity';
+    if (name.includes('MOPA')) return 'sliders';
     if (p.es_toxico) return 'alert-triangle';
-    const name = p.nombre.toLowerCase();
-    if (name.includes('cristal') || name.includes('limpia')) return 'wind';
-    if (name.includes('ambient') || name.includes('bosque')) return 'feather';
-    if (name.includes('lejia') || name.includes('cloro')) return 'shield';
     return 'droplet';
   };
 
@@ -339,8 +413,8 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
   };
 
   const handleSave = async () => {
-    if (formItems.length === 0) {
-      showCustomAlert('Detalles del Pedido', 'Por favor, agrega al menos un producto al pedido.', 'info');
+    if (formItems.length === 0 && !formObservaciones.trim()) {
+      showCustomAlert('Detalles del Pedido', 'Por favor, selecciona al menos un producto estándar o escribe tu petición excepcional en el campo de observaciones.', 'info');
       return;
     }
 
