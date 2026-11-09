@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Modal, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { styles } from '../../../css/OrdersView.styles';
 import { Center, Product, User, FormItem } from './types';
-import { STANDARD_PRODUCTS_LIST } from './standardProductsList';
+import { STANDARD_PRODUCTS_LIST, STANDARD_PRODUCT_IMAGES } from './standardProductsList';
 
 export const STANDARD_ORDER_NAMES = [
   'LEJIA',
@@ -60,6 +60,7 @@ interface OrderFormModalProps {
   getProductColor: (p: Product) => string;
   getProductIcon: (p: Product) => any;
   getProductIconColor: (p: Product) => string;
+  baseUrl?: string;
 }
 
 export const OrderFormModal: React.FC<OrderFormModalProps> = ({
@@ -88,6 +89,7 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
   getProductColor,
   getProductIcon,
   getProductIconColor,
+  baseUrl = 'http://localhost:8000/api',
 }) => {
   if (!visible) return null;
 
@@ -175,6 +177,17 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                     {standardProducts.map((p) => {
                       const existingItem = formItems.find(item => item.id_producto === p.id_producto);
                       const addedQty = existingItem ? existingItem.cantidad : 0;
+                      const upperName = p.nombre.toUpperCase().trim();
+                      const mappedImage =
+                        (p.imagen && p.imagen.includes('uploads/productos/') ? p.imagen : undefined) ||
+                        STANDARD_PRODUCT_IMAGES[upperName];
+                      const serverRoot = baseUrl.replace(/\/api\/?$/, '');
+                      const imageUri = mappedImage
+                        ? mappedImage.startsWith('http')
+                          ? mappedImage
+                          : `${serverRoot}/${encodeURI(mappedImage)}`
+                        : null;
+
                       return (
                         <TouchableOpacity
                           key={p.id_producto}
@@ -182,8 +195,20 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                           onPress={() => onProductCardClick(p.id_producto)}
                           activeOpacity={0.8}
                         >
-                          <View style={[styles.productImagePlaceholder, { backgroundColor: getProductColor(p) }]}>
-                            <Feather name={getProductIcon(p)} size={26} color={getProductIconColor(p)} />
+                          <View
+                            style={[
+                              styles.productImagePlaceholder,
+                              { backgroundColor: imageUri ? '#FFFFFF' : getProductColor(p) },
+                            ]}
+                          >
+                            {imageUri ? (
+                              <Image
+                                source={{ uri: imageUri }}
+                                style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
+                              />
+                            ) : (
+                              <Feather name={getProductIcon(p)} size={26} color={getProductIconColor(p)} />
+                            )}
                             {addedQty > 0 && (
                               <View style={styles.addedBadge}>
                                 <Text style={styles.addedBadgeText}>+{addedQty}</Text>

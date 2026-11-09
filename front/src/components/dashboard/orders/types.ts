@@ -53,6 +53,7 @@ export interface Product {
   precio_unidad: number;
   es_toxico?: boolean | number;
   es_estandar_pedido?: boolean | number;
+  imagen?: string;
 }
 
 export interface FormItem {

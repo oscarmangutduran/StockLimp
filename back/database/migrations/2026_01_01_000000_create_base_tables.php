@@ -11,10 +11,13 @@ return new class extends Migration
         // 1. centros_trabajo
         Schema::create('centros_trabajo', function (Blueprint $table) {
             $table->id('id_centro');
-            $table->string('nombre_centro');
+            $table->text('nombre_centro');
             $table->integer('numero_ruta')->nullable();
-            $table->string('direccion')->nullable();
+            $table->text('direccion')->nullable();
             $table->string('ciudad')->nullable();
+            $table->string('contacto')->nullable();
+            $table->string('telefono')->nullable();
+            $table->timestamp('fecha_registro')->nullable()->useCurrent();
         });
 
         // 2. users
@@ -27,10 +30,10 @@ return new class extends Migration
             $table->string('direccion', 255)->nullable();
             $table->string('foto_perfil', 255)->nullable();
             $table->string('password_hash', 255);
-            $table->string('rol', 20)->default('usuario');
+            $table->string('rol', 50)->default('usuario');
             $table->string('api_token', 80)->unique()->nullable();
             $table->unsignedBigInteger('id_centro')->nullable();
-            $table->timestamp('fecha_creacion')->useCurrent();
+            $table->timestamp('fecha_creacion')->nullable()->useCurrent();
             $table->string('estado', 20)->default('activo');
             $table->boolean('solicita_restablecimiento')->default(0)->nullable();
             
@@ -59,17 +62,31 @@ return new class extends Migration
             $table->boolean('es_estandar_pedido')->default(0)->nullable();
             $table->decimal('precio_unidad', 10, 2)->default(0);
             $table->decimal('stock_actual', 10, 2)->default(0)->nullable();
-            $table->timestamp('fecha_registro')->useCurrent();
+            $table->timestamp('fecha_registro')->nullable()->useCurrent();
             $table->string('imagen')->nullable();
+            $table->string('ficha_tecnica')->nullable();
+        });
+
+        // 4b. producto_componentes
+        Schema::create('producto_componentes', function (Blueprint $table) {
+            $table->id('id_componente');
+            $table->unsignedBigInteger('id_producto');
+            $table->string('nombre_componente');
+            $table->string('porcentaje', 50)->nullable();
+            $table->text('descripcion_seguridad')->nullable();
+
+            $table->foreign('id_producto')->references('id_producto')->on('productos')->onDelete('cascade');
         });
 
         // 5. pedidos
         Schema::create('pedidos', function (Blueprint $table) {
             $table->id('id_pedido');
-            $table->unsignedBigInteger('id_user');
-            $table->unsignedBigInteger('id_centro');
-            $table->string('estado', 50)->default('pendiente');
-            $table->timestamp('fecha')->useCurrent();
+            $table->unsignedBigInteger('id_user')->nullable();
+            $table->unsignedBigInteger('id_centro')->nullable();
+            $table->string('estado', 50)->default('PENDIENTE');
+            $table->dateTime('fecha_creacion')->nullable()->useCurrent();
+            $table->dateTime('fecha_salida_almacen')->nullable();
+            $table->timestamp('fecha')->nullable()->useCurrent();
             $table->text('observaciones')->nullable();
 
             $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
@@ -80,7 +97,9 @@ return new class extends Migration
         Schema::create('detalle_pedido', function (Blueprint $table) {
             $table->unsignedBigInteger('id_pedido');
             $table->unsignedBigInteger('id_producto');
-            $table->integer('cantidad')->default(1);
+            $table->integer('cantidad')->default(1)->nullable();
+            $table->decimal('cantidad_solicitada', 10, 2)->default(1)->nullable();
+            $table->decimal('precio_total_linea', 10, 2)->default(0)->nullable();
 
             $table->foreign('id_pedido')->references('id_pedido')->on('pedidos')->onDelete('cascade');
             $table->foreign('id_producto')->references('id_producto')->on('productos')->onDelete('cascade');
@@ -190,6 +209,7 @@ return new class extends Migration
         Schema::dropIfExists('fichajes');
         Schema::dropIfExists('detalle_pedido');
         Schema::dropIfExists('pedidos');
+        Schema::dropIfExists('producto_componentes');
         Schema::dropIfExists('productos');
         Schema::dropIfExists('centro_user');
         Schema::dropIfExists('users');

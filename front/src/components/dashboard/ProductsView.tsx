@@ -38,24 +38,24 @@ interface ProductsViewProps {
 }
 
 const mockProducts: Product[] = [
-  { id_producto: 1, nombre: "Desatascador de Desagües 2CV880", sku: "2CV-880", es_toxico: true, precio_unidad: 14.50, stock_actual: 45, ficha_tecnica: "DESATASCADOR DESAGUES FT_2CV880.pdf", imagen: "desengrasante.png" },
-  { id_producto: 2, nombre: "Desengrasante Enérgico ISA 1DT300", sku: "1DT-300", es_toxico: true, precio_unidad: 18.90, stock_actual: 60, ficha_tecnica: "DESENGRASANTE (ISA) FDS 1DT300 v6 CLP.PDF", imagen: "desengrasante.png" },
-  { id_producto: 3, nombre: "Desgrafion (A) Eliminador de Graffitis", sku: "DESGRAF-A", es_toxico: true, precio_unidad: 22.50, stock_actual: 25, ficha_tecnica: "DESGRAFION (A).pdf", imagen: "detergente.png" },
-  { id_producto: 4, nombre: "Splash / Glup Suelos Limón (Monodosis)", sku: "SPLASH-LIMON", es_toxico: false, precio_unidad: 16.75, stock_actual: 120, ficha_tecnica: "glup suelos limon.pdf", imagen: "ambientador.png" },
-  { id_producto: 5, nombre: "Splash / Glup Suelos Marino (Monodosis)", sku: "SPLASH-MARINO", es_toxico: false, precio_unidad: 16.75, stock_actual: 110, ficha_tecnica: "glup marino.pdf", imagen: "cristales.png" },
-  { id_producto: 6, nombre: "Splash / Glup Suelos Manzana (Monodosis)", sku: "SPLASH-MANZANA", es_toxico: false, precio_unidad: 16.75, stock_actual: 115, ficha_tecnica: "GLUP SUELOS MANZANA.PDF", imagen: "ambientador.png" },
-  { id_producto: 7, nombre: "Tergi Inox - Limpiador Abrillantador Acero Inox", sku: "TERGI-INOX", es_toxico: true, precio_unidad: 12.80, stock_actual: 45, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "cristales.png" },
-  { id_producto: 8, nombre: "Arrixaca Baño - Gel Ácido Antical Sanitarios", sku: "ARRIXACA-BANO", es_toxico: false, precio_unidad: 4.95, stock_actual: 80, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "detergente.png" },
-  { id_producto: 9, nombre: "Fregasuelos Perfumado Manzana Maypro", sku: "FREG-MANZ-MAY", es_toxico: false, precio_unidad: 6.20, stock_actual: 95, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "ambientador.png" },
-  { id_producto: 10, nombre: "INTA Desengrasante Eliminador de Tintas Cidal", sku: "INTA-CIDAL", es_toxico: true, precio_unidad: 21.00, stock_actual: 35, ficha_tecnica: "INTA desengrasante eliminador de tintas.pdf", imagen: "desengrasante.png" },
-  { id_producto: 11, nombre: "Jabonoso Maderas Moblysol", sku: "MOBLISOL-MAD", es_toxico: false, precio_unidad: 7.40, stock_actual: 70, ficha_tecnica: "JABONOSO MADERA MOBLISOL.PDF", imagen: "detergente.png" },
-  { id_producto: 12, nombre: "Lavavajillas Manual Tres Sietes", sku: "LAVAV-3-SIETES", es_toxico: false, precio_unidad: 8.50, stock_actual: 90, ficha_tecnica: "LAVAVAJILLAS 3 SIETES.PDF", imagen: "detergente.png" },
-  { id_producto: 13, nombre: "Lavavajillas Manual Cidasol", sku: "CIDASOL-LAV", es_toxico: false, precio_unidad: 9.10, stock_actual: 85, ficha_tecnica: "LAVAVAJILLAS CIDAL.PDF", imagen: "detergente.png" },
-  { id_producto: 14, nombre: "Lavavajillas Máquinas Automáticas L-303", sku: "LAVAV-L303", es_toxico: true, precio_unidad: 27.50, stock_actual: 30, ficha_tecnica: "LAVAVAJILLAS L-303.pdf", imagen: "lejia.png" },
-  { id_producto: 15, nombre: "Activador de Color La Tuna 2L (Lejía Color)", sku: "LATUNA-COLOR-8411494000834", es_toxico: false, precio_unidad: 4.80, stock_actual: 100, ficha_tecnica: "LEJIA COLOR LA TUNA.PDF", imagen: "lejia.png" },
-  { id_producto: 16, nombre: "Limpiador Ecológico de Tintas 1DT 660", sku: "1DT-660", es_toxico: false, precio_unidad: 19.30, stock_actual: 40, ficha_tecnica: "LIMPIADOR ECOLOGICOS TINTAS 1DT 660.pdf", imagen: "detergente.png" },
-  { id_producto: 17, nombre: "Multi-Asepti CV Higienizante Desinfectante", sku: "MULTI-ASEPTI-CV", es_toxico: false, precio_unidad: 15.60, stock_actual: 150, ficha_tecnica: "MULTI ASEPTI maq nebulizadora.pdf", imagen: "ambientador.png" },
-  { id_producto: 18, nombre: "Desincrustante Quita Cementos", sku: "QUITA-CEMENTOS", es_toxico: true, precio_unidad: 14.20, stock_actual: 55, ficha_tecnica: "QUITA CEMENTOS.PDF", imagen: "lejia.png" }
+  { id_producto: 1, nombre: "Desatascador de Desagües 2CV880", sku: "2CV-880", es_toxico: true, precio_unidad: 14.50, stock_actual: 45, ficha_tecnica: "DESATASCADOR DESAGUES FT_2CV880.pdf", imagen: "uploads/productos/lejia.webp" },
+  { id_producto: 2, nombre: "Desengrasante Enérgico ISA 1DT300", sku: "1DT-300", es_toxico: true, precio_unidad: 18.90, stock_actual: 60, ficha_tecnica: "DESENGRASANTE (ISA) FDS 1DT300 v6 CLP.PDF", imagen: "uploads/productos/limpiacristales.webp" },
+  { id_producto: 3, nombre: "Desgrafion (A) Eliminador de Graffitis", sku: "DESGRAF-A", es_toxico: true, precio_unidad: 22.50, stock_actual: 25, ficha_tecnica: "DESGRAFION (A).pdf", imagen: "uploads/productos/limpiacristales.webp" },
+  { id_producto: 4, nombre: "Splash / Glup Suelos Limón (Monodosis)", sku: "SPLASH-LIMON", es_toxico: false, precio_unidad: 16.75, stock_actual: 120, ficha_tecnica: "glup suelos limon.pdf", imagen: "uploads/productos/ambientador.webp" },
+  { id_producto: 5, nombre: "Splash / Glup Suelos Marino (Monodosis)", sku: "SPLASH-MARINO", es_toxico: false, precio_unidad: 16.75, stock_actual: 110, ficha_tecnica: "glup marino.pdf", imagen: "uploads/productos/ambientador.webp" },
+  { id_producto: 6, nombre: "Splash / Glup Suelos Manzana (Monodosis)", sku: "SPLASH-MANZANA", es_toxico: false, precio_unidad: 16.75, stock_actual: 115, ficha_tecnica: "GLUP SUELOS MANZANA.PDF", imagen: "uploads/productos/ambientador.webp" },
+  { id_producto: 7, nombre: "Tergi Inox - Limpiador Abrillantador Acero Inox", sku: "TERGI-INOX", es_toxico: true, precio_unidad: 12.80, stock_actual: 45, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "uploads/productos/limpiacristales.webp" },
+  { id_producto: 8, nombre: "Arrixaca Baño - Gel Ácido Antical Sanitarios", sku: "ARRIXACA-BANO", es_toxico: false, precio_unidad: 4.95, stock_actual: 80, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "uploads/productos/arrixaca.webp" },
+  { id_producto: 9, nombre: "Fregasuelos Perfumado Manzana Maypro", sku: "FREG-MANZ-MAY", es_toxico: false, precio_unidad: 6.20, stock_actual: 95, ficha_tecnica: "FREGASUELOS, ARRIXACA BAÑO , LIMPIA ALUMINIO.PDF", imagen: "uploads/productos/ambientador.webp" },
+  { id_producto: 10, nombre: "INTA Desengrasante Eliminador de Tintas Cidal", sku: "INTA-CIDAL", es_toxico: true, precio_unidad: 21.00, stock_actual: 35, ficha_tecnica: "INTA desengrasante eliminador de tintas.pdf", imagen: "uploads/productos/limpiacristales.webp" },
+  { id_producto: 11, nombre: "Jabonoso Maderas Moblysol", sku: "MOBLISOL-MAD", es_toxico: false, precio_unidad: 7.40, stock_actual: 70, ficha_tecnica: "JABONOSO MADERA MOBLISOL.PDF", imagen: "uploads/productos/spray_mopa.webp" },
+  { id_producto: 12, nombre: "Lavavajillas Manual Tres Sietes", sku: "LAVAV-3-SIETES", es_toxico: false, precio_unidad: 8.50, stock_actual: 90, ficha_tecnica: "LAVAVAJILLAS 3 SIETES.PDF", imagen: "uploads/productos/lavavajillas.webp" },
+  { id_producto: 13, nombre: "Lavavajillas Manual Cidasol", sku: "CIDASOL-LAV", es_toxico: false, precio_unidad: 9.10, stock_actual: 85, ficha_tecnica: "LAVAVAJILLAS CIDAL.PDF", imagen: "uploads/productos/lavavajillas.webp" },
+  { id_producto: 14, nombre: "Lavavajillas Máquinas Automáticas L-303", sku: "LAVAV-L303", es_toxico: true, precio_unidad: 27.50, stock_actual: 30, ficha_tecnica: "LAVAVAJILLAS L-303.pdf", imagen: "uploads/productos/lavavajillas.webp" },
+  { id_producto: 15, nombre: "Activador de Color La Tuna 2L (Lejía Color)", sku: "LATUNA-COLOR-8411494000834", es_toxico: false, precio_unidad: 4.80, stock_actual: 100, ficha_tecnica: "LEJIA COLOR LA TUNA.PDF", imagen: "uploads/productos/Lejia color.webp" },
+  { id_producto: 16, nombre: "Limpiador Ecológico de Tintas 1DT 660", sku: "1DT-660", es_toxico: false, precio_unidad: 19.30, stock_actual: 40, ficha_tecnica: "LIMPIADOR ECOLOGICOS TINTAS 1DT 660.pdf", imagen: "uploads/productos/limpiacristales.webp" },
+  { id_producto: 17, nombre: "Multi-Asepti CV Higienizante Desinfectante", sku: "MULTI-ASEPTI-CV", es_toxico: false, precio_unidad: 15.60, stock_actual: 150, ficha_tecnica: "MULTI ASEPTI maq nebulizadora.pdf", imagen: "uploads/productos/ambientador.webp" },
+  { id_producto: 18, nombre: "Desincrustante Quita Cementos", sku: "QUITA-CEMENTOS", es_toxico: true, precio_unidad: 14.20, stock_actual: 55, ficha_tecnica: "QUITA CEMENTOS.PDF", imagen: "uploads/productos/lejia.webp" }
 ];
 
 export default function ProductsView({ baseUrl }: ProductsViewProps) {
@@ -392,7 +392,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                       >
                         {product.imagen ? (
                           <Image
-                            source={{ uri: product.imagen.startsWith('http') ? product.imagen : `${baseUrl.replace('/api', '')}/${product.imagen}` }}
+                            source={{ uri: product.imagen.startsWith('http') ? product.imagen : `${baseUrl.replace('/api', '')}/${encodeURI(product.imagen)}` }}
                             style={styles.thumbnailImage}
                           />
                         ) : (
@@ -590,7 +590,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                 </TouchableOpacity>
                 {selectedProduct.imagen ? (
                   <Image
-                    source={{ uri: selectedProduct.imagen.startsWith('http') ? selectedProduct.imagen : `${baseUrl.replace('/api', '')}/${selectedProduct.imagen}` }}
+                    source={{ uri: selectedProduct.imagen.startsWith('http') ? selectedProduct.imagen : `${baseUrl.replace('/api', '')}/${encodeURI(selectedProduct.imagen)}` }}
                     style={{ width: '100%', height: 300, borderRadius: 12, resizeMode: 'contain' }}
                   />
                 ) : (

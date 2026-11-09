@@ -32,7 +32,7 @@ $standardProducts = [
         'es_toxico' => 1,
         'precio_unidad' => 1.95,
         'stock_actual' => 150.00,
-        'imagen' => 'lejia.png',
+        'imagen' => 'uploads/productos/lejia.webp',
     ],
     [
         'nombre' => 'AMONIACO',
@@ -40,7 +40,7 @@ $standardProducts = [
         'es_toxico' => 1,
         'precio_unidad' => 2.10,
         'stock_actual' => 100.00,
-        'imagen' => 'detergente.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'FREGASUELOS',
@@ -48,7 +48,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.50,
         'stock_actual' => 180.00,
-        'imagen' => 'ambientador.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'LEJIA DETERGENTE',
@@ -56,7 +56,7 @@ $standardProducts = [
         'es_toxico' => 1,
         'precio_unidad' => 2.45,
         'stock_actual' => 120.00,
-        'imagen' => 'lejia.png',
+        'imagen' => 'uploads/productos/Lejia color.webp',
     ],
     [
         'nombre' => 'AMBIENTADOR',
@@ -64,7 +64,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.20,
         'stock_actual' => 140.00,
-        'imagen' => 'ambientador.png',
+        'imagen' => 'uploads/productos/ambientador.webp',
     ],
     [
         'nombre' => 'BAYETAS',
@@ -72,7 +72,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 1.80,
         'stock_actual' => 250.00,
-        'imagen' => 'cristales.png',
+        'imagen' => 'uploads/productos/bayetas multihogar.webp',
     ],
     [
         'nombre' => 'FREGONAS',
@@ -80,7 +80,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 2.90,
         'stock_actual' => 200.00,
-        'imagen' => 'detergente.png',
+        'imagen' => 'uploads/productos/fregona.webp',
     ],
     [
         'nombre' => 'F. MICROFIBRA',
@@ -88,7 +88,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.80,
         'stock_actual' => 160.00,
-        'imagen' => 'cristales.png',
+        'imagen' => 'uploads/productos/mopa.webp',
     ],
     [
         'nombre' => 'SACOS',
@@ -96,7 +96,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.50,
         'stock_actual' => 300.00,
-        'imagen' => 'detergente.png',
+        'imagen' => 'uploads/productos/sacos.webp',
     ],
     [
         'nombre' => 'BOLSAS',
@@ -104,7 +104,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 2.20,
         'stock_actual' => 350.00,
-        'imagen' => 'detergente.png',
+        'imagen' => 'uploads/productos/bolsas.webp',
     ],
     [
         'nombre' => 'CEPILLOS',
@@ -112,7 +112,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.90,
         'stock_actual' => 90.00,
-        'imagen' => 'desengrasante.png',
+        'imagen' => 'uploads/productos/cepillo.webp',
     ],
     [
         'nombre' => 'PALOS',
@@ -120,7 +120,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 2.75,
         'stock_actual' => 110.00,
-        'imagen' => 'desengrasante.png',
+        'imagen' => 'uploads/productos/palo.webp',
     ],
     [
         'nombre' => 'RECOGEDOR',
@@ -128,7 +128,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 5.20,
         'stock_actual' => 85.00,
-        'imagen' => 'desengrasante.png',
+        'imagen' => 'uploads/productos/recogedor.webp',
     ],
     [
         'nombre' => 'FLOTA',
@@ -136,7 +136,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.95,
         'stock_actual' => 95.00,
-        'imagen' => 'detergente.png',
+        'imagen' => 'uploads/productos/lavavajillas.webp',
     ],
     [
         'nombre' => 'ARRIXACA',
@@ -144,7 +144,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.95,
         'stock_actual' => 115.00,
-        'imagen' => 'detergente.png',
+        'imagen' => 'uploads/productos/arrixaca.webp',
     ],
     [
         'nombre' => 'PAPEL WC',
@@ -152,7 +152,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 6.50,
         'stock_actual' => 220.00,
-        'imagen' => 'detergente.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'CRISTASOL',
@@ -160,7 +160,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.20,
         'stock_actual' => 130.00,
-        'imagen' => 'cristales.png',
+        'imagen' => 'uploads/productos/limpiacristales.webp',
     ],
     [
         'nombre' => 'CENTELLA',
@@ -168,7 +168,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.40,
         'stock_actual' => 80.00,
-        'imagen' => 'ambientador.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'SUPERBRILLO',
@@ -176,7 +176,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 5.80,
         'stock_actual' => 75.00,
-        'imagen' => 'cristales.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'LQ MADERA',
@@ -184,7 +184,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.70,
         'stock_actual' => 70.00,
-        'imagen' => 'detergente.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'GAMUZA',
@@ -192,7 +192,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 1.90,
         'stock_actual' => 190.00,
-        'imagen' => 'cristales.png',
+        'imagen' => 'uploads/productos/bayetas.webp',
     ],
     [
         'nombre' => 'PLUMERO',
@@ -200,7 +200,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.60,
         'stock_actual' => 65.00,
-        'imagen' => 'ambientador.png',
+        'imagen' => 'uploads/productos/plumero.webp',
     ],
     [
         'nombre' => 'SUPER FLAX',
@@ -208,7 +208,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 5.10,
         'stock_actual' => 80.00,
-        'imagen' => 'detergente.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'CUBO',
@@ -216,7 +216,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 6.20,
         'stock_actual' => 70.00,
-        'imagen' => 'desengrasante.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'ESTROPAJO',
@@ -224,7 +224,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 1.25,
         'stock_actual' => 280.00,
-        'imagen' => 'cristales.png',
+        'imagen' => null,
     ],
     [
         'nombre' => 'SPRAY MOPA',
@@ -232,7 +232,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 4.85,
         'stock_actual' => 85.00,
-        'imagen' => 'ambientador.png',
+        'imagen' => 'uploads/productos/spray_mopa.webp',
     ],
 ];
 

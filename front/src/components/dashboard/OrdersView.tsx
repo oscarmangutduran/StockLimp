@@ -938,6 +938,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
         getProductColor={getProductColor}
         getProductIcon={getProductIcon}
         getProductIconColor={getProductIconColor}
+        baseUrl={baseUrl}
       />
 
       {/* Modal Selección de Centro para Empleados con varios centros */}

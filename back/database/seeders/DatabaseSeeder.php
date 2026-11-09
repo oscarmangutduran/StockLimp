@@ -42,10 +42,13 @@ class DatabaseSeeder extends Seeder
             }
 
             if (DB::table($tableName)->count() === 0 && !empty($rows)) {
-                $this->command->info("Inserting " . count($rows) . " rows into '$tableName'...");
+                $columns = array_flip(Schema::getColumnListing($tableName));
+                $filteredRows = array_map(fn($row) => array_intersect_key($row, $columns), $rows);
+
+                $this->command->info("Inserting " . count($filteredRows) . " rows into '$tableName'...");
                 
                 // Insertar en chunks de 100
-                $chunks = array_chunk($rows, 100);
+                $chunks = array_chunk($filteredRows, 100);
                 foreach ($chunks as $chunk) {
                     DB::table($tableName)->insert($chunk);
                 }
