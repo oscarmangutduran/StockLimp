@@ -136,7 +136,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
   const isPeriodActive = () => {
     if (simulateActivePeriod) return true;
     const currentDay = new Date().getDate();
-    return currentDay >= 2 && currentDay <= 8;
+    return currentDay >= 2 && currentDay <= 20;
   };
 
   const getUserAssignedCenters = (targetUserId?: number): Center[] => {
@@ -250,7 +250,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
 
   const handleOpenCreateForUser = () => {
     if (!isPeriodActive()) {
-      showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 8 de cada mes.', 'info');
+      showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 20 de cada mes.', 'info');
       return;
     }
     const myCenters = getUserAssignedCenters(userId);
@@ -843,7 +843,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
                       style={styles.employeeCenterActionBtn}
                       onPress={() => {
                         if (!isPeriodActive()) {
-                          showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 8 de cada mes.', 'info');
+                          showCustomAlert('Fuera de plazo', 'El período para realizar o modificar pedidos es del día 2 al 20 de cada mes.', 'info');
                           return;
                         }
                         handleStartCreateForCenter(c.id_centro);

@@ -34,7 +34,7 @@ export const PeriodNoticeBanner: React.FC<PeriodNoticeBannerProps> = ({
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 280 }}>
         <Feather name="info" size={18} color="#2563EB" style={{ marginRight: 8 }} />
         <Text style={{ fontSize: 14, color: '#1E3A8A', lineHeight: 20 }}>
-          Nota: Puedes modificar tus pedidos del día 2 al 8 de cada mes. Estado actual:{' '}
+          Nota: Puedes modificar tus pedidos del día 2 al 20 de cada mes. Estado actual:{' '}
           <Text style={{ fontWeight: 'bold', color: '#1D4ED8' }}>
             {isPeriodActive ? 'HABILITADO' : 'DESHABILITADO'}
           </Text>

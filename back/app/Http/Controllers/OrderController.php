@@ -139,13 +139,13 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Usuario no encontrado'], 404);
         }
 
-        // Restricción de fecha del 2 al 8 para rol usuario
+        // Restricción de fecha del 2 al 20 para rol usuario
         if ($user->rol === 'usuario' && !$request->input('force_period')) {
             $day = (int)date('j');
-            if ($day < 2 || $day > 8) {
+            if ($day < 2 || $day > 20) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Solo se pueden modificar los pedidos entre los días 2 y 8 del mes en curso.'
+                    'message' => 'Solo se pueden modificar los pedidos entre los días 2 y 20 del mes en curso.'
                 ], 403);
             }
         }
