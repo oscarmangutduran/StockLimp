@@ -12,8 +12,8 @@ export const STANDARD_ORDER_NAMES = [
   'LEJIA DETERGENTE',
   'AMBIENTADOR',
   'BAYETAS',
-  'FREGONAS',
-  'F. MICROFIBRA',
+  'FREGONA',
+  'FMICROFIS',
   'SACOS',
   'BOLSAS',
   'CEPILLOS',
@@ -25,7 +25,7 @@ export const STANDARD_ORDER_NAMES = [
   'CRISTASOL',
   'CENTELLA',
   'SUPERBRILLO',
-  'LQ MADERA',
+  'LIQUIDO MADERA',
   'GAMUZA',
   'PLUMERO',
   'SUPER FLAX',
@@ -100,22 +100,21 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
         ? getUserAssignedCenters(parseInt(formUserId, 10))
         : centers);
 
-  // Filtrar estrictamente para que en la cuadrícula de pedidos SOLO aparezcan los 26 productos estándar de la planilla
-  const filtered = products
-    .filter((p) => {
-      if (Boolean(p.es_estandar_pedido)) return true;
-      const upper = p.nombre.toUpperCase().trim();
-      return STANDARD_ORDER_NAMES.some(
-        std => upper === std || upper.startsWith(std) || std.startsWith(upper)
-      );
-    })
-    .sort((a, b) => {
-      const idxA = STANDARD_ORDER_NAMES.findIndex(std => a.nombre.toUpperCase().trim().includes(std));
-      const idxB = STANDARD_ORDER_NAMES.findIndex(std => b.nombre.toUpperCase().trim().includes(std));
-      return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999);
-    });
+  const normalizeStandardName = (name: string) => {
+    const upper = name.toUpperCase().trim();
+    if (upper === 'FREGONAS') return 'FREGONA';
+    if (upper === 'F. MICROFIBRA' || upper === 'F MICROFIBRA') return 'FMICROFIS';
+    if (upper === 'LQ MADERA' || upper === 'LIQUIDO, MADERA') return 'LIQUIDO MADERA';
+    return upper;
+  };
 
-  const standardProducts = filtered.length >= 15 ? filtered : STANDARD_PRODUCTS_LIST;
+  // Filtrar estrictamente para que en la cuadrícula de pedidos SOLO aparezcan los 26 productos estándar de la planilla
+  const filtered = STANDARD_ORDER_NAMES.map((stdName) => {
+    const found = products.find((p) => normalizeStandardName(p.nombre) === stdName);
+    return found ? { ...found, nombre: stdName } : null;
+  }).filter((p): p is Product => p !== null);
+
+  const standardProducts = filtered.length === STANDARD_ORDER_NAMES.length ? filtered : STANDARD_PRODUCTS_LIST;
 
   return (
     <Modal
@@ -276,7 +275,9 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                   <Text style={styles.label}>Productos Seleccionados</Text>
                   <View style={styles.cartList}>
                     {formItems.map((item) => {
-                      const p = products.find((prod) => prod.id_producto === item.id_producto);
+                      const p =
+                        standardProducts.find((prod) => prod.id_producto === item.id_producto) ||
+                        products.find((prod) => prod.id_producto === item.id_producto);
                       if (!p) return null;
                       return (
                         <View key={item.id_producto} style={styles.cartItemRow}>

@@ -10,6 +10,11 @@ use App\Http\Requests\UpdateProductRequest;
 
 class ProductController extends Controller
 {
+    public function __construct()
+    {
+        \Database\Seeders\StandardProductsSeeder::ensureSeeded();
+    }
+
     public function index(Request $request)
     {
         $query = Product::with('componentes');

@@ -12,6 +12,11 @@ use App\Http\Requests\UpdateOrderStatusRequest;
 
 class OrderController extends Controller
 {
+    public function __construct()
+    {
+        \Database\Seeders\StandardProductsSeeder::ensureSeeded();
+    }
+
     public function index(Request $request)
     {
         $query = Order::with(['detalles.producto', 'usuario', 'centro']);

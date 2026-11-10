@@ -201,7 +201,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
       if (lowerInput === '1' || lowerInput.includes('contraseña') || lowerInput.includes('password') || lowerInput.includes('olvid') || lowerInput.includes('recordar')) {
         responseText = "Si no recuerdas tu contraseña, debes escribir un correo a direccion@adarvelimpiezas.net con el asunto 'Olvidado'.";
       } else if (lowerInput === '2' || (lowerInput.includes('pedido') && (lowerInput.includes('dia') || lowerInput.includes('fecha') || lowerInput.includes('modificar') || lowerInput.includes('cuando')))) {
-        responseText = "Puedes hacer y modificar tus pedidos del 2 al 8 de cada mes.";
+        responseText = "Puedes hacer y modificar tus pedidos del 2 al 20 de cada mes.";
       } else if (lowerInput === '3' || (lowerInput.includes('falta') && (lowerInput.includes('producto') || lowerInput.includes('material')))) {
         responseText = "Si te falta algún producto, debes escribir a la persona encargada de entregar el pedido.";
       } else if (lowerInput === '4' || lowerInput.includes('vacacion') || lowerInput.includes('vacaciones') || lowerInput.includes('descanso')) {
@@ -221,7 +221,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         }, 1500);
         return;
       } else if (lowerInput.includes('pedido') || lowerInput.includes('producto')) {
-        responseText = "Sobre pedidos: los puedes hacer del 2 al 8 de cada mes. Si falta algún producto, avisa a la persona encargada de entregarlo.";
+        responseText = "Sobre pedidos: los puedes hacer del 2 al 20 de cada mes. Si falta algún producto, avisa a la persona encargada de entregarlo.";
       }
 
       setChatMessages(prev => [...prev, {

@@ -10,6 +10,7 @@ class StoreOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        \Database\Seeders\StandardProductsSeeder::ensureSeeded();
         return true;
     }
 

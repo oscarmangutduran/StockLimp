@@ -75,7 +75,7 @@ $standardProducts = [
         'imagen' => 'uploads/productos/bayetas multihogar.webp',
     ],
     [
-        'nombre' => 'FREGONAS',
+        'nombre' => 'FREGONA',
         'sku' => 'STD-FREGONAS',
         'es_toxico' => 0,
         'precio_unidad' => 2.90,
@@ -83,7 +83,7 @@ $standardProducts = [
         'imagen' => 'uploads/productos/fregona.webp',
     ],
     [
-        'nombre' => 'F. MICROFIBRA',
+        'nombre' => 'FMICROFIS',
         'sku' => 'STD-FMICROFIBRA',
         'es_toxico' => 0,
         'precio_unidad' => 3.80,
@@ -179,7 +179,7 @@ $standardProducts = [
         'imagen' => null,
     ],
     [
-        'nombre' => 'LQ MADERA',
+        'nombre' => 'LIQUIDO MADERA',
         'sku' => 'STD-LQ-MADERA',
         'es_toxico' => 0,
         'precio_unidad' => 4.70,

@@ -296,7 +296,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     if (name.includes('AMBIENTADOR')) return '#ECFEFF';
     if (name.includes('BAYETA')) return '#EFF6FF';
     if (name.includes('FREGONA')) return '#EEF2FF';
-    if (name.includes('MICROFIBRA')) return '#FDF2F8';
+    if (name.includes('MICROFIBRA') || name.includes('FMICROFIS')) return '#FDF2F8';
     if (name.includes('SACO')) return '#F1F5F9';
     if (name.includes('BOLSA')) return '#F8FAFC';
     if (name.includes('CEPILLO')) return '#FEF2F2';
@@ -327,7 +327,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     if (name.includes('AMBIENTADOR')) return '#0891B2';
     if (name.includes('BAYETA')) return '#2563EB';
     if (name.includes('FREGONA')) return '#4F46E5';
-    if (name.includes('MICROFIBRA')) return '#DB2777';
+    if (name.includes('MICROFIBRA') || name.includes('FMICROFIS')) return '#DB2777';
     if (name.includes('SACO')) return '#334155';
     if (name.includes('BOLSA')) return '#475569';
     if (name.includes('CEPILLO')) return '#DC2626';
@@ -358,7 +358,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     if (name.includes('AMBIENTADOR')) return 'feather';
     if (name.includes('BAYETA')) return 'layers';
     if (name.includes('FREGONA')) return 'disc';
-    if (name.includes('MICROFIBRA')) return 'sun';
+    if (name.includes('MICROFIBRA') || name.includes('FMICROFIS')) return 'sun';
     if (name.includes('SACO')) return 'archive';
     if (name.includes('BOLSA')) return 'shopping-bag';
     if (name.includes('CEPILLO')) return 'scissors';
