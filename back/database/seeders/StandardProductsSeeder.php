@@ -35,7 +35,7 @@ class StandardProductsSeeder extends Seeder
             ['nombre' => 'PLUMERO', 'sku' => 'STD-PLUMERO', 'es_toxico' => 0, 'precio_unidad' => 3.60, 'stock_actual' => 65.00, 'imagen' => 'uploads/productos/plumero.webp'],
             ['nombre' => 'SUPER FLAX', 'sku' => 'STD-SUPER-FLAX', 'es_toxico' => 0, 'precio_unidad' => 5.10, 'stock_actual' => 80.00, 'imagen' => null],
             ['nombre' => 'CUBO', 'sku' => 'STD-CUBO', 'es_toxico' => 0, 'precio_unidad' => 6.20, 'stock_actual' => 70.00, 'imagen' => null],
-            ['nombre' => 'ESTROPAJO', 'sku' => 'STD-ESTROPAJO', 'es_toxico' => 0, 'precio_unidad' => 1.25, 'stock_actual' => 280.00, 'imagen' => null],
+            ['nombre' => 'ESTROPAJO', 'sku' => 'STD-ESTROPAJO', 'es_toxico' => 0, 'precio_unidad' => 1.25, 'stock_actual' => 280.00, 'imagen' => 'uploads/productos/estropajo.jpeg'],
             ['nombre' => 'SPRAY MOPA', 'sku' => 'STD-SPRAY-MOPA', 'es_toxico' => 0, 'precio_unidad' => 4.85, 'stock_actual' => 85.00, 'imagen' => 'uploads/productos/spray_mopa.webp'],
         ];
     }
@@ -64,14 +64,14 @@ class StandardProductsSeeder extends Seeder
                 ->whereIn('nombre', ['FREGONA', 'FMICROFIS', 'LIQUIDO MADERA'])
                 ->count();
 
-            $hasAmoniacoImg = DB::table('productos')
-                ->where('sku', 'STD-AMONIACO')
+            $hasLatestImgs = DB::table('productos')
+                ->where('sku', 'STD-ESTROPAJO')
                 ->whereNotNull('imagen')
                 ->exists();
 
             $totalStd = DB::table('productos')->where('es_estandar_pedido', 1)->count();
 
-            if ($readyCount === 3 && $totalStd === 26 && $hasAmoniacoImg) {
+            if ($readyCount === 3 && $totalStd === 26 && $hasLatestImgs) {
                 return;
             }
 

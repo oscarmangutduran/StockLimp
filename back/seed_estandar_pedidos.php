@@ -224,7 +224,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 1.25,
         'stock_actual' => 280.00,
-        'imagen' => null,
+        'imagen' => 'uploads/productos/estropajo.jpeg',
     ],
     [
         'nombre' => 'SPRAY MOPA',

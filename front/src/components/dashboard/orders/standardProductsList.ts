@@ -21,6 +21,7 @@ export const STANDARD_PRODUCT_IMAGES: Record<string, string> = {
   'CRISTASOL': 'uploads/productos/limpia cristales.webp',
   'GAMUZA': 'uploads/productos/bayetas.webp',
   'PLUMERO': 'uploads/productos/plumero.webp',
+  'ESTROPAJO': 'uploads/productos/estropajo.jpeg',
   'SPRAY MOPA': 'uploads/productos/spray_mopa.webp',
 };
 
@@ -49,6 +50,6 @@ export const STANDARD_PRODUCTS_LIST: Product[] = [
   { id_producto: 40, nombre: 'PLUMERO', precio_unidad: 3.60, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/plumero.webp' },
   { id_producto: 41, nombre: 'SUPER FLAX', precio_unidad: 5.10, es_toxico: 0, es_estandar_pedido: 1 },
   { id_producto: 42, nombre: 'CUBO', precio_unidad: 6.20, es_toxico: 0, es_estandar_pedido: 1 },
-  { id_producto: 43, nombre: 'ESTROPAJO', precio_unidad: 1.25, es_toxico: 0, es_estandar_pedido: 1 },
+  { id_producto: 43, nombre: 'ESTROPAJO', precio_unidad: 1.25, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/estropajo.jpeg' },
   { id_producto: 44, nombre: 'SPRAY MOPA', precio_unidad: 4.85, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/spray_mopa.webp' },
 ];
