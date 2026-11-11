@@ -93,12 +93,15 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
 }) => {
   if (!visible) return null;
 
-  const currentCenterName = centers.find((c) => c.id_centro.toString() === formCenterId)?.nombre || 'Centro no seleccionado';
   const assignedCenters = userRole === 'usuario'
     ? getUserAssignedCenters(userId)
     : (getUserAssignedCenters(parseInt(formUserId, 10)).length > 0
         ? getUserAssignedCenters(parseInt(formUserId, 10))
         : centers);
+  const currentCenterName =
+    assignedCenters.find((c) => c.id_centro.toString() === formCenterId)?.nombre ||
+    centers.find((c) => c.id_centro.toString() === formCenterId)?.nombre ||
+    'Selecciona un centro de trabajo';
 
   const normalizeStandardName = (name: string) => {
     const upper = name.toUpperCase().trim();
@@ -142,21 +145,67 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
           )}
 
           <View style={{ flex: 1 }}>
-            <View style={styles.centerBannerActive}>
-              <View style={styles.centerBannerLeft}>
-                <Feather name="map-pin" size={18} color="#0F766E" />
-                <View>
-                  <Text style={styles.centerBannerLabel}>Pedido para el centro:</Text>
-                  <Text style={styles.centerBannerTitle}>{currentCenterName}</Text>
+            <View style={[styles.centerBannerActive, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <View style={[styles.centerBannerLeft, { flex: 1 }]}>
+                  <Feather name="map-pin" size={18} color="#0F766E" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.centerBannerLabel}>
+                      {assignedCenters.length > 1
+                        ? `Pedido para el centro (${assignedCenters.length} centros asignados):`
+                        : 'Pedido para el centro:'}
+                    </Text>
+                    <Text style={styles.centerBannerTitle} numberOfLines={2}>{currentCenterName}</Text>
+                  </View>
                 </View>
+                {userRole === 'usuario' && assignedCenters.length > 1 && modalType === 'create' && (
+                  <TouchableOpacity
+                    style={styles.centerChangeBtn}
+                    onPress={onOpenCenterSelection}
+                  >
+                    <Text style={styles.centerChangeBtnText}>Cambiar centro</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              {userRole === 'usuario' && getUserAssignedCenters(userId).length > 1 && modalType === 'create' && (
-                <TouchableOpacity
-                  style={styles.centerChangeBtn}
-                  onPress={onOpenCenterSelection}
-                >
-                  <Text style={styles.centerChangeBtnText}>Cambiar centro</Text>
-                </TouchableOpacity>
+
+              {assignedCenters.length > 1 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                  {assignedCenters.map((c) => {
+                    const isSelected = formCenterId === c.id_centro.toString();
+                    return (
+                      <TouchableOpacity
+                        key={c.id_centro}
+                        onPress={() => setFormCenterId(c.id_centro.toString())}
+                        style={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: 8,
+                          backgroundColor: isSelected ? '#0F766E' : '#FFFFFF',
+                          borderWidth: 1,
+                          borderColor: isSelected ? '#0F766E' : '#99F6E4',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <Feather
+                          name={isSelected ? 'check-circle' : 'circle'}
+                          size={13}
+                          color={isSelected ? '#FFFFFF' : '#0F766E'}
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: isSelected ? '700' : '500',
+                            color: isSelected ? '#FFFFFF' : '#0F766E',
+                          }}
+                        >
+                          {c.nombre}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               )}
             </View>
 

@@ -19,7 +19,8 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        // Auto-sanación de la tabla users para asegurar la columna api_token
+        // Auto-sanación de la tabla users para asegurar la columna api_token y desglosar centros múltiples
+        \Database\Seeders\StandardProductsSeeder::ensureSeeded();
         try {
             if (Schema::hasTable('users')) {
                 if (!Schema::hasColumn('users', 'api_token')) {

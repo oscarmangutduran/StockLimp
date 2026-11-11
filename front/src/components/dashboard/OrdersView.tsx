@@ -141,15 +141,15 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
 
   const getUserAssignedCenters = (targetUserId?: number): Center[] => {
     if (!targetUserId) return [];
-    if (currentUser && currentUser.id_user === targetUserId && currentUser.assigned_centros && currentUser.assigned_centros.length > 0) {
-      return currentUser.assigned_centros;
-    }
     const foundUser = users.find(u => u.id_user === targetUserId);
     if (foundUser?.assigned_centros && foundUser.assigned_centros.length > 0) {
       return foundUser.assigned_centros;
     }
     if (foundUser?.centros && foundUser.centros.length > 0) {
       return foundUser.centros;
+    }
+    if (currentUser && currentUser.id_user === targetUserId && currentUser.assigned_centros && currentUser.assigned_centros.length > 0) {
+      return currentUser.assigned_centros;
     }
     if (foundUser?.id_centro) {
       const single = centers.find(c => c.id_centro === foundUser.id_centro);
@@ -413,6 +413,10 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
   };
 
   const handleSave = async () => {
+    if (!formCenterId) {
+      showCustomAlert('Centro Requerido', 'Por favor, selecciona el centro de trabajo para el que es este pedido.', 'info');
+      return;
+    }
     if (formItems.length === 0 && !formObservaciones.trim()) {
       showCustomAlert('Detalles del Pedido', 'Por favor, selecciona al menos un producto estándar o escribe tu petición excepcional en el campo de observaciones.', 'info');
       return;

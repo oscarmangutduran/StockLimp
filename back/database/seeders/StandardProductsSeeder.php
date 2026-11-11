@@ -40,8 +40,122 @@ class StandardProductsSeeder extends Seeder
         ];
     }
 
+    public static function splitCenterName(string $rawName): array
+    {
+        $clean = preg_replace('/\r?\n\s*\r?\n.*$/s', '', $rawName);
+        $clean = preg_replace('/\b(PAGO DELEGADO|CUANDO SE INCORPORE|vacaciones pendientes|no se le puede modificar|comprobar antiguedad).*$/iu', '', $clean);
+        if (preg_match('/CENTROS:\s*(.+)$/is', $clean, $m)) {
+            $clean = $m[1];
+        }
+        $clean = str_replace(["\r", "\n"], ' ', $clean);
+        $rawParts = preg_split('/\s*\+\s*|\s+-\s*/u', $clean);
+        $parts = [];
+        foreach ($rawParts as $part) {
+            $p = trim($part, " \t\n\r\0\x0B,.-");
+            $p = preg_replace('/^y\s+/iu', '', $p);
+            $p = trim($p);
+            if (mb_strlen($p) > 2) {
+                $parts[] = $p;
+            }
+        }
+        return array_values(array_unique($parts));
+    }
+
+    public static function ensureCentersSplit(): void
+    {
+        try {
+            if (!Schema::hasTable('centros_trabajo') || !Schema::hasTable('centro_user') || !Schema::hasTable('users')) {
+                return;
+            }
+
+            $combinedCenters = DB::table('centros_trabajo')
+                ->where('nombre_centro', 'like', '%+%')
+                ->orWhere('nombre_centro', 'like', '% - %')
+                ->get();
+
+            if ($combinedCenters->isEmpty()) {
+                return;
+            }
+
+            foreach ($combinedCenters as $c) {
+                $parts = self::splitCenterName($c->nombre_centro);
+                if (count($parts) <= 1) {
+                    if (!empty($parts[0]) && $parts[0] !== $c->nombre_centro) {
+                        DB::table('centros_trabajo')->where('id_centro', $c->id_centro)->update([
+                            'nombre_centro' => $parts[0],
+                            'direccion' => $parts[0],
+                        ]);
+                    }
+                    continue;
+                }
+
+                // Usuarios asignados a este centro originalmente
+                $directUsers = DB::table('users')->where('id_centro', $c->id_centro)->pluck('id_user')->toArray();
+                $pivotUsers = DB::table('centro_user')->where('id_centro', $c->id_centro)->pluck('id_user')->toArray();
+                $userIds = array_values(array_unique(array_merge($directUsers, $pivotUsers)));
+
+                // Actualizar el primer centro sobre el ID original
+                $firstPart = $parts[0];
+                DB::table('centros_trabajo')->where('id_centro', $c->id_centro)->update([
+                    'nombre_centro' => $firstPart,
+                    'direccion' => $firstPart,
+                ]);
+
+                foreach ($userIds as $uid) {
+                    $exists = DB::table('centro_user')
+                        ->where('id_user', $uid)
+                        ->where('id_centro', $c->id_centro)
+                        ->exists();
+                    if (!$exists) {
+                        DB::table('centro_user')->insert([
+                            'id_user' => $uid,
+                            'id_centro' => $c->id_centro,
+                        ]);
+                    }
+                }
+
+                // Crear o vincular cada centro adicional por separado
+                for ($i = 1; $i < count($parts); $i++) {
+                    $partName = $parts[$i];
+                    $existingCenter = DB::table('centros_trabajo')
+                        ->where('nombre_centro', $partName)
+                        ->first();
+
+                    if ($existingCenter) {
+                        $targetCentroId = $existingCenter->id_centro;
+                    } else {
+                        $targetCentroId = DB::table('centros_trabajo')->insertGetId([
+                            'nombre_centro' => $partName,
+                            'direccion' => $partName,
+                            'ciudad' => $c->ciudad ?? 'Cáceres',
+                            'numero_ruta' => $c->numero_ruta ?? null,
+                            'fecha_registro' => $c->fecha_registro ?? now(),
+                        ]);
+                    }
+
+                    foreach ($userIds as $uid) {
+                        $exists = DB::table('centro_user')
+                            ->where('id_user', $uid)
+                            ->where('id_centro', $targetCentroId)
+                            ->exists();
+                        if (!$exists) {
+                            DB::table('centro_user')->insert([
+                                'id_user' => $uid,
+                                'id_centro' => $targetCentroId,
+                            ]);
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Ignorar errores temporales de conexión
+        }
+    }
+
     public static function ensureSeeded(): void
     {
+        self::ensureCentersSplit();
+
         try {
             if (!Schema::hasTable('productos')) {
                 return;

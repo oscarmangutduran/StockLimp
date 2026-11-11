@@ -12,6 +12,7 @@ class CenterController extends Controller
     public function __construct()
     {
         // Auto-sanación de la base de datos para añadir las columnas ciudad y fecha_registro requeridas por el frontend
+        \Database\Seeders\StandardProductsSeeder::ensureSeeded();
         try {
             if (Schema::hasTable('centros_trabajo')) {
                 if (!Schema::hasColumn('centros_trabajo', 'ciudad')) {
