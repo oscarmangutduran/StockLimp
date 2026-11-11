@@ -40,7 +40,7 @@ $standardProducts = [
         'es_toxico' => 1,
         'precio_unidad' => 2.10,
         'stock_actual' => 100.00,
-        'imagen' => null,
+        'imagen' => 'uploads/productos/amoniaco.webp',
     ],
     [
         'nombre' => 'FREGASUELOS',
@@ -48,7 +48,7 @@ $standardProducts = [
         'es_toxico' => 0,
         'precio_unidad' => 3.50,
         'stock_actual' => 180.00,
-        'imagen' => null,
+        'imagen' => 'uploads/productos/ropa limpia.webp',
     ],
     [
         'nombre' => 'LEJIA DETERGENTE',

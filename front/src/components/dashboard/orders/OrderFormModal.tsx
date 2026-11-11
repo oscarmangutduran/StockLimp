@@ -178,8 +178,8 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                       const addedQty = existingItem ? existingItem.cantidad : 0;
                       const upperName = p.nombre.toUpperCase().trim();
                       const mappedImage =
-                        (p.imagen && p.imagen.includes('uploads/productos/') ? p.imagen : undefined) ||
-                        STANDARD_PRODUCT_IMAGES[upperName];
+                        STANDARD_PRODUCT_IMAGES[upperName] ||
+                        (p.imagen && p.imagen.includes('uploads/productos/') ? p.imagen : undefined);
                       const serverRoot = baseUrl.replace(/\/api\/?$/, '');
                       const imageUri = mappedImage
                         ? mappedImage.startsWith('http')
@@ -279,9 +279,25 @@ export const OrderFormModal: React.FC<OrderFormModalProps> = ({
                         standardProducts.find((prod) => prod.id_producto === item.id_producto) ||
                         products.find((prod) => prod.id_producto === item.id_producto);
                       if (!p) return null;
+                      const upperName = p.nombre.toUpperCase().trim();
+                      const mappedImage =
+                        STANDARD_PRODUCT_IMAGES[upperName] ||
+                        (p.imagen && p.imagen.includes('uploads/productos/') ? p.imagen : undefined);
+                      const serverRoot = baseUrl.replace(/\/api\/?$/, '');
+                      const itemImageUri = mappedImage
+                        ? mappedImage.startsWith('http')
+                          ? mappedImage
+                          : `${serverRoot}/${encodeURI(mappedImage)}`
+                        : null;
                       return (
                         <View key={item.id_producto} style={styles.cartItemRow}>
-                          <View style={styles.cartItemDetails}>
+                          <View style={[styles.cartItemDetails, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                            {itemImageUri ? (
+                              <Image
+                                source={{ uri: itemImageUri }}
+                                style={{ width: 28, height: 28, borderRadius: 4, resizeMode: 'contain', backgroundColor: '#FFFFFF' }}
+                              />
+                            ) : null}
                             <Text style={styles.cartItemName} numberOfLines={1}>{p.nombre}</Text>
                           </View>
                           <View style={styles.cartQtyControls}>

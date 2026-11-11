@@ -2,6 +2,8 @@ import { Product } from './types';
 
 export const STANDARD_PRODUCT_IMAGES: Record<string, string> = {
   'LEJIA': 'uploads/productos/lejia.webp',
+  'AMONIACO': 'uploads/productos/amoniaco.webp',
+  'FREGASUELOS': 'uploads/productos/ropa limpia.webp',
   'LEJIA DETERGENTE': 'uploads/productos/Lejia color.webp',
   'AMBIENTADOR': 'uploads/productos/ambientador.webp',
   'BAYETAS': 'uploads/productos/bayetas multihogar.webp',
@@ -16,7 +18,7 @@ export const STANDARD_PRODUCT_IMAGES: Record<string, string> = {
   'RECOGEDOR': 'uploads/productos/recogedor.webp',
   'FLOTA': 'uploads/productos/lavavajillas.webp',
   'ARRIXACA': 'uploads/productos/arrixaca.webp',
-  'CRISTASOL': 'uploads/productos/limpiacristales.webp',
+  'CRISTASOL': 'uploads/productos/limpia cristales.webp',
   'GAMUZA': 'uploads/productos/bayetas.webp',
   'PLUMERO': 'uploads/productos/plumero.webp',
   'SPRAY MOPA': 'uploads/productos/spray_mopa.webp',
@@ -24,8 +26,8 @@ export const STANDARD_PRODUCT_IMAGES: Record<string, string> = {
 
 export const STANDARD_PRODUCTS_LIST: Product[] = [
   { id_producto: 19, nombre: 'LEJIA', precio_unidad: 1.95, es_toxico: 1, es_estandar_pedido: 1, imagen: 'uploads/productos/lejia.webp' },
-  { id_producto: 20, nombre: 'AMONIACO', precio_unidad: 2.10, es_toxico: 1, es_estandar_pedido: 1 },
-  { id_producto: 21, nombre: 'FREGASUELOS', precio_unidad: 3.50, es_toxico: 0, es_estandar_pedido: 1 },
+  { id_producto: 20, nombre: 'AMONIACO', precio_unidad: 2.10, es_toxico: 1, es_estandar_pedido: 1, imagen: 'uploads/productos/amoniaco.webp' },
+  { id_producto: 21, nombre: 'FREGASUELOS', precio_unidad: 3.50, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/ropa limpia.webp' },
   { id_producto: 22, nombre: 'LEJIA DETERGENTE', precio_unidad: 2.45, es_toxico: 1, es_estandar_pedido: 1, imagen: 'uploads/productos/Lejia color.webp' },
   { id_producto: 23, nombre: 'AMBIENTADOR', precio_unidad: 4.20, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/ambientador.webp' },
   { id_producto: 24, nombre: 'BAYETAS', precio_unidad: 1.80, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/bayetas multihogar.webp' },
@@ -39,7 +41,7 @@ export const STANDARD_PRODUCTS_LIST: Product[] = [
   { id_producto: 32, nombre: 'FLOTA', precio_unidad: 3.95, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/lavavajillas.webp' },
   { id_producto: 33, nombre: 'ARRIXACA', precio_unidad: 4.95, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/arrixaca.webp' },
   { id_producto: 34, nombre: 'PAPEL WC', precio_unidad: 6.50, es_toxico: 0, es_estandar_pedido: 1 },
-  { id_producto: 35, nombre: 'CRISTASOL', precio_unidad: 3.20, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/limpiacristales.webp' },
+  { id_producto: 35, nombre: 'CRISTASOL', precio_unidad: 3.20, es_toxico: 0, es_estandar_pedido: 1, imagen: 'uploads/productos/limpia cristales.webp' },
   { id_producto: 36, nombre: 'CENTELLA', precio_unidad: 4.40, es_toxico: 0, es_estandar_pedido: 1 },
   { id_producto: 37, nombre: 'SUPERBRILLO', precio_unidad: 5.80, es_toxico: 0, es_estandar_pedido: 1 },
   { id_producto: 38, nombre: 'LIQUIDO MADERA', precio_unidad: 4.70, es_toxico: 0, es_estandar_pedido: 1 },

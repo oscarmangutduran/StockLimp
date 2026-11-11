@@ -12,8 +12,8 @@ class StandardProductsSeeder extends Seeder
     {
         return [
             ['nombre' => 'LEJIA', 'sku' => 'STD-LEJIA', 'es_toxico' => 1, 'precio_unidad' => 1.95, 'stock_actual' => 150.00, 'imagen' => 'uploads/productos/lejia.webp'],
-            ['nombre' => 'AMONIACO', 'sku' => 'STD-AMONIACO', 'es_toxico' => 1, 'precio_unidad' => 2.10, 'stock_actual' => 100.00, 'imagen' => null],
-            ['nombre' => 'FREGASUELOS', 'sku' => 'STD-FREGASUELOS', 'es_toxico' => 0, 'precio_unidad' => 3.50, 'stock_actual' => 180.00, 'imagen' => null],
+            ['nombre' => 'AMONIACO', 'sku' => 'STD-AMONIACO', 'es_toxico' => 1, 'precio_unidad' => 2.10, 'stock_actual' => 100.00, 'imagen' => 'uploads/productos/amoniaco.webp'],
+            ['nombre' => 'FREGASUELOS', 'sku' => 'STD-FREGASUELOS', 'es_toxico' => 0, 'precio_unidad' => 3.50, 'stock_actual' => 180.00, 'imagen' => 'uploads/productos/ropa limpia.webp'],
             ['nombre' => 'LEJIA DETERGENTE', 'sku' => 'STD-LEJIA-DET', 'es_toxico' => 1, 'precio_unidad' => 2.45, 'stock_actual' => 120.00, 'imagen' => 'uploads/productos/Lejia color.webp'],
             ['nombre' => 'AMBIENTADOR', 'sku' => 'STD-AMBIENTADOR', 'es_toxico' => 0, 'precio_unidad' => 4.20, 'stock_actual' => 140.00, 'imagen' => 'uploads/productos/ambientador.webp'],
             ['nombre' => 'BAYETAS', 'sku' => 'STD-BAYETAS', 'es_toxico' => 0, 'precio_unidad' => 1.80, 'stock_actual' => 250.00, 'imagen' => 'uploads/productos/bayetas multihogar.webp'],
@@ -64,9 +64,14 @@ class StandardProductsSeeder extends Seeder
                 ->whereIn('nombre', ['FREGONA', 'FMICROFIS', 'LIQUIDO MADERA'])
                 ->count();
 
+            $hasAmoniacoImg = DB::table('productos')
+                ->where('sku', 'STD-AMONIACO')
+                ->whereNotNull('imagen')
+                ->exists();
+
             $totalStd = DB::table('productos')->where('es_estandar_pedido', 1)->count();
 
-            if ($readyCount === 3 && $totalStd === 26) {
+            if ($readyCount === 3 && $totalStd === 26 && $hasAmoniacoImg) {
                 return;
             }
 
