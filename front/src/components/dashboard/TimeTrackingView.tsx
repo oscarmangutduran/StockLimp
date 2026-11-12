@@ -101,8 +101,9 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [horaEntrada, setHoraEntrada] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Modal finalizar
+  // Modal pausar / finalizar
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalAction, setModalAction] = useState<'pause' | 'stop'>('stop');
   const [comentarios, setComentarios] = useState('');
   const [documento, setDocumento] = useState<any>(null);
 
@@ -223,7 +224,15 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
-  const handlePause = async () => {
+  const handlePauseOrResume = async () => {
+    if (estado === 'trabajando') {
+      setComentarios('');
+      setDocumento(null);
+      setModalAction('pause');
+      setModalVisible(true);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${baseUrl}/fichajes/pausar`, {
@@ -235,11 +244,11 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
       if (data.success) {
         setEstado(data.fichaje.estado);
       } else {
-        showAlert(data.message || 'No se pudo cambiar el estado de pausa.');
+        showAlert(data.message || 'No se pudo reanudar la jornada.');
       }
     } catch (e) {
-      console.log('Error pausando', e);
-      showAlert('Error de conexión al pausar/reanudar.');
+      console.log('Error reanudando', e);
+      showAlert('Error de conexión al reanudar.');
     } finally {
       setLoading(false);
     }
@@ -256,7 +265,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
-  const handleStopConfirm = async () => {
+  const handleModalConfirm = async () => {
     setLoading(true);
     try {
       const formData = new FormData();
@@ -277,26 +286,31 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         }
       }
 
-      const res = await fetch(`${baseUrl}/fichajes/finalizar`, {
+      const endpoint = modalAction === 'pause' ? `${baseUrl}/fichajes/pausar` : `${baseUrl}/fichajes/finalizar`;
+      const res = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
 
       const data = await res.json();
       if (data.success) {
-        setActivo(false);
-        setEstado(null);
-        setHoraEntrada(null);
-        setElapsedSeconds(0);
+        if (modalAction === 'pause') {
+          setEstado(data.fichaje.estado);
+        } else {
+          setActivo(false);
+          setEstado(null);
+          setHoraEntrada(null);
+          setElapsedSeconds(0);
+        }
         setModalVisible(false);
         setComentarios('');
         setDocumento(null);
       } else {
-        showAlert(data.message || 'No se pudo finalizar el turno.');
+        showAlert(data.message || (modalAction === 'pause' ? 'No se pudo pausar el turno.' : 'No se pudo finalizar el turno.'));
       }
     } catch (e) {
-      console.log('Error finalizando', e);
-      showAlert('Error de conexión al finalizar el turno.');
+      console.log('Error en acción de fichaje', e);
+      showAlert('Error de conexión.');
     } finally {
       setLoading(false);
     }
@@ -469,9 +483,32 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   };
 
   const currentYear = new Date().getFullYear();
-  const approvedDays = vacaciones
+  const todayMid = new Date();
+  todayMid.setHours(0, 0, 0, 0);
+
+  let enjoyedDays = 0;
+  let acceptedDays = 0;
+  vacaciones
     .filter((v) => v.estado === 'aprobada')
-    .reduce((acc, v) => acc + countBusinessDays(v.fecha_inicio, v.fecha_fin), 0);
+    .forEach((v) => {
+      const start = new Date(v.fecha_inicio.split(' ')[0] + 'T00:00:00');
+      const end = new Date(v.fecha_fin.split(' ')[0] + 'T00:00:00');
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
+      const cur = new Date(start);
+      while (cur <= end) {
+        const d = cur.getDay();
+        if (d !== 0 && d !== 6) {
+          if (cur <= todayMid) {
+            enjoyedDays++;
+          } else {
+            acceptedDays++;
+          }
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+
+  const approvedDays = enjoyedDays + acceptedDays;
   const pendingDays = vacaciones
     .filter((v) => v.estado === 'pendiente')
     .reduce((acc, v) => acc + countBusinessDays(v.fecha_inicio, v.fecha_fin), 0);
@@ -609,7 +646,7 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
                       styles.pauseBtn,
                       estado === 'en_pausa' && { backgroundColor: '#10B981', borderColor: '#10B981' },
                     ]}
-                    onPress={handlePause}
+                    onPress={handlePauseOrResume}
                     disabled={loading}
                     activeOpacity={0.85}
                   >
@@ -625,7 +662,12 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
 
                   <TouchableOpacity
                     style={styles.stopShiftBtn}
-                    onPress={() => setModalVisible(true)}
+                    onPress={() => {
+                      setComentarios('');
+                      setDocumento(null);
+                      setModalAction('stop');
+                      setModalVisible(true);
+                    }}
                     disabled={loading}
                     activeOpacity={0.85}
                   >
@@ -653,17 +695,21 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
           </View>
 
           <View style={styles.vacStatsGrid}>
-            <View style={[styles.vacStatBox, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
-              <Text style={[styles.vacStatNum, { color: '#15803D' }]}>{availableDays}</Text>
+            <View style={[styles.vacStatBox, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4' }]}>
+              <Text style={[styles.vacStatNum, { color: '#0F766E' }]}>{availableDays}</Text>
               <Text style={styles.vacStatLabel}>Disponibles</Text>
             </View>
             <View style={[styles.vacStatBox, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
               <Text style={[styles.vacStatNum, { color: '#B45309' }]}>{pendingDays}</Text>
               <Text style={styles.vacStatLabel}>Pendientes</Text>
             </View>
-            <View style={[styles.vacStatBox, { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
-              <Text style={[styles.vacStatNum, { color: '#334155' }]}>{approvedDays}</Text>
-              <Text style={styles.vacStatLabel}>Consumidos</Text>
+            <View style={[styles.vacStatBox, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+              <Text style={[styles.vacStatNum, { color: '#15803D' }]}>{acceptedDays}</Text>
+              <Text style={styles.vacStatLabel}>Aceptados</Text>
+            </View>
+            <View style={[styles.vacStatBox, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
+              <Text style={[styles.vacStatNum, { color: '#1D4ED8' }]}>{enjoyedDays}</Text>
+              <Text style={styles.vacStatLabel}>Disfrutados</Text>
             </View>
           </View>
 
@@ -678,8 +724,14 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
             <View style={styles.progressTrack}>
               <View
                 style={[
+                  { backgroundColor: '#2563EB', height: '100%' },
+                  { width: `${Math.min(100, (enjoyedDays / 22) * 100)}%` },
+                ]}
+              />
+              <View
+                style={[
                   styles.progressFillApproved,
-                  { width: `${Math.min(100, (approvedDays / 22) * 100)}%` },
+                  { width: `${Math.min(100 - Math.min(100, (enjoyedDays / 22) * 100), (acceptedDays / 22) * 100)}%` },
                 ]}
               />
               <View
@@ -812,12 +864,14 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         )}
       </View>
 
-      {/* Modal Finalizar Turno */}
+      {/* Modal Pausar / Finalizar Turno */}
       <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Finalizar Jornada</Text>
+              <Text style={styles.modalTitle}>
+                {modalAction === 'pause' ? 'Pausar Jornada' : 'Finalizar Jornada'}
+              </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Feather name="x" size={20} color="#64748B" />
               </TouchableOpacity>
@@ -830,7 +884,11 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
               numberOfLines={4}
               value={comentarios}
               onChangeText={setComentarios}
-              placeholder="Ej: Salida anticipada por visita médica o incidencia en ruta..."
+              placeholder={
+                modalAction === 'pause'
+                  ? 'Ej: Pausa para descanso, comida o cita médica...'
+                  : 'Ej: Salida anticipada por visita médica o incidencia en ruta...'
+              }
               placeholderTextColor="#94A3B8"
             />
 
@@ -846,8 +904,17 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
                 <Text style={styles.cancelBtnText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleStopConfirm} disabled={loading}>
-                <Text style={styles.saveBtnText}>Confirmar Salida</Text>
+              <TouchableOpacity
+                style={[
+                  styles.modalBtn,
+                  modalAction === 'pause' ? { backgroundColor: '#D97706' } : styles.saveBtn,
+                ]}
+                onPress={handleModalConfirm}
+                disabled={loading}
+              >
+                <Text style={styles.saveBtnText}>
+                  {modalAction === 'pause' ? 'Confirmar Pausa' : 'Confirmar Salida'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1126,9 +1193,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
   cardSub: { fontSize: 12, color: '#64748B', marginTop: 1 },
 
-  vacStatsGrid: { flexDirection: 'row', gap: 10 },
+  vacStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   vacStatBox: {
     flex: 1,
+    minWidth: 92,
     borderRadius: 12,
     borderWidth: 1,
     paddingVertical: 12,

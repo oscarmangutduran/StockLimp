@@ -54,14 +54,28 @@ class TimeTrackingController extends Controller
         return response()->json(['success' => true, 'fichaje' => $fichaje]);
     }
 
-    // Pausar turno
+    // Pausar o reanudar turno (con comentarios y documento opcionales)
     public function pausar(Request $request)
     {
         $id_user = $request->input('id_user');
-        
+        $comentarios = $request->input('comentarios');
+
         $activo = Fichaje::where('id_user', $id_user)->whereIn('estado', ['trabajando', 'en_pausa'])->orderBy('id', 'desc')->first();
         if (!$activo) {
             return response()->json(['success' => false, 'message' => 'No hay turno activo para pausar o reanudar.']);
+        }
+
+        if ($request->hasFile('documento')) {
+            $file = $request->file('documento');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('public/justificantes', $filename);
+            $activo->documento_path = Storage::url($path);
+        }
+
+        if ($comentarios !== null && trim($comentarios) !== '') {
+            $activo->comentarios = $activo->comentarios
+                ? $activo->comentarios . "\n[Pausa] " . trim($comentarios)
+                : '[Pausa] ' . trim($comentarios);
         }
 
         if ($activo->estado === 'trabajando') {
