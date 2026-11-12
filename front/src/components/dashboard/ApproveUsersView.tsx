@@ -209,19 +209,19 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
         <View style={styles.formCard}>
           <View style={styles.formHeader}>
             <Feather name="user-plus" size={20} color="#FFFFFF" />
-            <Text style={styles.formHeaderTitle}>SOLICITUD DE REGISTRO DE TRABAJADOR</Text>
+            <Text style={styles.formHeaderTitle}>ALTA DIRECTA DE TRABAJADOR</Text>
           </View>
 
           <View style={styles.formBody}>
             <Text style={styles.formInstructions}>
-              El nuevo usuario registrado quedará en estado <Text style={{ fontWeight: '700', color: '#D97706' }}>pendiente</Text> y requerirá aprobación del Super Administrador antes de poder iniciar sesión en el sistema.
+              El nuevo usuario se creará en estado <Text style={{ fontWeight: '700', color: '#059669' }}>activo</Text> de forma inmediata y podrá iniciar sesión directamente sin aprobación previa.
             </Text>
 
             {formSuccess && (
               <View style={styles.successAlert}>
                 <Feather name="check-circle" size={18} color="#047857" />
                 <Text style={styles.successAlertText}>
-                  ¡Registro solicitado con éxito! El alta ha quedado registrada como pendiente para validación del Super Administrador. Clave por defecto temporal: "12345".
+                  ¡Usuario creado y activado con éxito! Ya puede iniciar sesión inmediatamente con la clave temporal "12345".
                 </Text>
               </View>
             )}
@@ -284,8 +284,8 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <>
-                  <Feather name="send" size={16} color="#FFFFFF" />
-                  <Text style={styles.submitBtnText}>Enviar Solicitud de Registro</Text>
+                  <Feather name="user-check" size={16} color="#FFFFFF" />
+                  <Text style={styles.submitBtnText}>Crear Usuario</Text>
                 </>
               )}
             </TouchableOpacity>

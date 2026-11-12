@@ -197,17 +197,30 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'rol' => 'required|in:super_admin,admin,usuario,repartidor',
             'id_centro' => 'nullable|exists:centros_trabajo,id_centro',
+            'id_centros' => 'nullable|array',
+            'id_centros.*' => 'exists:centros_trabajo,id_centro',
         ]);
+
+        $primaryCentro = $request->id_centro;
+        if ($request->has('id_centros') && is_array($request->id_centros) && !empty($request->id_centros)) {
+            $primaryCentro = $request->id_centros[0];
+        }
 
         $user = User::create([
             'nombre' => $request->nombre,
             'email' => $request->email,
             'password_hash' => \Illuminate\Support\Facades\Hash::make('12345'),
             'rol' => $request->rol,
-            'id_centro' => $request->id_centro,
-            'estado' => 'pendiente',
+            'id_centro' => $primaryCentro,
+            'estado' => 'activo',
             'fecha_creacion' => now(),
         ]);
+
+        if ($request->has('id_centros') && is_array($request->id_centros)) {
+            $user->centros()->sync($request->id_centros);
+        } elseif ($primaryCentro) {
+            $user->centros()->sync([$primaryCentro]);
+        }
 
         try {
             Mail::to($user->email)->send(new UserRegistered($user, '12345'));
@@ -217,8 +230,8 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Usuario creado correctamente.',
-            'user' => $user
+            'message' => 'Usuario creado y activado correctamente.',
+            'user' => $user->load(['centro', 'centros'])
         ], 201);
     }
 
