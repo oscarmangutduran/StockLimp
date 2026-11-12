@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,15 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
 
   const fileInputRef = useRef<any>(null);
 
+  useEffect(() => {
+    setNombre(user.nombre || '');
+    setApellido(user.apellido || '');
+    setEmail(user.email || '');
+    setTelefono(user.telefono || '');
+    setDireccion(user.direccion || '');
+    setFotoPerfil(user.foto_perfil || '');
+  }, [user]);
+
   // Custom Alert state
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title?: string; message: string; showCancel?: boolean; onConfirm?: () => void }>({ visible: false, message: '' });
   const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
@@ -61,32 +70,7 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
     }
   };
 
-  const handleFileChange = (e: any) => {
-    const files = e.target.files;
-    if (files && files[0]) {
-      const file = files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        showAlert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        setNewPhotoBase64(reader.result as string);
-        setPhotoCleared(false);
-        setError(null);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleClearPhoto = () => {
-    setNewPhotoBase64(null);
-    setFotoPerfil('');
-    setPhotoCleared(true);
-  };
-
-  const handleSave = async () => {
+  const persistProfile = async (options?: { base64?: string | null; cleared?: boolean; successMsg?: string }) => {
     if (!nombre.trim()) {
       setError('El nombre es requerido.');
       return;
@@ -100,6 +84,9 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
     setError(null);
     setSuccess(null);
 
+    const photoToSend = options?.base64 !== undefined ? options.base64 : newPhotoBase64;
+    const isCleared = options?.cleared !== undefined ? options.cleared : photoCleared;
+
     try {
       const payload: any = {
         id_user: user.id_user,
@@ -110,11 +97,11 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
         direccion: direccion.trim(),
       };
 
-      if (newPhotoBase64) {
-        payload.foto_perfil_base64 = newPhotoBase64;
+      if (photoToSend) {
+        payload.foto_perfil_base64 = photoToSend;
       }
 
-      if (photoCleared) {
+      if (isCleared) {
         payload.foto_perfil_clear = true;
       }
 
@@ -130,7 +117,7 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setSuccess('¡Perfil actualizado con éxito!');
+        setSuccess(options?.successMsg || '¡Perfil actualizado con éxito!');
         setNewPhotoBase64(null);
         setPhotoCleared(false);
         if (data.user) {
@@ -147,6 +134,36 @@ export default function ProfileView({ baseUrl, user, onUpdateUser }: ProfileView
       setSaving(false);
     }
   };
+
+  const handleFileChange = (e: any) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      const file = files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        showAlert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setNewPhotoBase64(result);
+        setPhotoCleared(false);
+        setError(null);
+        persistProfile({ base64: result, cleared: false, successMsg: '¡Foto de perfil guardada!' });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearPhoto = () => {
+    setNewPhotoBase64(null);
+    setFotoPerfil('');
+    setPhotoCleared(true);
+    persistProfile({ base64: null, cleared: true, successMsg: 'Foto de perfil eliminada.' });
+  };
+
+  const handleSave = () => persistProfile();
 
   // Get image URI source for rendering
   const getAvatarSource = () => {

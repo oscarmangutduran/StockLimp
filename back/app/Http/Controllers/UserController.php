@@ -19,12 +19,15 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        // Auto-sanación de la tabla users para asegurar la columna api_token y desglosar centros múltiples
+        // Auto-sanación de la tabla users para asegurar las columnas api_token y foto_perfil
         \Database\Seeders\StandardProductsSeeder::ensureSeeded();
         try {
             if (Schema::hasTable('users')) {
                 if (!Schema::hasColumn('users', 'api_token')) {
                     DB::statement("ALTER TABLE users ADD COLUMN api_token VARCHAR(80) NULL UNIQUE AFTER password_hash");
+                }
+                if (!Schema::hasColumn('users', 'foto_perfil')) {
+                    DB::statement("ALTER TABLE users ADD COLUMN foto_perfil VARCHAR(255) NULL AFTER direccion");
                 }
             }
         } catch (\Exception $e) {
@@ -437,7 +440,7 @@ class UserController extends Controller
 
         if ($request->foto_perfil_clear === true || $request->foto_perfil_clear === 'true') {
             if ($user->foto_perfil) {
-                $oldPath = public_path($user->foto_perfil);
+                $oldPath = public_path(ltrim($user->foto_perfil, '/'));
                 if (file_exists($oldPath)) {
                     @unlink($oldPath);
                 }
@@ -447,27 +450,30 @@ class UserController extends Controller
 
         if ($request->filled('foto_perfil_base64')) {
             $base64 = $request->foto_perfil_base64;
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
+            if (preg_match('/^data:image\/([a-zA-Z0-9+.-]+);base64,/', $base64, $type)) {
                 $data = substr($base64, strpos($base64, ',') + 1);
-                $type = strtolower($type[1]);
+                $ext = strtolower($type[1]);
+                if ($ext === 'jpeg') {
+                    $ext = 'jpg';
+                }
 
-                if (in_array($type, ['jpg', 'jpeg', 'gif', 'png', 'webp'])) {
+                if (in_array($ext, ['jpg', 'gif', 'png', 'webp'])) {
                     $decodedData = base64_decode($data);
                     if ($decodedData !== false) {
                         // Delete old profile photo if it exists
                         if ($user->foto_perfil) {
-                            $oldPath = public_path($user->foto_perfil);
+                            $oldPath = public_path(ltrim($user->foto_perfil, '/'));
                             if (file_exists($oldPath)) {
                                 @unlink($oldPath);
                             }
                         }
 
-                        $filename = 'profile_' . $user->id_user . '_' . time() . '.' . $type;
+                        $filename = 'profile_' . $user->id_user . '_' . time() . '.' . $ext;
                         $dir = public_path('uploads/profiles');
                         if (!file_exists($dir)) {
                             mkdir($dir, 0755, true);
                         }
-                        file_put_contents($dir . '/' . $filename, $decodedData);
+                        file_put_contents($dir . DIRECTORY_SEPARATOR . $filename, $decodedData);
                         $user->foto_perfil = '/uploads/profiles/' . $filename;
                     }
                 }
@@ -475,24 +481,18 @@ class UserController extends Controller
         }
 
         $user->save();
+        $user->load(['centro', 'centros']);
 
         return response()->json([
             'success' => true,
             'message' => 'Perfil actualizado correctamente.',
-            'user' => [
+            'user' => array_merge($user->toArray(), [
                 'id' => $user->id_user,
                 'id_user' => $user->id_user,
-                'nombre' => $user->nombre,
-                'apellido' => $user->apellido,
                 'name' => $user->nombre,
-                'email' => $user->email,
-                'rol' => $user->rol,
                 'role' => $user->rol,
-                'id_centro' => $user->id_centro,
-                'telefono' => $user->telefono,
-                'direccion' => $user->direccion,
                 'foto_perfil' => $user->foto_perfil,
-            ]
+            ])
         ], 200);
     }
 }

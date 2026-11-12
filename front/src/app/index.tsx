@@ -93,6 +93,24 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           if (!initialTab) {
             setActiveTab(parsed.rol === 'super_admin' || parsed.rol === 'admin' ? 'centros' : 'pedidos');
           }
+          const savedToken = sessionStorage.getItem('token') || parsed.token;
+          if (savedToken) {
+            fetch(`${BASE_URL}/usuarios/me`, {
+              headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${savedToken}`,
+              },
+            })
+              .then((res) => (res.ok ? res.json() : null))
+              .then((meData) => {
+                if (meData && meData.success && meData.user) {
+                  const refreshed = { ...parsed, ...meData.user, token: savedToken };
+                  setUser(refreshed);
+                  sessionStorage.setItem('user', JSON.stringify(refreshed));
+                }
+              })
+              .catch(() => {});
+          }
         }
       } catch (e) {
         console.error('Error restoring session from sessionStorage:', e);
@@ -139,25 +157,32 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   };
 
   const saveUserSession = (userData: any, token?: string) => {
-    const userWithToken = token ? { ...userData, token } : userData;
-    setUser(userWithToken);
-    if (!initialTab) {
-      setActiveTab(userWithToken.rol === 'super_admin' || userWithToken.rol === 'admin' ? 'centros' : 'pedidos');
-    }
-    if (Platform.OS === 'web') {
-      try {
-        sessionStorage.setItem('user', JSON.stringify(userWithToken));
-        if (token || userWithToken.token) {
-          sessionStorage.setItem('token', token || userWithToken.token);
+    setUser((prevUser: any) => {
+      const preservedToken = token || userData.token || prevUser?.token;
+      const mergedUser = {
+        ...(prevUser || {}),
+        ...userData,
+        ...(preservedToken ? { token: preservedToken } : {}),
+      };
+      if (Platform.OS === 'web') {
+        try {
+          sessionStorage.setItem('user', JSON.stringify(mergedUser));
+          if (preservedToken) {
+            sessionStorage.setItem('token', preservedToken);
+          }
+          if (rememberMe && email && password) {
+            localStorage.setItem('stocklimp_remember_creds', JSON.stringify({ email, password }));
+          } else if (!rememberMe) {
+            localStorage.removeItem('stocklimp_remember_creds');
+          }
+        } catch (e) {
+          console.error('Error saving session to sessionStorage / localStorage:', e);
         }
-        if (rememberMe) {
-          localStorage.setItem('stocklimp_remember_creds', JSON.stringify({ email, password }));
-        } else {
-          localStorage.removeItem('stocklimp_remember_creds');
-        }
-      } catch (e) {
-        console.error('Error saving session to sessionStorage / localStorage:', e);
       }
+      return mergedUser;
+    });
+    if (!initialTab) {
+      setActiveTab(userData.rol === 'super_admin' || userData.rol === 'admin' ? 'centros' : 'pedidos');
     }
   };
 
@@ -250,29 +275,6 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           },
           body: JSON.stringify({ email }),
         });
-      }
-
-      // If backend is down, we allow local backdoors for testing
-      if (email === 'oscar@stocklimp.com' && password === 'admin123') {
-        saveUserSession({
-          id_user: 1,
-          nombre: 'Oscar Mangut',
-          email: 'oscar@stocklimp.com',
-          rol: 'super_admin',
-        });
-        setLoading(false);
-        return;
-      }
-
-      if (email === 'admin@stocklimp.com' && password === 'admin123') {
-        saveUserSession({
-          id_user: 2,
-          nombre: 'Admin Pruebas',
-          email: 'admin@stocklimp.com',
-          rol: 'admin',
-        });
-        setLoading(false);
-        return;
       }
 
       const response = await fetch(`${BASE_URL}/usuarios/login`, {
