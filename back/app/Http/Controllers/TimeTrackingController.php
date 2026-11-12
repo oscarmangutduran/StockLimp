@@ -20,17 +20,40 @@ class TimeTrackingController extends Controller
             ->orderBy('id', 'desc')
             ->first();
 
+        $semanaInicio = Carbon::now()->startOfWeek();
+
+        $fichajesSemanaFinalizados = Fichaje::where('id_user', $id_user)
+            ->where('estado', 'finalizado')
+            ->where('hora_entrada', '>=', $semanaInicio)
+            ->whereNotNull('hora_salida')
+            ->get();
+
+        $segundosSemana = 0;
+        foreach ($fichajesSemanaFinalizados as $f) {
+            $segundosSemana += max(0, Carbon::parse($f->hora_entrada)->diffInSeconds(Carbon::parse($f->hora_salida)));
+        }
+
+        // Objetivo semanal estándar: 40 horas (144000s)
+        $objetivoSemanaSegundos = 40 * 3600;
+
+        $resumen = [
+            'objetivo_semana_segundos' => $objetivoSemanaSegundos,
+            'realizados_semana_segundos' => $segundosSemana,
+        ];
+
         if ($fichajeActivo) {
             return response()->json([
                 'success' => true,
                 'activo' => true,
-                'fichaje' => $fichajeActivo
+                'fichaje' => $fichajeActivo,
+                'resumen' => $resumen,
             ]);
         }
 
         return response()->json([
             'success' => true,
-            'activo' => false
+            'activo' => false,
+            'resumen' => $resumen,
         ]);
     }
 

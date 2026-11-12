@@ -30,29 +30,34 @@ interface TimeTrackingViewProps {
   userId: number;
 }
 
+const formatSecondsHMS = (secs: number) => {
+  const safe = Math.max(0, Math.floor(secs));
+  const h = Math.floor(safe / 3600).toString().padStart(2, '0');
+  const m = Math.floor((safe % 3600) / 60).toString().padStart(2, '0');
+  const s = Math.floor(safe % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
+};
+
 const ShiftProgressRing = ({
-  elapsedSeconds,
-  totalSeconds = 8 * 3600,
+  realizedSeconds,
+  totalSeconds = 40 * 3600,
   isActive,
   isPaused,
 }: {
-  elapsedSeconds: number;
+  realizedSeconds: number;
   totalSeconds?: number;
   isActive: boolean;
   isPaused: boolean;
 }) => {
-  const size = 152;
+  const size = 158;
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = totalSeconds > 0 ? Math.min(elapsedSeconds / totalSeconds, 1) : 0;
+  const progress = totalSeconds > 0 ? Math.min(realizedSeconds / totalSeconds, 1) : 0;
   const strokeDashoffset = circumference - progress * circumference;
 
-  const hrs = Math.floor(elapsedSeconds / 3600).toString().padStart(2, '0');
-  const mins = Math.floor((elapsedSeconds % 3600) / 60).toString().padStart(2, '0');
-  const secs = Math.floor(elapsedSeconds % 60).toString().padStart(2, '0');
-
-  const ringColor = !isActive ? '#1E5B55' : isPaused ? '#F59E0B' : '#5EEAD4';
+  const remainingSeconds = Math.max(0, totalSeconds - realizedSeconds);
+  const ringColor = !isActive && realizedSeconds === 0 ? '#1E5B55' : isPaused ? '#F59E0B' : '#5EEAD4';
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -80,11 +85,14 @@ const ShiftProgressRing = ({
         />
       </Svg>
       <View style={{ alignItems: 'center' }}>
-        <Text style={{ fontSize: 24, fontWeight: '800', color: '#FFFFFF', fontVariant: ['tabular-nums'] }}>
-          {hrs}:{mins}:{secs}
+        <Text style={{ fontSize: 10, color: '#99F6E4', fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 }}>
+          Restantes semana
         </Text>
-        <Text style={{ fontSize: 11, color: '#99F6E4', marginTop: 2, fontWeight: '600' }}>
-          Meta: 08:00:00
+        <Text style={{ fontSize: 23, fontWeight: '800', color: '#FFFFFF', fontVariant: ['tabular-nums'] }}>
+          {formatSecondsHMS(remainingSeconds)}
+        </Text>
+        <Text style={{ fontSize: 10, color: '#CBD5E1', marginTop: 2, fontWeight: '600' }}>
+          de {formatSecondsHMS(totalSeconds)}
         </Text>
       </View>
     </View>
@@ -100,6 +108,8 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
   const [estado, setEstado] = useState<'trabajando' | 'en_pausa' | null>(null);
   const [horaEntrada, setHoraEntrada] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [objetivoSemanaSegundos, setObjetivoSemanaSegundos] = useState(40 * 3600);
+  const [realizadosSemanaPrevios, setRealizadosSemanaPrevios] = useState(0);
 
   // Modal pausar / finalizar
   const [modalVisible, setModalVisible] = useState(false);
@@ -138,6 +148,10 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
         body: JSON.stringify({ id_user: userId }),
       });
       const data = await res.json();
+      if (data.resumen) {
+        setObjetivoSemanaSegundos(data.resumen.objetivo_semana_segundos ?? 40 * 3600);
+        setRealizadosSemanaPrevios(data.resumen.realizados_semana_segundos ?? 0);
+      }
       if (data.success && data.activo) {
         setActivo(true);
         setEstado(data.fichaje.estado);
@@ -538,6 +552,9 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
     }
   };
 
+  const totalRealizadosSemana = realizadosSemanaPrevios + elapsedSeconds;
+  const restantesSemana = Math.max(0, objetivoSemanaSegundos - totalRealizadosSemana);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* View Header */}
@@ -595,7 +612,8 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
 
           <View style={[styles.shiftBody, !isDesktop && { flexDirection: 'column', gap: 18 }]}>
             <ShiftProgressRing
-              elapsedSeconds={elapsedSeconds}
+              realizedSeconds={totalRealizadosSemana}
+              totalSeconds={objetivoSemanaSegundos}
               isActive={activo}
               isPaused={estado === 'en_pausa'}
             />
@@ -603,23 +621,36 @@ export default function TimeTrackingView({ baseUrl, userId }: TimeTrackingViewPr
             <View style={styles.shiftInfoCol}>
               <View style={styles.shiftMetaGrid}>
                 <View style={styles.shiftMetaBox}>
-                  <Text style={styles.shiftMetaLabel}>Hora de entrada</Text>
-                  <Text style={styles.shiftMetaVal}>
-                    {activo ? formatHoraEntradaDisplay(horaEntrada) : '--:--'}
+                  <Text style={styles.shiftMetaLabel}>Total semanal</Text>
+                  <Text style={styles.shiftMetaVal}>{formatSecondsHMS(objetivoSemanaSegundos)}</Text>
+                </View>
+                <View style={styles.shiftMetaBox}>
+                  <Text style={styles.shiftMetaLabel}>Realizadas (semana)</Text>
+                  <Text style={[styles.shiftMetaVal, { color: '#5EEAD4' }]}>
+                    {formatSecondsHMS(totalRealizadosSemana)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.shiftMetaGrid}>
+                <View style={styles.shiftMetaBox}>
+                  <Text style={styles.shiftMetaLabel}>Restantes semana</Text>
+                  <Text style={[styles.shiftMetaVal, { color: '#FDE68A' }]}>
+                    {formatSecondsHMS(restantesSemana)}
                   </Text>
                 </View>
                 <View style={styles.shiftMetaBox}>
-                  <Text style={styles.shiftMetaLabel}>Estado actual</Text>
+                  <Text style={styles.shiftMetaLabel}>Hora de entrada</Text>
                   <Text style={styles.shiftMetaVal}>
-                    {!activo ? 'Listo para fichar' : estado === 'en_pausa' ? 'Pausado' : 'Trabajando'}
+                    {activo ? formatHoraEntradaDisplay(horaEntrada) : '--:--'}
                   </Text>
                 </View>
               </View>
 
               <Text style={styles.shiftHint}>
                 {!activo
-                  ? 'Pulsa "Iniciar Jornada" para registrar tu entrada y comenzar el cómputo de horas.'
-                  : 'Puedes pausar tu turno para descansos o finalizarlo adjuntando un justificante si lo necesitas.'}
+                  ? 'Pulsa "Iniciar Jornada" para fichar tu entrada. Las horas trabajadas se irán restando automáticamente de tu objetivo semanal.'
+                  : `Entrada registrada a las ${formatHoraEntradaDisplay(horaEntrada)}. El tiempo restante semanal se descuenta en tiempo real.`}
               </Text>
 
               {/* Action Buttons */}
