@@ -430,6 +430,52 @@ export const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 24,
   },
+
+  // Role Selector Bar for Admins & Super Admins
+  roleSelectorCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  roleSelectorLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  roleSelectorPills: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  rolePillBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    cursor: 'pointer',
+  } as any,
+  rolePillBtnActive: {
+    backgroundColor: '#0F766E',
+    borderColor: '#0F766E',
+  },
+  rolePillBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  rolePillBtnTextActive: {
+    color: '#FFFFFF',
+  },
   mobileAppsTop: {
     marginBottom: 18,
   },
