@@ -26,6 +26,7 @@ import AnalyticsView from '@/components/dashboard/AnalyticsView';
 import ProfileView from '@/components/dashboard/ProfileView';
 import TimeTrackingView from '@/components/dashboard/TimeTrackingView';
 import VacationsAdminView from '@/components/dashboard/VacationsAdminView';
+import DownloadsView from '@/components/dashboard/DownloadsView';
 import { styles } from '../css/index.styles';
 
 const cleaningWorkerImg = require('../images/equipo.jpg');
@@ -34,7 +35,7 @@ const PROD_URL = 'https://stocklimp-backend.onrender.com/api';
 const DEV_URL = Platform.OS === 'web' ? 'http://localhost:8000/api' : 'http://10.0.2.2:8000/api';
 const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 
-type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje' | 'vacaciones';
+type TabType = 'productos' | 'pedidos' | 'centros' | 'alta' | 'control' | 'analitica' | 'perfil' | 'fichaje' | 'vacaciones' | 'descargas';
 
 export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const [mounted, setMounted] = useState(false);
@@ -380,6 +381,8 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
           return <TimeTrackingView baseUrl={BASE_URL} userId={user.id_user} />;
         case 'vacaciones':
           return <VacationsAdminView baseUrl={BASE_URL} userId={user.id_user} />;
+        case 'descargas':
+          return <DownloadsView baseUrl={BASE_URL} userRole={user.rol} />;
         default:
           return <CentersView baseUrl={BASE_URL} />;
       }
@@ -551,6 +554,20 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
               </Text>
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            style={[styles.menuItem, activeTab === 'descargas' && styles.menuItemActive]}
+            onPress={() => {
+              changeTab('descargas');
+              setMobileMenuOpen(false);
+            }}
+          >
+            {activeTab === 'descargas' && <View style={styles.activeBar} />}
+            <Feather name="arrow-down" size={18} color={activeTab === 'descargas' ? '#F97316' : '#94A3B8'} />
+            <Text style={[styles.menuItemText, activeTab === 'descargas' && styles.menuItemTextActive]}>
+              Descargas
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Logout Button */}

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>StockLimp — Case Study & UI/UX Portfolio (Behance)</title>
+  <style>
+    @page {
+      size: 297mm 190mm;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #041f1e;
+      color: #0f172a;
+      line-height: 1.45;
+    }
+
+    .slide {
+      width: 297mm;
+      height: 190mm;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14mm 16mm;
+    }
+
+    .slide:last-child {
+      page-break-after: auto;
+    }
+
+    /* Themes */
+    .slide-dark {
+      background: radial-gradient(circle at 85% 15%, #115e59 0%, #042f2e 55%, #021716 100%);
+      color: #ffffff;
+    }
+
+    .slide-light {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .slide-white {
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    /* Decorative glow circles */
+    .glow-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(55px);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    /* Header bar inside slides */
+    .slide-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2;
+      margin-bottom: 10px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-pill-dark {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #5eead4;
+    }
+
+    .brand-pill-light {
+      background: #ccfbf1;
+      border: 1px solid #99f6e4;
+      color: #0f766e;
+    }
+
+    .slide-num {
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      opacity: 0.65;
+    }
+
+    /* Section Titles */
+    .section-title {
+      font-size: 24pt;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.12;
+      margin-bottom: 6px;
+    }
+
+    .section-subtitle {
+      font-size: 10.5pt;
+      color: #64748b;
+      max-width: 720px;
+    }
+
+    .slide-dark .section-subtitle {
+      color: #99f6e4;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      z-index: 2;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      z-index: 2;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      z-index: 2;
+    }
+
+    /* Cards */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+    }
+
+    .card-dark {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: #ffffff;
+    }
+
+    /* Mockup Browser Window */
+    .browser-window {
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 18px 40px rgba(2, 23, 22, 0.28);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .browser-bar {
+      background: #0f172a;
+      padding: 7px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-r { background: #ef4444; }
+    .dot-y { background: #f59e0b; }
+    .dot-g { background: #10b981; }
+
+    .browser-url {
+      margin-left: 10px;
+      background: #1e293b;
+      color: #94a3b8;
+      font-size: 7.5pt;
+      padding: 2px 12px;
+      border-radius: 99px;
+      font-family: Consolas, monospace;
+    }
+
+    /* Mockup App Layout */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 135px 1fr;
+      min-height: 112mm;
+      background: #f1f5f9;
+    }
+
+    .app-sidebar {
+      background: #1e293b;
+      color: #ffffff;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #334155;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #0d9488;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 8.5pt;
+    }
+
+    .nav-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 8pt;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-item.active {
+      background: rgba(249, 115, 22, 0.16);
+      color: #f97316;
+      font-weight: 700;
+      border-left: 3px solid #f97316;
+    }
+
+    /* Product Mini Cards in Catalog Mockup */
+    .prod-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .prod-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 6px;
+      text-align: center;
+      position: relative;
+    }
+
+    .prod-card img {
+      width: 100%;
+      height: 46px;
+      object-fit: contain;
+      background: #ffffff;
+      border-radius: 6px;
+    }
+
+    .prod-name {
+      font-size: 7pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-top: 4px;
+    }
+
+    .prod-badge-qty {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #0d9488;
+      color: #ffffff;
+      font-size: 6.5pt;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 99px;
+    }
+
+    .toxic-pill {
+      display: inline-block;
+      font-size: 6pt;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      padding: 0 4px;
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    /* Footer */
+    .slide-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8pt;
+      opacity: 0.7;
+      border-top: 1px solid rgba(148, 163, 184, 0.25);
+      padding-top: 8px;
+      z-index: 2;
+    }
+
+    .tech-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 8pt;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      margin-right: 6px;
+    }
+
+    .swatch {
+      border-radius: 12px;
+      height: 62px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      font-size: 8pt;
+      font-weight: 700;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button onclick="window.print()" style="background: #0f766e; color: #ffffff; border: 2px solid #5eead4; padding: 12px 22px; border-radius: 999px; font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+      🖨️ Guardar / Exportar PDF para Behance
+    </button>
+  </div>
+
+  <!-- =====================================================================
+       SLIDE 1: PORTADA HERO (BEHANCE COVER)
+       ===================================================================== -->
+  <section class="slide slide-dark">
+    <div class="glow-orb" style="width: 320px; height: 320px; background: #2dd4bf; top: -60px; right: -40px;"></div>
+    <div class="glow-orb" style="width: 260px; height: 260px; background: #f97316; bottom: -50px; left: 30%;"></div>
+
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-dark">UI/UX CASE STUDY &bull; FULL-STACK WEB &amp; MOBILE</div>
+      <div class="slide-num">BEHANCE PORTFOLIO // 2026</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 22px; align-items: center; z-index: 2; my: auto;">
+      <div>
+        <div style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: #14b8a6; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16pt; color: #042f2e;">S</div>
+          <span style="font-size: 13pt; font-weight: 800; letter-spacing: 0.12em; color: #5eead4;">STOCKLIMP</span>
+        </div>
+
+        <h1 style="font-size: 34pt; font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 12px; color: #ffffff;">
+           Plataforma Integral de Logística, Pedidos y Control Horario
+        </h1>
+
+        <p style="font-size: 11pt; color: #ccfbf1; margin-bottom: 18px; line-height: 1.55;">
+          Digitalización extremo a extremo para empresas de limpieza industrial: catálogo interactivo de <strong>26 insumos estándar</strong>, asignación multicentro por operario, trazabilidad de productos químicos con fichas técnicas y gestión laboral en tiempo real.
+        </p>
+
+        <div style="margin-bottom: 18px;">
+          <span class="tech-tag">React Native Web</span>
+          <span class="tech-tag">Expo 54</span>
+          <span class="tech-tag">Laravel 12 API</span>
+          <span class="tech-tag">MySQL 8</span>
+          <span class="tech-tag">Docker</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="card-dark" style="padding: 10px 12px;">
+            <div style="font-size: 18pt; font-weight: 900; color: #5eead4;">+110</div>
+            <div style="font-size: 7.5pt; color: #cbd5e1; text-transform: uppercase;">Centros de Trabajo</div>
+          </div>
+          <div class="card-dark" style="padding: 10px 12px;">
+            <div style="font-size: 18pt; font-weight: 900; color: #f97316;">26</div>
+            <div style="font-size: 7.5pt; color: #cbd5e1; text-transform: uppercase;">Productos Estándar</div>
+          </div>
+          <div class="card-dark" style="padding: 10px 12px;">
+            <div style="font-size: 18pt; font-weight: 900; color: #38bdf8;">4 Roles</div>
+            <div style="font-size: 7.5pt; color: #cbd5e1; text-transform: uppercase;">Seguridad RBAC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Hero Visual Mockup -->
+      <div class="browser-window">
+        <div class="browser-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="browser-url">https://app.stocklimp.com/login</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1.05fr; background: #ffffff; height: 105mm;">
+          <div style="position: relative; overflow: hidden; background: #0f766e;">
+            <img src="front/src/images/equipo.jpg" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.88;" />
+            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(4,47,46,0.92), rgba(15,118,110,0.25)); padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; color: #fff;">
+              <div style="font-size: 7.5pt; font-weight: 700; color: #5eead4; text-transform: uppercase; letter-spacing: 0.08em;">Adarve Limpiezas &bull; StockLimp</div>
+              <div style="font-size: 12pt; font-weight: 800; line-height: 1.2; margin-top: 3px;">Gestión inteligente para operarios y almacén</div>
+            </div>
+          </div>
+          <div style="padding: 18px 16px; display: flex; flex-direction: column; justify-content: center; background: #ffffff; color: #0f172a;">
+            <div style="font-size: 13pt; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Bienvenido a StockLimp</div>
+            <div style="font-size: 7.5pt; color: #64748b; margin-bottom: 12px;">Inicia sesión para gestionar tus pedidos y centros</div>
+            <div style="font-size: 7pt; font-weight: 700; color: #475569; margin-bottom: 3px;">CORREO ELECTRÓNICO</div>
+            <div style="padding: 7px 10px; border-radius: 7px; border: 1px solid #cbd5e1; font-size: 7.5pt; color: #0f172a; background: #f8fafc; margin-bottom: 9px;">
+              admin@atocklimp.com
+            </div>
+            <div style="font-size: 7pt; font-weight: 700; color: #475569; margin-bottom: 3px;">CONTRASEÑA</div>
+            <div style="padding: 7px 10px; border-radius: 7px; border: 1px solid #cbd5e1; font-size: 7.5pt; color: #0f172a; background: #f8fafc; margin-bottom: 10px;">
+              ••••••••
+            </div>
+            <div style="background: #5c8e8d; color: #ffffff; text-align: center; padding: 8px; border-radius: 8px; font-size: 8pt; font-weight: 700; margin-bottom: 10px;">
+              ENTRAR AL PANEL
+            </div>
+            <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 7px 9px; font-size: 7pt; color: #0f766e;">
+              💬 <strong>Asistente Virtual Activo:</strong> Soporte 24/7 sobre plazos de pedidos (días 2 al 20), vacaciones y claves.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp | UI/UX Case Study &amp; Full-Stack Architecture | Behance Portfolio | Desarrollado por Oscar Mangut Dev</span>
+      <span>01 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SLIDE 2: EL RETO, LA SOLUCIÓN Y ARQUITECTURA DE ROLES
+       ===================================================================== -->
+  <section class="slide slide-light">
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-light">01 &bull; CONTEXTO DEL PROYECTO &amp; SOLUCIÓN</div>
+      <div class="slide-num">STOCKLIMP CASE STUDY</div>
+    </div>
+
+    <div>
+      <div class="section-title">De hojas de cálculo manuales a un ecosistema sincronizado</div>
+      <div class="section-subtitle">
+        El objetivo principal de StockLimp fue transformar la operativa mensual de suministros de limpieza de más de 110 centros de trabajo en Cáceres y provincia en una experiencia visual intuitiva, sin errores y accesible desde móvil o escritorio.
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 6px;">
+      <div class="card" style="border-left: 5px solid #ef4444;">
+        <div style="font-size: 8pt; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">
+          ⚠️ El Problema Inicial
+        </div>
+        <div style="font-size: 12pt; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+          Pedidos fragmentados y falta de trazabilidad
+        </div>
+        <ul style="padding-left: 16px; font-size: 8.8pt; color: #475569; line-height: 1.6;">
+          <li><strong>Operarios con múltiples centros concatenados:</strong> Dificultad para distinguir a qué edificio o comunidad iba destinado cada pedido mensual.</li>
+          <li><strong>Catálogo en papel/Excel:</strong> Errores frecuentes en nombres de productos y cantidades fuera del plazo operativo.</li>
+          <li><strong>Seguridad química dispersa:</strong> Ausencia de alertas visibles para productos tóxicos y fichas técnicas PDF.</li>
+          <li><strong>Control horario manual:</strong> Registro de jornada, pausas, bajas médicas y vacaciones sin centralizar.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="border-left: 5px solid #0d9488; background: #f0fdfa;">
+        <div style="font-size: 8pt; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">
+          ✅ La Solución StockLimp
+        </div>
+        <div style="font-size: 12pt; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+          Experiencia guiada por centro y catálogo visual
+        </div>
+        <ul style="padding-left: 16px; font-size: 8.8pt; color: #134e4a; line-height: 1.6;">
+          <li><strong>Asignación Multicentro Inteligente:</strong> Desglose individual de centros por operario con selector interactivo al crear cada pedido.</li>
+          <li><strong>Catálogo Visual de 26 Productos Estándar:</strong> Fotografías reales, indicadores de toxicidad y buzón de peticiones excepcionales.</li>
+          <li><strong>Ventana Operativa Automatizada:</strong> Regla de negocio activa del <strong>día 2 al 20 de cada mes</strong> con modo simulación para pruebas.</li>
+          <li><strong>Notificaciones y Exportación Excel:</strong> Avisos por email en cambios de estado y descarga directa en XLSX para almacén.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4 Roles Row -->
+    <div class="grid-4" style="margin-top: 6px;">
+      <div class="card" style="padding: 11px 13px;">
+        <div style="display: inline-block; background: #ffebef; color: #ef4444; font-size: 7pt; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-bottom: 5px;">SUPER ADMIN</div>
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 3px;">Control Total</div>
+        <p style="font-size: 7.8pt; color: #64748b;">Aprobación de altas, asignación de múltiples centros por trabajador, analítica global y gestión de roles.</p>
+      </div>
+      <div class="card" style="padding: 11px 13px;">
+        <div style="display: inline-block; background: #fef3c7; color: #d97706; font-size: 7pt; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-bottom: 5px;">ADMINISTRADOR</div>
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 3px;">Gestión de Almacén</div>
+        <p style="font-size: 7.8pt; color: #64748b;">Control de stock e inventario químico, fichas PDF, gestión de centros, pedidos, vacaciones y exportación Excel.</p>
+      </div>
+      <div class="card" style="padding: 11px 13px;">
+        <div style="display: inline-block; background: #f3e8ff; color: #8b5cf6; font-size: 7pt; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-bottom: 5px;">REPARTIDOR</div>
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 3px;">Rutas de Entrega</div>
+        <p style="font-size: 7.8pt; color: #64748b;">Filtrado por número de ruta (1 a 17), actualización masiva de estados de entrega y fichaje horario.</p>
+      </div>
+      <div class="card" style="padding: 11px 13px;">
+        <div style="display: inline-block; background: #eff6ff; color: #2563eb; font-size: 7pt; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-bottom: 5px;">OPERARIO (USUARIO)</div>
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 3px;">Pedidos por Centro</div>
+        <p style="font-size: 7.8pt; color: #64748b;">Solicitud mensual (días 2–20) seleccionando centro asignado, control de jornada y solicitud de vacaciones.</p>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp — Investigación UX &amp; Reglas de Negocio</span>
+      <span>02 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SLIDE 3: EXPERIENCIA DE PEDIDOS MULTICENTRO Y CATÁLOGO DE 26 PRODUCTOS
+       ===================================================================== -->
+  <section class="slide slide-dark">
+    <div class="glow-orb" style="width: 300px; height: 300px; background: #14b8a6; bottom: -80px; right: 10%;"></div>
+
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-dark">02 &bull; FLUJO ESTRELLA: PEDIDOS MULTICENTRO</div>
+      <div class="slide-num">UI/UX SHOWCASE</div>
+    </div>
+
+    <div>
+      <div class="section-title" style="color: #ffffff; font-size: 21pt;">Catálogo Visual de 26 Productos y Selección de Centro</div>
+      <div class="section-subtitle">
+        Cuando un operario tiene más de un centro asignado, elige para qué centro es el pedido mediante pastillas interactivas y añade productos con un solo clic sobre su fotografía.
+      </div>
+    </div>
+
+    <!-- High-Fidelity Order Form Modal Mockup -->
+    <div class="browser-window" style="z-index: 2; margin-top: 4px;">
+      <div class="browser-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="browser-url">https://app.stocklimp.com/pedidos — Ventana Registrar Pedido (Operario: Antonio Benítez)</span>
+      </div>
+
+      <div style="background: #ffffff; padding: 12px 14px; color: #0f172a;">
+        <!-- Multi-center selector header banner -->
+        <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div style="font-size: 8pt; color: #0f766e; font-weight: 700;">
+              📍 Pedido para el centro (3 centros asignados a Antonio Benítez): <strong style="color: #042f2e;">GANTE 80 VIVIENDAS</strong>
+            </div>
+            <span style="background: #ccfbf1; color: #0f766e; font-size: 7pt; font-weight: 800; padding: 2px 8px; border-radius: 6px;">Plazo Activo: Día 2 al 20</span>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span style="background: #0f766e; color: #ffffff; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 7px;">✓ GANTE 80 VIVIENDAS</span>
+            <span style="background: #ffffff; color: #0f766e; border: 1px solid #99f6e4; font-size: 7.5pt; font-weight: 600; padding: 4px 10px; border-radius: 7px;">○ RUTA DE CRISTALES ESTABLECIDA</span>
+            <span style="background: #ffffff; color: #0f766e; border: 1px solid #99f6e4; font-size: 7.5pt; font-weight: 600; padding: 4px 10px; border-radius: 7px;">○ ALDEANUEVA DEL CAMINO Nº 26</span>
+          </div>
+        </div>
+
+        <!-- Split Catalog + Cart -->
+        <div style="display: grid; grid-template-columns: 1.45fr 0.85fr; gap: 12px;">
+          <!-- Left: 8 Real Product Photos from the 26 Standard Catalog -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 9pt; font-weight: 800; color: #0f172a;">Catálogo de Pedidos (26 Productos Estándar)</span>
+              <span style="font-size: 7pt; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 7px; border-radius: 99px; font-weight: 700;">Vista de Cuadrícula Interactiva</span>
+            </div>
+            <div class="prod-grid">
+              <div class="prod-card">
+                <span class="prod-badge-qty">+2</span>
+                <img src="back/public/uploads/productos/lejia.webp" alt="LEJIA" />
+                <div class="prod-name">LEJIA</div>
+                <div class="toxic-pill">⚠️ Tóxico</div>
+              </div>
+              <div class="prod-card">
+                <span class="prod-badge-qty">+1</span>
+                <img src="back/public/uploads/productos/amoniaco.webp" alt="AMONIACO" />
+                <div class="prod-name">AMONIACO</div>
+                <div class="toxic-pill">⚠️ Tóxico</div>
+              </div>
+              <div class="prod-card">
+                <span class="prod-badge-qty">+3</span>
+                <img src="back/public/uploads/productos/ropa limpia.webp" alt="FREGASUELOS" />
+                <div class="prod-name">FREGASUELOS</div>
+              </div>
+              <div class="prod-card">
+                <img src="back/public/uploads/productos/Lejia color.webp" alt="LEJIA DETERGENTE" />
+                <div class="prod-name">LEJIA DETERGENTE</div>
+                <div class="toxic-pill">⚠️ Tóxico</div>
+              </div>
+              <div class="prod-card">
+                <img src="back/public/uploads/productos/ambientador.webp" alt="AMBIENTADOR" />
+                <div class="prod-name">AMBIENTADOR</div>
+              </div>
+              <div class="prod-card">
+                <img src="back/public/uploads/productos/fregona.webp" alt="FREGONA" />
+                <div class="prod-name">FREGONA</div>
+              </div>
+              <div class="prod-card">
+                <img src="back/public/uploads/productos/mopa.webp" alt="FMICROFIS" />
+                <div class="prod-name">FMICROFIS</div>
+              </div>
+              <div class="prod-card">
+                <span class="prod-badge-qty">+4</span>
+                <img src="back/public/uploads/productos/estropajo.jpeg" alt="ESTROPAJO" />
+                <div class="prod-name">ESTROPAJO</div>
+              </div>
+            </div>
+            <div style="margin-top: 6px; font-size: 7pt; color: #64748b;">
+              <strong>Listado completo (26):</strong> LEJIA &bull; AMONIACO &bull; FREGASUELOS &bull; LEJIA DETERGENTE &bull; AMBIENTADOR &bull; BAYETAS &bull; FREGONA &bull; FMICROFIS &bull; SACOS &bull; BOLSAS &bull; CEPILLOS &bull; PALOS &bull; RECOGEDOR &bull; FLOTA &bull; ARRIXACA &bull; PAPEL WC &bull; CRISTASOL &bull; CENTELLA &bull; SUPERBRILLO &bull; LIQUIDO MADERA &bull; GAMUZA &bull; PLUMERO &bull; SUPER FLAX &bull; CUBO &bull; ESTROPAJO &bull; SPRAY MOPA
+            </div>
+          </div>
+
+          <!-- Right: Order Summary & Exceptional Requests -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px;">
+            <div style="font-size: 9pt; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Detalles del Pedido</div>
+            <div style="font-size: 7pt; font-weight: 700; color: #475569; margin-bottom: 3px;">CENTRO DE TRABAJO SELECCIONADO *</div>
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 8px; font-size: 7.5pt; font-weight: 700; color: #0f766e; margin-bottom: 8px;">
+              GANTE 80 VIVIENDAS ▼
+            </div>
+
+            <div style="font-size: 7pt; font-weight: 700; color: #475569; margin-bottom: 4px;">PRODUCTOS SELECCIONADOS (4)</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;">
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 7.5pt;">
+                <span>🧴 <strong>LEJIA</strong></span>
+                <span style="font-weight: 800; color: #0f766e;">- &nbsp; 2 &nbsp; +</span>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 7.5pt;">
+                <span>🧴 <strong>AMONIACO</strong></span>
+                <span style="font-weight: 800; color: #0f766e;">- &nbsp; 1 &nbsp; +</span>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 7.5pt;">
+                <span>🧴 <strong>FREGASUELOS</strong></span>
+                <span style="font-weight: 800; color: #0f766e;">- &nbsp; 3 &nbsp; +</span>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 7.5pt;">
+                <span>🧽 <strong>ESTROPAJO</strong></span>
+                <span style="font-weight: 800; color: #0f766e;">- &nbsp; 4 &nbsp; +</span>
+              </div>
+            </div>
+
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 7px; padding: 6px 8px;">
+              <div style="font-size: 7pt; font-weight: 800; color: #92400e;">⚠️ Peticiones Excepcionales y Observaciones</div>
+              <div style="font-size: 6.5pt; color: #b45309; margin-top: 2px;">
+                "Solicito 1 garrafa adicional de desengrasante para limpieza de garaje..."
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp — Diseño de Interacción en Pedidos de Operarios</span>
+      <span>03 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SLIDE 4: SISTEMA DE DISEÑO, PALETA CROMÁTICA Y GALERÍA DE PRODUCTOS
+       ===================================================================== -->
+  <section class="slide slide-white">
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-light">03 &bull; SISTEMA DE DISEÑO &amp; IDENTIDAD VISUAL</div>
+      <div class="slide-num">DESIGN SYSTEM</div>
+    </div>
+
+    <div>
+      <div class="section-title">Lenguaje Visual Limpio, Accesible y Orientado a la Acción</div>
+      <div class="section-subtitle">
+        Paleta cromática inspirada en higiene profesional (Teal &amp; Esmeralda) combinada con acentos semánticos de alta visibilidad para estados logísticos y alertas químicas.
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 4px;">
+      <!-- Color Palette -->
+      <div class="card" style="background: #f8fafc;">
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 8px; color: #0f172a;">Paleta de Colores &amp; Semántica</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+          <div class="swatch" style="background: #042f2e; color: #ffffff;">
+            <span>Deep Emerald</span>
+            <span style="font-size: 7pt; opacity: 0.8;">#042F2E</span>
+          </div>
+          <div class="swatch" style="background: #0f766e; color: #ffffff;">
+            <span>Brand Teal</span>
+            <span style="font-size: 7pt; opacity: 0.8;">#0F766E</span>
+          </div>
+          <div class="swatch" style="background: #5c8e8d; color: #ffffff;">
+            <span>Action Sage</span>
+            <span style="font-size: 7pt; opacity: 0.8;">#5C8E8D</span>
+          </div>
+          <div class="swatch" style="background: #f97316; color: #ffffff;">
+            <span>Active Orange</span>
+            <span style="font-size: 7pt; opacity: 0.9;">#F97316</span>
+          </div>
+          <div class="swatch" style="background: #10b981; color: #ffffff;">
+            <span>Delivered Green</span>
+            <span style="font-size: 7pt; opacity: 0.9;">#10B981</span>
+          </div>
+          <div class="swatch" style="background: #ef4444; color: #ffffff;">
+            <span>Toxic / Alert Red</span>
+            <span style="font-size: 7pt; opacity: 0.9;">#EF4444</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typography & UI Tokens -->
+      <div class="card" style="background: #f8fafc;">
+        <div style="font-size: 9.5pt; font-weight: 800; margin-bottom: 8px; color: #0f172a;">Tipografía &amp; Componentes Modulares</div>
+        <div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+          <div style="font-size: 26pt; font-weight: 900; color: #0f766e; line-height: 1;">Aa</div>
+          <div>
+            <div style="font-size: 9.5pt; font-weight: 800; color: #0f172a;">Inter / System UI Sans-Serif</div>
+            <div style="font-size: 7.8pt; color: #64748b;">Pesos: Regular (400), Medium (500), Bold (700), Black (900)</div>
+          </div>
+        </div>
+        <div style="font-size: 8pt; font-weight: 700; color: #475569; margin-bottom: 6px;">ETIQUETAS DE ESTADO DE PEDIDOS Y SEGURIDAD</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span style="background: #f1f5f9; color: #64748b; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 6px;">PENDIENTE</span>
+          <span style="background: #f5e6ff; color: #a855f7; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 6px;">EN_PREPARACION</span>
+          <span style="background: #ebfdf5; color: #10b981; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 6px;">ENTREGADO</span>
+          <span style="background: #ffebeb; color: #ef4444; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 6px;">⚠️ TÓXICO / SGA</span>
+          <span style="background: #eff6ff; color: #2563eb; font-size: 7.5pt; font-weight: 700; padding: 4px 10px; border-radius: 6px;">📄 FICHA PDF</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real Product Visuals Strip -->
+    <div class="card" style="padding: 10px 14px;">
+      <div style="font-size: 8.5pt; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
+        Fotografía de Producto Integrada en el Catálogo de Pedidos (`uploads/productos/`)
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; align-items: center;">
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/arrixaca.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">ARRIXACA</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/lavavajillas.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">FLOTA</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/limpia cristales.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">CRISTASOL</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/spray_mopa.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">SPRAY MOPA</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/bayetas multihogar.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">BAYETAS</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/sacos.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">SACOS</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/bolsas.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">BOLSAS</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/cepillo.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">CEPILLOS</div>
+        </div>
+        <div style="text-align: center;">
+          <img src="back/public/uploads/productos/recogedor.webp" style="height: 44px; object-fit: contain;" />
+          <div style="font-size: 6.5pt; font-weight: 700; margin-top: 2px;">RECOGEDOR</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp — Guía de Estilo &amp; Activos Visuales</span>
+      <span>04 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SLIDE 5: MÓDULOS DE GESTIÓN: CONTROL HORARIO, VACACIONES Y ANALÍTICA
+       ===================================================================== -->
+  <section class="slide slide-light">
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-light">04 &bull; ECOSISTEMA COMPLETO DEL TRABAJADOR Y ADMIN</div>
+      <div class="slide-num">KEY MODULES</div>
+    </div>
+
+    <div>
+      <div class="section-title">Más allá del inventario: RRHH, Fichajes y Analítica</div>
+      <div class="section-subtitle">
+        StockLimp unifica en una sola aplicación las operaciones diarias de los trabajadores y la supervisión ejecutiva de dirección.
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 6px;">
+      <!-- Module 1: Control Horario -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="background: #e0f2fe; color: #0284c7; font-size: 7.5pt; font-weight: 800; padding: 3px 9px; border-radius: 99px;">CONTROL HORARIO</span>
+          <span style="font-size: 11pt;">⏱️</span>
+        </div>
+        <div style="font-size: 11pt; font-weight: 800; margin-bottom: 6px;">Fichaje de Jornada en Vivo</div>
+        <div style="background: #0f172a; color: #ffffff; border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 8px;">
+          <div style="font-size: 7pt; color: #5eead4; text-transform: uppercase; letter-spacing: 0.08em;">Tiempo Restante de Jornada</div>
+          <div style="font-size: 20pt; font-weight: 900; font-family: Consolas, monospace; margin: 4px 0;">06:42:18</div>
+          <div style="display: flex; justify-content: center; gap: 6px; margin-top: 6px;">
+            <span style="background: #10b981; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 3px 8px; border-radius: 5px;">EN JORNADA</span>
+            <span style="background: #f59e0b; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 3px 8px; border-radius: 5px;">PAUSAR</span>
+            <span style="background: #ef4444; color: #fff; font-size: 6.5pt; font-weight: 700; padding: 3px 8px; border-radius: 5px;">FINALIZAR</span>
+          </div>
+        </div>
+        <p style="font-size: 8pt; color: #475569;">
+          Incluye subida de justificantes médicos/laborales (PDF o imagen) y cálculo automático de horas trabajadas.
+        </p>
+      </div>
+
+      <!-- Module 2: Vacaciones -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="background: #fef3c7; color: #d97706; font-size: 7.5pt; font-weight: 800; padding: 3px 9px; border-radius: 99px;">GESTIÓN DE VACACIONES</span>
+          <span style="font-size: 11pt;">☀️</span>
+        </div>
+        <div style="font-size: 11pt; font-weight: 800; margin-bottom: 6px;">Calendario de 23 Días Hábiles</div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5pt; margin-bottom: 6px;">
+            <span>Cupo Anual: <strong>23 días</strong></span>
+            <span style="color: #0f766e; font-weight: 800;">Disponibles: 15 días</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; font-size: 6.5pt; font-weight: 700;">
+            <span style="color:#94a3b8">L</span><span style="color:#94a3b8">M</span><span style="color:#94a3b8">X</span><span style="color:#94a3b8">J</span><span style="color:#94a3b8">V</span><span style="color:#ef4444">S</span><span style="color:#ef4444">D</span>
+            <span>10</span><span>11</span><span style="background:#0d9488;color:#fff;border-radius:4px;padding:2px 0;">12</span><span style="background:#0d9488;color:#fff;border-radius:4px;padding:2px 0;">13</span><span style="background:#0d9488;color:#fff;border-radius:4px;padding:2px 0;">14</span><span style="color:#94a3b8">15</span><span style="color:#94a3b8">16</span>
+          </div>
+        </div>
+        <p style="font-size: 8pt; color: #475569;">
+          Descuento inteligente solo de días laborables (excluye sábados y domingos) y flujo de aprobación con alertas por email.
+        </p>
+      </div>
+
+      <!-- Module 3: Analítica & Panel de Control -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="background: #dcfce7; color: #15803d; font-size: 7.5pt; font-weight: 800; padding: 3px 9px; border-radius: 99px;">ANALÍTICA &amp; KPIs</span>
+          <span style="font-size: 11pt;">📊</span>
+        </div>
+        <div style="font-size: 11pt; font-weight: 800; margin-bottom: 6px;">Métricas en Tiempo Real</div>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; margin-bottom: 8px;">
+          <div style="font-size: 7pt; color: #64748b; margin-bottom: 4px; font-weight: 700;">DISTRIBUCIÓN DE PEDIDOS Y STOCK</div>
+          <div style="display: flex; align-items: flex-end; gap: 8px; height: 52px; padding-top: 6px;">
+            <div style="flex: 1; background: #0f766e; height: 85%; border-radius: 4px 4px 0 0;"></div>
+            <div style="flex: 1; background: #14b8a6; height: 65%; border-radius: 4px 4px 0 0;"></div>
+            <div style="flex: 1; background: #f97316; height: 95%; border-radius: 4px 4px 0 0;"></div>
+            <div style="flex: 1; background: #38bdf8; height: 55%; border-radius: 4px 4px 0 0;"></div>
+            <div style="flex: 1; background: #10b981; height: 78%; border-radius: 4px 4px 0 0;"></div>
+          </div>
+        </div>
+        <p style="font-size: 8pt; color: #475569;">
+          Gráficos vectoriales SVG de consumo por centro, proporción de productos tóxicos vs. ecológicos y exportación CSV/Excel.
+        </p>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp — Módulos de Gestión Laboral y Analítica</span>
+      <span>05 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SLIDE 6: ARQUITECTURA FULL-STACK Y CIERRE DE PORTAFOLIO
+       ===================================================================== -->
+  <section class="slide slide-dark">
+    <div class="glow-orb" style="width: 340px; height: 340px; background: #0d9488; top: -80px; left: -60px;"></div>
+
+    <div class="slide-top">
+      <div class="brand-pill brand-pill-dark">05 &bull; ARQUITECTURA TÉCNICA &amp; STACK</div>
+      <div class="slide-num">ENGINEERING OVERVIEW</div>
+    </div>
+
+    <div>
+      <div class="section-title" style="color: #ffffff;">Arquitectura Full-Stack Lista para Producción</div>
+      <div class="section-subtitle">
+        Separación limpia entre cliente multiplataforma (Web &amp; Mobile) y API RESTful transaccional con auto-sanación de base de datos.
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 8px;">
+      <div class="card-dark">
+        <div style="font-size: 8pt; font-weight: 800; color: #5eead4; text-transform: uppercase; margin-bottom: 6px;">FRONTEND CLIENT</div>
+        <div style="font-size: 12pt; font-weight: 800; margin-bottom: 6px;">React Native Web + Expo 54</div>
+        <ul style="padding-left: 15px; font-size: 8pt; color: #cbd5e1; line-height: 1.6;">
+          <li>Navegación con <strong>Expo Router 6</strong> y diseño adaptativo (Desktop, Tablet y Móvil).</li>
+          <li>Componentes modulares para pedidos (`OrderFormModal`, `CenterSelectionModal`, `OrdersTable`).</li>
+          <li>Gráficos nativos con `react-native-svg` y calendarios interactivos.</li>
+        </ul>
+      </div>
+
+      <div class="card-dark">
+        <div style="font-size: 8pt; font-weight: 800; color: #f97316; text-transform: uppercase; margin-bottom: 6px;">BACKEND API</div>
+        <div style="font-size: 12pt; font-weight: 800; margin-bottom: 6px;">PHP 8.3 &amp; Laravel 12</div>
+        <ul style="padding-left: 15px; font-size: 8pt; color: #cbd5e1; line-height: 1.6;">
+          <li>Transacciones ACID en creación y edición de pedidos (`OrderController`).</li>
+          <li>Seeder inteligente (`StandardProductsSeeder`) con desglose automático de centros por operario.</li>
+          <li>Notificaciones por email asíncronas (`afterResponse`) y reportes `Maatwebsite/Excel`.</li>
+        </ul>
+      </div>
+
+      <div class="card-dark">
+        <div style="font-size: 8pt; font-weight: 800; color: #38bdf8; text-transform: uppercase; margin-bottom: 6px;">DATOS &amp; DESPLIEGUE</div>
+        <div style="font-size: 12pt; font-weight: 800; margin-bottom: 6px;">MySQL 8 + Docker + Render</div>
+        <ul style="padding-left: 15px; font-size: 8pt; color: #cbd5e1; line-height: 1.6;">
+          <li>Modelo relacional con pivote `centro_user` (N:M) y `detalle_pedido`.</li>
+          <li>Almacenamiento público optimizado en `.webp` para catálogo de productos y fichas PDF.</li>
+          <li>Infraestructura contenerizada con `Dockerfile`, `docker-compose.yml` y `render.yaml`.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Thank You Banner -->
+    <div class="card-dark" style="background: linear-gradient(90deg, rgba(20,184,166,0.22), rgba(249,115,22,0.18)); border-color: rgba(94,234,212,0.35); display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 2;">
+      <div>
+        <div style="font-size: 14pt; font-weight: 900; color: #ffffff;">Gracias por ver este proyecto &bull; StockLimp</div>
+        <div style="font-size: 8.5pt; color: #ccfbf1;">Diseño UI/UX, Desarrollo Frontend Multiplataforma &amp; Backend API RESTful</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="background: #14b8a6; color: #042f2e; font-weight: 900; font-size: 8.5pt; padding: 7px 16px; border-radius: 99px; display: inline-block;">
+          PROYECTO COMPLETO // 2026
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      <span>StockLimp | UI/UX Case Study &amp; Full-Stack Architecture | Behance Portfolio | Desarrollado por Oscar Mangut Dev</span>
+      <span>06 / 06 &bull; Presentación Behance</span>
+    </div>
+  </section>
+
+</body>
+</html>
