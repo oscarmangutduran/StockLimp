@@ -38,9 +38,20 @@ interface User {
   created_at?: string;
 }
 
+interface UserWeekHours {
+  semana_key: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  segundos_trabajados: number;
+  dias_trabajados: number;
+  num_fichajes: number;
+  en_curso: boolean;
+  cumple_jornada: boolean;
+}
+
 interface ControlPanelViewProps {
   baseUrl: string;
-  currentUser: { id_user: number };
+  currentUser: { id_user: number; rol?: string };
 }
 
 const mockUsers: User[] = [
@@ -93,6 +104,15 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
   // Modal edit user
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Modal user hours by week (Super Admin)
+  const [hoursModalVisible, setHoursModalVisible] = useState(false);
+  const [hoursUser, setHoursUser] = useState<User | null>(null);
+  const [hoursLoading, setHoursLoading] = useState(false);
+  const [userHours, setUserHours] = useState<UserWeekHours[]>([]);
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [stipulatedHours, setStipulatedHours] = useState('40');
 
   // Form states
   const [formNombre, setFormNombre] = useState('');
@@ -289,6 +309,48 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
     });
   };
 
+  const formatSecondsToReadable = (secs: number) => {
+    const safe = Math.max(0, Math.floor(secs));
+    const h = Math.floor(safe / 3600);
+    const m = Math.floor((safe % 3600) / 60);
+    const s = safe % 60;
+    const hms = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${h}h ${m.toString().padStart(2, '0')}m (${hms})`;
+  };
+
+  const fetchUserHours = async (idUser: number, fromDate = filterDateFrom, toDate = filterDateTo) => {
+    setHoursLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (fromDate.trim()) params.append('fecha_desde', fromDate.trim());
+      if (toDate.trim()) params.append('fecha_hasta', toDate.trim());
+      const queryStr = params.toString() ? `?${params.toString()}` : '';
+
+      const response = await fetch(`${baseUrl}/fichajes/usuario/${idUser}${queryStr}`);
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setUserHours(Array.isArray(data.semanas) ? data.semanas : []);
+      } else {
+        setUserHours([]);
+        showAlert(data.message || 'No se pudieron cargar las horas del usuario.');
+      }
+    } catch (error) {
+      console.error('Error al cargar horas del usuario:', error);
+      setUserHours([]);
+      showAlert('Error de conexión al consultar las horas.');
+    } finally {
+      setHoursLoading(false);
+    }
+  };
+
+  const handleOpenUserHours = (user: User) => {
+    setHoursUser(user);
+    setFilterDateFrom('');
+    setFilterDateTo('');
+    setHoursModalVisible(true);
+    fetchUserHours(user.id_user, '', '');
+  };
+
   const handleExportCSV = () => {
     if (Platform.OS !== 'web') {
       showAlert('La exportación de datos está disponible en la versión Web.');
@@ -467,7 +529,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         ) : (
           <View style={{ flex: 1 }}>
             <ScrollView horizontal={true} style={styles.scrollContainer}>
-              <View style={[styles.tableContainer, { minWidth: 1140 }]}>
+              <View style={[styles.tableContainer, { minWidth: 1180 }]}>
                 {/* Table Header */}
                 <View style={styles.tableHeader}>
                   <Text style={[styles.thText, { width: 60 }]}>ID</Text>
@@ -477,7 +539,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                   <Text style={[styles.thText, { width: 240 }]}>Centro Asignado</Text>
                   <Text style={[styles.thText, { width: 90 }]}>Estado</Text>
                   <Text style={[styles.thText, { width: 120 }]}>Fecha de Registro</Text>
-                  <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+                  <Text style={[styles.thText, { width: 160, textAlign: 'center' }]}>Acciones</Text>
                 </View>
 
                 {/* Table Rows */}
@@ -567,16 +629,30 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                               ? user.fecha_creacion.substring(0, 10)
                               : (user.created_at ? user.created_at.substring(0, 10) : '17/06/2026')}
                           </Text>
-                          <View style={[styles.tdActions, { width: 120 }]}>
+                          <View style={[styles.tdActions, { width: 160 }]}>
                             <TouchableOpacity
                               style={styles.actionIcon}
                               onPress={() => handleOpenEdit(user)}
+                              // @ts-ignore
+                              title="Editar usuario"
                             >
                               <Feather name="edit-2" size={14} color="#475569" />
                             </TouchableOpacity>
+                            {(!currentUser?.rol || currentUser.rol === 'super_admin') && (
+                              <TouchableOpacity
+                                style={[styles.actionIcon, styles.hoursBtn]}
+                                onPress={() => handleOpenUserHours(user)}
+                                // @ts-ignore
+                                title="Ver horas trabajadas por fecha"
+                              >
+                                <Feather name="file-text" size={14} color="#FFFFFF" />
+                              </TouchableOpacity>
+                            )}
                             <TouchableOpacity
                               style={[styles.actionIcon, styles.keyBtn]}
                               onPress={() => handleResetPassword(user)}
+                              // @ts-ignore
+                              title="Restablecer contraseña"
                             >
                               <Feather name="key" size={14} color="#FFFFFF" />
                             </TouchableOpacity>
@@ -584,6 +660,8 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                               style={[styles.actionIcon, isSelf ? styles.disabledDeleteBtn : styles.deleteBtn]}
                               onPress={() => handleDeleteUser(user)}
                               disabled={isSelf}
+                              // @ts-ignore
+                              title="Eliminar usuario"
                             >
                               <Feather name="trash-2" size={14} color={isSelf ? '#CBD5E1' : '#FFFFFF'} />
                             </TouchableOpacity>
@@ -746,6 +824,231 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                 onPress={handleSaveUser}
               >
                 <Text style={styles.saveBtnText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* User Worked Hours By Date Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={hoursModalVisible}
+        onRequestClose={() => setHoursModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.hoursModalContent}>
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>
+                  Registro de Horas — {hoursUser ? `${hoursUser.nombre} ${hoursUser.apellido || ''}`.trim() : ''}
+                </Text>
+                {hoursUser?.email ? (
+                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{hoursUser.email}</Text>
+                ) : null}
+              </View>
+              <TouchableOpacity onPress={() => setHoursModalVisible(false)}>
+                <Feather name="x" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Filter Bar */}
+            <View style={styles.hoursFilterBar}>
+              <View style={styles.hoursFilterGroup}>
+                <Text style={styles.hoursFilterLabel}>Desde</Text>
+                {Platform.OS === 'web' ? (
+                  <input
+                    type="date"
+                    value={filterDateFrom}
+                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                    style={{
+                      height: 36,
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 8,
+                      padding: '0 10px',
+                      fontSize: 13,
+                      color: '#1E293B',
+                      backgroundColor: '#FFFFFF',
+                    }}
+                  />
+                ) : (
+                  <TextInput
+                    style={styles.hoursDateInput}
+                    value={filterDateFrom}
+                    onChangeText={setFilterDateFrom}
+                    placeholder="YYYY-MM-DD"
+                  />
+                )}
+              </View>
+
+              <View style={styles.hoursFilterGroup}>
+                <Text style={styles.hoursFilterLabel}>Hasta</Text>
+                {Platform.OS === 'web' ? (
+                  <input
+                    type="date"
+                    value={filterDateTo}
+                    onChange={(e) => setFilterDateTo(e.target.value)}
+                    style={{
+                      height: 36,
+                      border: '1px solid #CBD5E1',
+                      borderRadius: 8,
+                      padding: '0 10px',
+                      fontSize: 13,
+                      color: '#1E293B',
+                      backgroundColor: '#FFFFFF',
+                    }}
+                  />
+                ) : (
+                  <TextInput
+                    style={styles.hoursDateInput}
+                    value={filterDateTo}
+                    onChangeText={setFilterDateTo}
+                    placeholder="YYYY-MM-DD"
+                  />
+                )}
+              </View>
+
+              <View style={styles.hoursFilterGroup}>
+                <Text style={styles.hoursFilterLabel}>Jornada semanal (h)</Text>
+                <TextInput
+                  style={[styles.hoursDateInput, { width: 90, textAlign: 'center' }]}
+                  value={stipulatedHours}
+                  onChangeText={setStipulatedHours}
+                  keyboardType="numeric"
+                  placeholder="40"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={styles.hoursFilterBtn}
+                onPress={() => hoursUser && fetchUserHours(hoursUser.id_user, filterDateFrom, filterDateTo)}
+              >
+                <Text style={styles.hoursFilterBtnText}>Filtrar</Text>
+              </TouchableOpacity>
+
+              {(filterDateFrom !== '' || filterDateTo !== '') && (
+                <TouchableOpacity
+                  style={styles.hoursClearBtn}
+                  onPress={() => {
+                    setFilterDateFrom('');
+                    setFilterDateTo('');
+                    if (hoursUser) fetchUserHours(hoursUser.id_user, '', '');
+                  }}
+                >
+                  <Text style={styles.hoursClearBtnText}>Limpiar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Summary */}
+            {(() => {
+              const targetHoursNum = Math.max(0, parseFloat(stipulatedHours.replace(',', '.')) || 40);
+              const targetSeconds = targetHoursNum * 3600;
+              const metCount = userHours.filter((s) => s.segundos_trabajados >= targetSeconds).length;
+              const missedCount = userHours.length - metCount;
+              const totalSeconds = userHours.reduce((acc, s) => acc + s.segundos_trabajados, 0);
+
+              const formatShortDate = (iso: string) => {
+                const parts = iso.split('-');
+                return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : iso;
+              };
+
+              return (
+                <>
+                  <View style={styles.hoursSummaryRow}>
+                    <View style={styles.hoursSummaryPill}>
+                      <Text style={styles.hoursSummaryText}>Semanas registradas: {userHours.length}</Text>
+                    </View>
+                    <View style={[styles.hoursSummaryPill, { backgroundColor: '#DCFCE7' }]}>
+                      <Text style={[styles.hoursSummaryText, { color: '#166534' }]}>
+                        Jornada cumplida: {metCount}
+                      </Text>
+                    </View>
+                    <View style={[styles.hoursSummaryPill, { backgroundColor: '#FEE2E2' }]}>
+                      <Text style={[styles.hoursSummaryText, { color: '#991B1B' }]}>
+                        Incompleta: {missedCount}
+                      </Text>
+                    </View>
+                    <View style={[styles.hoursSummaryPill, { backgroundColor: '#E0F2FE' }]}>
+                      <Text style={[styles.hoursSummaryText, { color: '#075985' }]}>
+                        Total: {formatSecondsToReadable(totalSeconds)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ flex: 1, minHeight: 220, maxHeight: 380 }}>
+                    {hoursLoading ? (
+                      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+                        <ActivityIndicator size="large" color="#5C8E8D" />
+                        <Text style={{ marginTop: 10, color: '#64748B', fontSize: 13 }}>Cargando fichajes...</Text>
+                      </View>
+                    ) : (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ flexGrow: 1 }}>
+                        <View style={{ flex: 1, minWidth: 660 }}>
+                          <View style={styles.hoursTableHeader}>
+                            <Text style={[styles.thText, { width: 200 }]}>Semana</Text>
+                            <Text style={[styles.thText, { width: 90 }]}>Días</Text>
+                            <Text style={[styles.thText, { width: 80 }]}>Fichajes</Text>
+                            <Text style={[styles.thText, { width: 170 }]}>Horas Trabajadas</Text>
+                            <Text style={[styles.thText, { width: 120 }]}>Jornada ({targetHoursNum}h)</Text>
+                          </View>
+
+                          <ScrollView style={{ flex: 1 }}>
+                            {userHours.length === 0 ? (
+                              <View style={styles.emptyRow}>
+                                <Text style={styles.emptyText}>No hay registros de horas para este usuario.</Text>
+                              </View>
+                            ) : (
+                              userHours.map((sem) => {
+                                const cumple = sem.segundos_trabajados >= targetSeconds;
+                                return (
+                                  <View
+                                    key={sem.semana_key}
+                                    style={[
+                                      styles.hoursTableRow,
+                                      cumple ? styles.hoursRowGreen : styles.hoursRowRed,
+                                    ]}
+                                  >
+                                    <Text style={[styles.tdText, { width: 200, fontWeight: '600', color: cumple ? '#14532D' : '#7F1D1D' }]}>
+                                      {`${formatShortDate(sem.fecha_inicio)} - ${formatShortDate(sem.fecha_fin)}`}
+                                    </Text>
+                                    <Text style={[styles.tdText, { width: 90, color: cumple ? '#14532D' : '#7F1D1D' }]}>
+                                      {sem.dias_trabajados} {sem.dias_trabajados === 1 ? 'día' : 'días'}
+                                    </Text>
+                                    <Text style={[styles.tdText, { width: 80, color: cumple ? '#14532D' : '#7F1D1D' }]}>
+                                      {sem.num_fichajes}
+                                    </Text>
+                                    <Text style={[styles.tdText, { width: 170, fontWeight: '600', color: cumple ? '#14532D' : '#7F1D1D' }]}>
+                                      {formatSecondsToReadable(sem.segundos_trabajados)}
+                                      {sem.en_curso ? ' (En curso)' : ''}
+                                    </Text>
+                                    <View style={{ width: 120 }}>
+                                      <View style={cumple ? styles.hoursBadgeGreen : styles.hoursBadgeRed}>
+                                        <Text style={styles.hoursBadgeText}>
+                                          {cumple ? 'CUMPLIDA' : 'NO CUMPLIDA'}
+                                        </Text>
+                                      </View>
+                                    </View>
+                                  </View>
+                                );
+                              })
+                            )}
+                          </ScrollView>
+                        </View>
+                      </ScrollView>
+                    )}
+                  </View>
+                </>
+              );
+            })()}
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.cancelModalBtn]}
+                onPress={() => setHoursModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>

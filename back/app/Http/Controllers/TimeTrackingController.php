@@ -140,4 +140,84 @@ class TimeTrackingController extends Controller
 
         return response()->json(['success' => true, 'fichaje' => $activo]);
     }
+
+    /**
+     * Obtener resumen semanal de horas trabajadas de un usuario.
+     */
+    public function porUsuario(Request $request, $id_user)
+    {
+        if (!$id_user) {
+            return response()->json(['success' => false, 'message' => 'Falta id_user'], 400);
+        }
+
+        $query = Fichaje::where('id_user', $id_user)
+            ->whereNotNull('hora_entrada')
+            ->orderBy('hora_entrada', 'desc');
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('hora_entrada', '>=', $request->input('fecha_desde'));
+        }
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('hora_entrada', '<=', $request->input('fecha_hasta'));
+        }
+
+        $fichajes = $query->get();
+
+        // Jornada semanal estipulada por defecto: 40 horas
+        $jornadaHoras = (float) $request->input('jornada_horas', 40);
+        $jornadaSegundos = max(0, $jornadaHoras * 3600);
+
+        $porSemana = [];
+        foreach ($fichajes as $f) {
+            $entrada = Carbon::parse($f->hora_entrada);
+            $inicioSemana = $entrada->copy()->startOfWeek(Carbon::MONDAY);
+            $finSemana = $entrada->copy()->endOfWeek(Carbon::SUNDAY);
+            $semanaKey = $inicioSemana->format('Y-m-d');
+            $fechaDia = $entrada->format('Y-m-d');
+
+            if (!isset($porSemana[$semanaKey])) {
+                $porSemana[$semanaKey] = [
+                    'semana_key' => $semanaKey,
+                    'fecha_inicio' => $inicioSemana->format('Y-m-d'),
+                    'fecha_fin' => $finSemana->format('Y-m-d'),
+                    'segundos_trabajados' => 0,
+                    'num_fichajes' => 0,
+                    'en_curso' => false,
+                    '_dias' => [],
+                ];
+            }
+
+            $porSemana[$semanaKey]['num_fichajes']++;
+            $porSemana[$semanaKey]['_dias'][$fechaDia] = true;
+
+            if ($f->hora_salida) {
+                $salida = Carbon::parse($f->hora_salida);
+                $porSemana[$semanaKey]['segundos_trabajados'] += max(0, $entrada->diffInSeconds($salida));
+            } elseif (in_array($f->estado, ['trabajando', 'en_pausa'], true)) {
+                $porSemana[$semanaKey]['segundos_trabajados'] += max(0, $entrada->diffInSeconds(Carbon::now()));
+                $porSemana[$semanaKey]['en_curso'] = true;
+            }
+        }
+
+        $semanas = [];
+        foreach ($porSemana as $item) {
+            $segs = (int) $item['segundos_trabajados'];
+            $semanas[] = [
+                'semana_key' => $item['semana_key'],
+                'fecha_inicio' => $item['fecha_inicio'],
+                'fecha_fin' => $item['fecha_fin'],
+                'segundos_trabajados' => $segs,
+                'dias_trabajados' => count($item['_dias']),
+                'num_fichajes' => $item['num_fichajes'],
+                'en_curso' => $item['en_curso'],
+                'cumple_jornada' => $segs >= $jornadaSegundos,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'jornada_estipulada_horas' => $jornadaHoras,
+            'semanas' => $semanas,
+        ]);
+    }
 }

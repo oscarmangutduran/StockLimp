@@ -52,6 +52,7 @@ Route::post('/fichajes/actual', [TimeTrackingController::class, 'actual']);
 Route::post('/fichajes/iniciar', [TimeTrackingController::class, 'iniciar']);
 Route::post('/fichajes/pausar', [TimeTrackingController::class, 'pausar']);
 Route::post('/fichajes/finalizar', [TimeTrackingController::class, 'finalizar']);
+Route::get('/fichajes/usuario/{id_user}', [TimeTrackingController::class, 'porUsuario']);
 
 // Endpoints de Vacaciones
 use App\Http\Controllers\VacacionController;

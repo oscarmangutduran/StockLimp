@@ -202,11 +202,14 @@ export const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 2,
   },
+  tabsScrollView: {
+    marginBottom: 16,
+  },
   tabsRow: {
     flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap',
-    marginBottom: 16,
+    paddingBottom: 4,
+    paddingRight: 8,
   },
   tabBtn: {
     flexDirection: 'row',

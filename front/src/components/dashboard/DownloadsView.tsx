@@ -6,6 +6,7 @@ import {
   Platform,
   Linking,
   Image,
+  ScrollView,
 } from 'react-native';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { styles } from '../../css/DownloadsView.styles';
@@ -603,8 +604,13 @@ export default function DownloadsView({ baseUrl, userRole = 'operario' }: Downlo
           </View>
         </View>
 
-        {/* Tabs for active role */}
-        <View style={styles.tabsRow}>
+        {/* Tabs for active role — horizontal scroll so super_admin's 3 tabs and others never overflow */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={true}
+          style={styles.tabsScrollView}
+          contentContainerStyle={styles.tabsRow}
+        >
           {activeConfig.screens.map((screen) => {
             const isActive = activeScreenId === screen.id;
             return (
@@ -620,7 +626,7 @@ export default function DownloadsView({ baseUrl, userRole = 'operario' }: Downlo
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* Mockup Frame displaying active screen */}
         {activeScreen && (
@@ -666,7 +672,7 @@ export default function DownloadsView({ baseUrl, userRole = 'operario' }: Downlo
           <TouchableOpacity onPress={handleDownload} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Feather name="arrow-down" size={14} color="#0F766E" />
             <Text style={{ fontSize: 13, color: '#0F766E', fontWeight: '700' }}>
-              Descargar Manual de Usuario ({activeConfig.roleBadge})
+              Descargar Manual de Usuario
             </Text>
           </TouchableOpacity>
         </View>
