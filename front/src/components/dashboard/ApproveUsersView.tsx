@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ModalAlert from '@/components/common/ModalAlert';
@@ -29,6 +30,9 @@ interface ApproveUsersViewProps {
 }
 
 export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersViewProps) {
+  const { width } = useWindowDimensions();
+  const isCompact = width < 1240;
+  const isMobile = width < 768;
   // Super Admin view states
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(userRole === 'super_admin');
@@ -332,15 +336,15 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
               </View>
             ) : (
               <ScrollView horizontal={true} style={styles.scrollContainer} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
-                <View style={styles.tableContainer}>
+                <View style={[styles.tableContainer, { minWidth: isMobile ? 600 : 0, width: '100%' }]}>
                   {/* Table Header */}
-                  <View style={styles.tableHeader}>
-                    <Text style={[styles.thText, { width: 80 }]}>ID</Text>
-                    <Text style={[styles.thText, { flex: 1, minWidth: 180 }]}>Nombre Completo</Text>
-                    <Text style={[styles.thText, { flex: 1.2, minWidth: 220 }]}>Correo Electrónico</Text>
-                    <Text style={[styles.thText, { width: 120 }]}>Rol Solicitado</Text>
-                    <Text style={[styles.thText, { width: 140 }]}>Fecha Registro</Text>
-                    <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+                  <View style={[styles.tableHeader, isCompact && { paddingHorizontal: 10, paddingVertical: 10 }]}>
+                    <Text style={[styles.thText, { flex: 0.5, minWidth: 0 }, isCompact && { fontSize: 11 }]}>ID</Text>
+                    <Text style={[styles.thText, { flex: 1.2, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Nombre Completo</Text>
+                    <Text style={[styles.thText, { flex: 1.5, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Correo Electrónico</Text>
+                    <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Rol Solicitado</Text>
+                    <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Fecha Registro</Text>
+                    <Text style={[styles.thText, { flex: 1.3, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Acciones</Text>
                   </View>
 
                   {/* Table Rows */}
@@ -349,15 +353,16 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
                       key={user.id_user}
                       style={[
                         styles.tableRow,
+                        isCompact && { paddingHorizontal: 10, paddingVertical: 10 },
                         { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                       ]}
                     >
-                      <Text style={[styles.tdText, { width: 80, fontWeight: '600' }]}>#{user.id_user}</Text>
-                      <Text style={[styles.tdText, { flex: 1, minWidth: 180, fontWeight: '500' }]}>{user.nombre}</Text>
-                      <Text style={[styles.tdText, { flex: 1.2, minWidth: 220 }]}>{user.email}</Text>
-                      <Text style={[styles.tdText, { width: 120, textTransform: 'uppercase' }]}>{user.rol}</Text>
-                      <Text style={[styles.tdText, { width: 140 }]}>{user.fecha_creacion || '2026-06-17'}</Text>
-                      <View style={[styles.tdActions, { width: 120 }]}>
+                      <Text style={[styles.tdText, { flex: 0.5, minWidth: 0, fontWeight: '600' }, isCompact && { fontSize: 12 }]}>#{user.id_user}</Text>
+                      <Text style={[styles.tdText, { flex: 1.2, minWidth: 0, fontWeight: '500', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>{user.nombre}</Text>
+                      <Text style={[styles.tdText, { flex: 1.5, minWidth: 0, paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={1}>{user.email}</Text>
+                      <Text style={[styles.tdText, { flex: 0.9, minWidth: 0, textTransform: 'uppercase' }, isCompact && { fontSize: 11 }]}>{user.rol}</Text>
+                      <Text style={[styles.tdText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>{user.fecha_creacion || '2026-06-17'}</Text>
+                      <View style={[styles.tdActions, { flex: 1.3, minWidth: 0 }, isCompact && { gap: 4 }]}>
                         <TouchableOpacity
                           style={[styles.actionBtn, styles.approveBtn]}
                           onPress={() => handleApprove(user.id_user)}

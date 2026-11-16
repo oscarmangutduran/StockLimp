@@ -62,6 +62,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const isTabletOrDesktop = width >= 768;
+  const isCompact = width < 1240;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -363,20 +364,20 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
-            <View style={[styles.tableContainer, { minWidth: isTabletOrDesktop ? 920 : 320, width: '100%' }]}>
+            <View style={[styles.tableContainer, { minWidth: isMobile ? 320 : 0, width: '100%' }]}>
               {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.thText, { width: 60 }]}>ID Producto</Text>
-                <Text style={[styles.thText, { width: 80 }]}>Imagen</Text>
-                <Text style={[styles.thText, { flex: 1.5, minWidth: 180 }]}>Nombre</Text>
+              <View style={[styles.tableHeader, isCompact && { paddingHorizontal: 10, paddingVertical: 10 }]}>
+                <Text style={[styles.thText, { flex: 0.55, minWidth: 0 }, isCompact && { fontSize: 11 }]}>ID Producto</Text>
+                <Text style={[styles.thText, { flex: 0.6, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Imagen</Text>
+                <Text style={[styles.thText, { flex: 1.5, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Nombre</Text>
                 {isTabletOrDesktop && (
                   <>
-                    <Text style={[styles.thText, { flex: 1, minWidth: 120 }]}>SKU</Text>
-                    <Text style={[styles.thText, { width: 100 }]}>¿Tóxico?</Text>
-                    <Text style={[styles.thText, { width: 100 }]}>Precio Unidad</Text>
-                    <Text style={[styles.thText, { width: 100 }]}>Stock Actual</Text>
-                    <Text style={[styles.thText, { width: 120 }]}>Fecha de registro</Text>
-                    <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+                    <Text style={[styles.thText, { flex: 1, minWidth: 0 }, isCompact && { fontSize: 11 }]}>SKU</Text>
+                    <Text style={[styles.thText, { flex: 0.7, minWidth: 0 }, isCompact && { fontSize: 11 }]}>¿Tóxico?</Text>
+                    <Text style={[styles.thText, { flex: 0.8, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Precio Unidad</Text>
+                    <Text style={[styles.thText, { flex: 0.75, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Stock Actual</Text>
+                    <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Fecha de registro</Text>
+                    <Text style={[styles.thText, { flex: 1, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Acciones</Text>
                   </>
                 )}
               </View>
@@ -393,12 +394,13 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                       key={product.id_producto}
                       style={[
                         styles.tableRow,
+                        isCompact && { paddingHorizontal: 10, paddingVertical: 10 },
                         { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                       ]}
                     >
-                      <Text style={[styles.tdText, { width: 60 }]}>#{product.id_producto}</Text>
+                      <Text style={[styles.tdText, { flex: 0.55, minWidth: 0 }, isCompact && { fontSize: 12 }]}>#{product.id_producto}</Text>
                       <TouchableOpacity
-                        style={[styles.tdView, { width: 80, alignItems: 'center' }]}
+                        style={[styles.tdView, { flex: 0.6, minWidth: 0, alignItems: 'center' }]}
                         onPress={() => handleOpenImage(product)}
                         activeOpacity={0.7}
                       >
@@ -425,57 +427,59 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                           );
                         })()}
                       </TouchableOpacity>
-                      <Text style={[styles.tdText, { flex: 1.5, minWidth: 180, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 1.5, minWidth: 0, fontWeight: '500', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>
                         {product.nombre}
                       </Text>
                       {isTabletOrDesktop && (
                         <>
-                          <Text style={[styles.tdText, { flex: 1, minWidth: 120, color: '#64748B' }]}>
+                          <Text style={[styles.tdText, { flex: 1, minWidth: 0, color: '#64748B', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={1}>
                             {product.sku || 'N/A'}
                           </Text>
                           <Text
                             style={[
                               styles.tdText,
                               {
-                                width: 100,
+                                flex: 0.7,
+                                minWidth: 0,
                                 fontWeight: 'bold',
                                 color: product.es_toxico ? '#EF4444' : '#1E293B',
                               },
+                              isCompact && { fontSize: 12 },
                             ]}
                           >
                             {product.es_toxico ? 'SÍ' : 'NO'}
                           </Text>
-                          <Text style={[styles.tdText, { width: 100 }]}>
+                          <Text style={[styles.tdText, { flex: 0.8, minWidth: 0 }, isCompact && { fontSize: 12 }]}>
                             {parseFloat(product.precio_unidad.toString()).toFixed(2)}€
                           </Text>
-                          <Text style={[styles.tdText, { width: 100 }]}>
+                          <Text style={[styles.tdText, { flex: 0.75, minWidth: 0 }, isCompact && { fontSize: 12 }]}>
                             {parseInt(product.stock_actual.toString(), 10)}
                           </Text>
-                          <Text style={[styles.tdText, { width: 120 }]}>
+                          <Text style={[styles.tdText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>
                             {product.fecha_registro ||
                               (product.created_at ? product.created_at.substring(0, 10) : '2026-06-17')}
                           </Text>
-                          <View style={[styles.tdActions, { width: 120 }]}>
+                          <View style={[styles.tdActions, { flex: 1, minWidth: 0 }, isCompact && { gap: 4 }]}>
                             {product.ficha_tecnica ? (
                               <TouchableOpacity
-                                style={[styles.actionIcon, { backgroundColor: '#2563EB' }]}
+                                style={[styles.actionIcon, { backgroundColor: '#2563EB' }, isCompact && { width: 24, height: 24 }]}
                                 onPress={() => handleOpenDocument(product)}
                                 activeOpacity={0.8}
                               >
-                                <Feather name="file-text" size={14} color="#FFFFFF" />
+                                <Feather name="file-text" size={isCompact ? 12 : 14} color="#FFFFFF" />
                               </TouchableOpacity>
                             ) : null}
                             <TouchableOpacity
-                              style={[styles.actionIcon, styles.editIcon]}
+                              style={[styles.actionIcon, styles.editIcon, isCompact && { width: 24, height: 24 }]}
                               onPress={() => handleOpenEdit(product)}
                             >
-                              <Feather name="edit-2" size={14} color="#FFFFFF" />
+                              <Feather name="edit-2" size={isCompact ? 12 : 14} color="#FFFFFF" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={[styles.actionIcon, styles.deleteIcon]}
+                              style={[styles.actionIcon, styles.deleteIcon, isCompact && { width: 24, height: 24 }]}
                               onPress={() => handleDelete(product.id_producto)}
                             >
-                              <Feather name="trash-2" size={14} color="#FFFFFF" />
+                              <Feather name="trash-2" size={isCompact ? 12 : 14} color="#FFFFFF" />
                             </TouchableOpacity>
                           </View>
                         </>

@@ -675,9 +675,7 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
     acciones: 140,
   };
 
-  const tableMinWidth = isDesktop
-    ? (userRole === 'usuario' ? 980 : 1120)
-    : (isTablet ? (userRole === 'usuario' ? 920 : 960) : 700);
+  const tableMinWidth = isMobile ? 620 : 0;
 
   return (
     <View style={styles.container}>

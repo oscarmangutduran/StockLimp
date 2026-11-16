@@ -64,6 +64,8 @@ const mockUsers: User[] = [
 export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelViewProps) {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const isCompact = width < 1240;
+  const isMobile = width < 768;
   const [users, setUsers] = useState<User[]>([]);
   const [centers, setCenters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -529,17 +531,17 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         ) : (
           <View style={{ flex: 1 }}>
             <ScrollView horizontal={true} style={styles.scrollContainer} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
-              <View style={[styles.tableContainer, { minWidth: 1180, width: '100%' }]}>
+              <View style={[styles.tableContainer, { minWidth: isMobile ? 640 : 0, width: '100%' }]}>
                 {/* Table Header */}
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.thText, { width: 60 }]}>ID</Text>
-                  <Text style={[styles.thText, { flex: 1.2, minWidth: 170 }]}>Nombre Completo</Text>
-                  <Text style={[styles.thText, { flex: 1.3, minWidth: 190 }]}>Correo Electrónico</Text>
-                  <Text style={[styles.thText, { width: 150 }]}>Rol Asignado</Text>
-                  <Text style={[styles.thText, { flex: 1.5, minWidth: 240 }]}>Centro Asignado</Text>
-                  <Text style={[styles.thText, { width: 90 }]}>Estado</Text>
-                  <Text style={[styles.thText, { width: 120 }]}>Fecha de Registro</Text>
-                  <Text style={[styles.thText, { width: 160, textAlign: 'center' }]}>Acciones</Text>
+                <View style={[styles.tableHeader, isCompact && { paddingHorizontal: 10, paddingVertical: 10 }]}>
+                  <Text style={[styles.thText, { flex: 0.45, minWidth: 0 }, isCompact && { fontSize: 11 }]}>ID</Text>
+                  <Text style={[styles.thText, { flex: 1.2, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Nombre Completo</Text>
+                  <Text style={[styles.thText, { flex: 1.35, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Correo Electrónico</Text>
+                  <Text style={[styles.thText, { flex: 1.05, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Rol Asignado</Text>
+                  <Text style={[styles.thText, { flex: 1.4, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Centro Asignado</Text>
+                  <Text style={[styles.thText, { flex: 0.7, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Estado</Text>
+                  <Text style={[styles.thText, { flex: 0.85, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Fecha de Registro</Text>
+                  <Text style={[styles.thText, { flex: 1.1, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Acciones</Text>
                 </View>
 
                 {/* Table Rows */}
@@ -563,20 +565,21 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                           key={user.id_user}
                           style={[
                             styles.tableRow,
+                            isCompact && { paddingHorizontal: 10, paddingVertical: 10 },
                             { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                           ]}
                         >
-                          <Text style={[styles.tdText, { width: 60, fontWeight: '600' }]}>#{user.id_user}</Text>
-                          <Text style={[styles.tdText, { flex: 1.2, minWidth: 170, fontWeight: '500' }]} numberOfLines={2}>
+                          <Text style={[styles.tdText, { flex: 0.45, minWidth: 0, fontWeight: '600' }, isCompact && { fontSize: 12 }]}>#{user.id_user}</Text>
+                          <Text style={[styles.tdText, { flex: 1.2, minWidth: 0, fontWeight: '500', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>
                             {`${user.nombre} ${user.apellido || ''}`.trim()}
                           </Text>
-                          <Text style={[styles.tdText, { flex: 1.3, minWidth: 190 }]} numberOfLines={1}>{user.email}</Text>
-                          <View style={{ width: 150 }}>
+                          <Text style={[styles.tdText, { flex: 1.35, minWidth: 0, paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={1}>{user.email}</Text>
+                          <View style={{ flex: 1.05, minWidth: 0, paddingRight: 4 }}>
                             <View style={[styles.roleTag, { backgroundColor: roleStyle.bg }]}>
-                              <Text style={[styles.roleText, { color: roleStyle.text }]}>{roleStyle.label}</Text>
+                              <Text style={[styles.roleText, { color: roleStyle.text }, isCompact && { fontSize: 9 }]} numberOfLines={1}>{roleStyle.label}</Text>
                             </View>
                           </View>
-                          <View style={{ flex: 1.5, minWidth: 240, paddingRight: 10 }}>
+                          <View style={{ flex: 1.4, minWidth: 0, paddingRight: 6 }}>
                             {hasCentros ? (
                               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
                                 <Feather name="map-pin" size={13} color="#5C8E8D" style={{ marginTop: 2 }} />
@@ -619,51 +622,51 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                               </View>
                             )}
                           </View>
-                          <View style={{ width: 90 }}>
+                          <View style={{ flex: 0.7, minWidth: 0 }}>
                             <View style={styles.statusTag}>
-                              <Text style={styles.statusText}>{user.estado ? user.estado.toUpperCase() : 'ACTIVO'}</Text>
+                              <Text style={[styles.statusText, isCompact && { fontSize: 9 }]}>{user.estado ? user.estado.toUpperCase() : 'ACTIVO'}</Text>
                             </View>
                           </View>
-                          <Text style={[styles.tdText, { width: 120 }]}>
+                          <Text style={[styles.tdText, { flex: 0.85, minWidth: 0 }, isCompact && { fontSize: 11 }]}>
                             {user.fecha_creacion
                               ? user.fecha_creacion.substring(0, 10)
                               : (user.created_at ? user.created_at.substring(0, 10) : '17/06/2026')}
                           </Text>
-                          <View style={[styles.tdActions, { width: 160 }]}>
+                          <View style={[styles.tdActions, { flex: 1.1, minWidth: 0 }, isCompact && { gap: 4 }]}>
                             <TouchableOpacity
-                              style={styles.actionIcon}
+                              style={[styles.actionIcon, isCompact && { width: 24, height: 24 }]}
                               onPress={() => handleOpenEdit(user)}
                               // @ts-ignore
                               title="Editar usuario"
                             >
-                              <Feather name="edit-2" size={14} color="#475569" />
+                              <Feather name="edit-2" size={isCompact ? 12 : 14} color="#475569" />
                             </TouchableOpacity>
                             {(!currentUser?.rol || currentUser.rol === 'super_admin') && (
                               <TouchableOpacity
-                                style={[styles.actionIcon, styles.hoursBtn]}
+                                style={[styles.actionIcon, styles.hoursBtn, isCompact && { width: 24, height: 24 }]}
                                 onPress={() => handleOpenUserHours(user)}
                                 // @ts-ignore
                                 title="Ver horas trabajadas por fecha"
                               >
-                                <Feather name="file-text" size={14} color="#FFFFFF" />
+                                <Feather name="file-text" size={isCompact ? 12 : 14} color="#FFFFFF" />
                               </TouchableOpacity>
                             )}
                             <TouchableOpacity
-                              style={[styles.actionIcon, styles.keyBtn]}
+                              style={[styles.actionIcon, styles.keyBtn, isCompact && { width: 24, height: 24 }]}
                               onPress={() => handleResetPassword(user)}
                               // @ts-ignore
                               title="Restablecer contraseña"
                             >
-                              <Feather name="key" size={14} color="#FFFFFF" />
+                              <Feather name="key" size={isCompact ? 12 : 14} color="#FFFFFF" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={[styles.actionIcon, isSelf ? styles.disabledDeleteBtn : styles.deleteBtn]}
+                              style={[styles.actionIcon, isSelf ? styles.disabledDeleteBtn : styles.deleteBtn, isCompact && { width: 24, height: 24 }]}
                               onPress={() => handleDeleteUser(user)}
                               disabled={isSelf}
                               // @ts-ignore
                               title="Eliminar usuario"
                             >
-                              <Feather name="trash-2" size={14} color={isSelf ? '#CBD5E1' : '#FFFFFF'} />
+                              <Feather name="trash-2" size={isCompact ? 12 : 14} color={isSelf ? '#CBD5E1' : '#FFFFFF'} />
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -691,7 +694,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                 </View>
                 <Text style={styles.paginationCount}>({filteredUsers.length} registros)</Text>
               </View>
-              
+
               {totalPages > 1 && (
                 <View style={styles.paginationRight}>
                   <TouchableOpacity
@@ -1055,7 +1058,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
         </View>
       </Modal>
 
-      <ModalAlert 
+      <ModalAlert
         visible={alertConfig.visible}
         title={alertConfig.title}
         message={alertConfig.message}

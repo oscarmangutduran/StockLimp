@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { styles } from '../../../css/OrdersView.styles';
 import { Order } from './types';
@@ -63,12 +63,15 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
   handleDelete,
   handleSaveOrderStatus,
 }) => {
+  const { width } = useWindowDimensions();
+  const isCompact = width < 1240;
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
         <View style={[styles.tableContainer, { minWidth: tableMinWidth, width: '100%' }]}>
           {/* Table Header */}
-          <View style={styles.tableHeader}>
+          <View style={[styles.tableHeader, isCompact && { paddingHorizontal: 10, paddingVertical: 10 }]}>
             {isDesktop && userRole === 'repartidor' && (
               <View style={{ width: 40, justifyContent: 'center', alignItems: 'center' }}>
                 <TouchableOpacity
@@ -85,13 +88,13 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                 </TouchableOpacity>
               </View>
             )}
-            <Text style={[styles.thText, { width: colWidths.id }]}>ID Pedido</Text>
-            {userRole !== 'usuario' && <Text style={[styles.thText, { flex: 0.8, minWidth: colWidths.operario }]}>Operario</Text>}
-            <Text style={[styles.thText, { flex: 1.5, minWidth: colWidths.productos }]}>Productos Pedidos</Text>
-            <Text style={[styles.thText, { width: colWidths.fecha }]}>Fecha de pedido</Text>
-            {isDesktop && <Text style={[styles.thText, { flex: 1, minWidth: colWidths.centro }]}>Centro Destino</Text>}
-            <Text style={[styles.thText, { width: colWidths.estado }]}>Estado</Text>
-            {isTabletOrDesktop && <Text style={[styles.thText, { width: colWidths.acciones, textAlign: 'center' }]}>Acciones</Text>}
+            <Text style={[styles.thText, { flex: 0.65, minWidth: 0 }, isCompact && { fontSize: 11 }]}>ID Pedido</Text>
+            {userRole !== 'usuario' && <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Operario</Text>}
+            <Text style={[styles.thText, { flex: 1.6, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Productos Pedidos</Text>
+            <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Fecha de pedido</Text>
+            {isDesktop && <Text style={[styles.thText, { flex: 1.1, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Centro Destino</Text>}
+            <Text style={[styles.thText, { flex: 1, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Estado</Text>
+            {isTabletOrDesktop && <Text style={[styles.thText, { flex: 0.95, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Acciones</Text>}
           </View>
 
           {/* Table Rows */}
@@ -128,36 +131,36 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                       </View>
                     )}
                     <TouchableOpacity
-                      style={{ width: colWidths.id }}
+                      style={{ flex: 0.65, minWidth: 0 }}
                       onPress={() => handleOpenInfo(order)}
                       activeOpacity={0.7}
                     >
-                      <Text style={[styles.tdText, { fontWeight: '600', color: '#5C8E8D', textDecorationLine: 'underline' }]}>
+                      <Text style={[styles.tdText, { fontWeight: '600', color: '#5C8E8D', textDecorationLine: 'underline' }, isCompact && { fontSize: 12 }]}>
                         #{order.id_pedido}
                       </Text>
                     </TouchableOpacity>
                     {userRole !== 'usuario' && (
-                      <Text style={[styles.tdText, { flex: 0.8, minWidth: colWidths.operario, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 0.9, minWidth: 0, fontWeight: '500', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>
                         {order.operario}
                       </Text>
                     )}
-                    <View style={{ flex: 1.5, minWidth: colWidths.productos, paddingRight: 10 }}>
-                      <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }]}>{totalUds} uds.</Text>
-                      <Text style={styles.detailsText} numberOfLines={2}>
+                    <View style={{ flex: 1.6, minWidth: 0, paddingRight: 8 }}>
+                      <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }, isCompact && { fontSize: 12 }]}>{totalUds} uds.</Text>
+                      <Text style={[styles.detailsText, isCompact && { fontSize: 11 }]} numberOfLines={2}>
                         {detailString || 'Sin productos'}
                       </Text>
                     </View>
-                    <Text style={[styles.tdText, { width: colWidths.fecha, color: '#475569' }]}>
+                    <Text style={[styles.tdText, { flex: 0.9, minWidth: 0, color: '#475569' }, isCompact && { fontSize: 11 }]}>
                       {order.fecha_creacion}
                     </Text>
                     {isDesktop && (
-                      <Text style={[styles.tdText, { flex: 1, minWidth: colWidths.centro, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
+                      <Text style={[styles.tdText, { flex: 1.1, minWidth: 0, fontWeight: '500', color: '#0F172A', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>
                         {order.centro?.nombre || 'N/A'}
                       </Text>
                     )}
-                    <View style={{ width: colWidths.estado }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
                       {userRole === 'repartidor' ? (
-                        <View style={[styles.selectWrapper, { height: 36, width: colWidths.estado - 10, marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
+                        <View style={[styles.selectWrapper, { height: 34, width: '95%', marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
                           <select
                             style={{
                               ...styles.htmlSelect,
@@ -197,7 +200,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                       )}
                     </View>
                     {isTabletOrDesktop && (
-                      <View style={[styles.tdActions, { width: colWidths.acciones }]}>
+                      <View style={[styles.tdActions, { flex: 0.95, minWidth: 0 }, isCompact && { gap: 4 }]}>
                         {userRole === 'usuario' && (
                           <>
                             <TouchableOpacity

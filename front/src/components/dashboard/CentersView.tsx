@@ -12,6 +12,7 @@ import {
   Alert,
   Animated,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { styles } from '../../css/CentersView.styles';
@@ -69,6 +70,9 @@ const mockCenters: Center[] = [
 ];
 
 export default function CentersView({ baseUrl }: CentersViewProps) {
+  const { width } = useWindowDimensions();
+  const isCompact = width < 1240;
+  const isMobile = width < 768;
   const [centers, setCenters] = useState<Center[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -353,16 +357,16 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
-            <View style={styles.tableContainer}>
+            <View style={[styles.tableContainer, { minWidth: isMobile ? 640 : 0, width: '100%' }]}>
               {/* Table Header */}
-              <View style={styles.tableHeader}>
-                <Text style={[styles.thText, { width: 80 }]}>ID Centro</Text>
-                <Text style={[styles.thText, { flex: 1.2, minWidth: 220 }]}>Nombre</Text>
-                <Text style={[styles.thText, { flex: 1, minWidth: 180 }]}>Operario Asignado</Text>
-                <Text style={[styles.thText, { flex: 1.4, minWidth: 280 }]}>Dirección</Text>
-                <Text style={[styles.thText, { width: 120 }]}>Ciudad</Text>
-                <Text style={[styles.thText, { width: 140 }]}>Fecha de registro</Text>
-                <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
+              <View style={[styles.tableHeader, isCompact && { paddingHorizontal: 10, paddingVertical: 10 }]}>
+                <Text style={[styles.thText, { flex: 0.55, minWidth: 0 }, isCompact && { fontSize: 11 }]}>ID Centro</Text>
+                <Text style={[styles.thText, { flex: 1.25, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Nombre</Text>
+                <Text style={[styles.thText, { flex: 1.05, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Operario Asignado</Text>
+                <Text style={[styles.thText, { flex: 1.4, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Dirección</Text>
+                <Text style={[styles.thText, { flex: 0.75, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Ciudad</Text>
+                <Text style={[styles.thText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>Fecha de registro</Text>
+                <Text style={[styles.thText, { flex: 0.8, minWidth: 0, textAlign: 'center' }, isCompact && { fontSize: 11 }]}>Acciones</Text>
               </View>
 
               {/* Table Rows */}
@@ -377,16 +381,17 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                       key={center.id_centro}
                       style={[
                         styles.tableRow,
+                        isCompact && { paddingHorizontal: 10, paddingVertical: 10 },
                         { backgroundColor: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' },
                       ]}
                     >
-                      <Text style={[styles.tdText, { width: 80, fontWeight: '600' }]}>
+                      <Text style={[styles.tdText, { flex: 0.55, minWidth: 0, fontWeight: '600' }, isCompact && { fontSize: 12 }]}>
                         {center.id_centro}
                       </Text>
-                      <Text style={[styles.tdText, { flex: 1.2, minWidth: 220, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 1.25, minWidth: 0, fontWeight: '500', paddingRight: 6 }, isCompact && { fontSize: 12 }]} numberOfLines={2}>
                         {center.nombre}
                       </Text>
-                      <View style={[styles.tdView, { flex: 1, minWidth: 180, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}>
+                      <View style={[styles.tdView, { flex: 1.05, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}>
                         <Feather
                           name="user"
                           size={13}
@@ -409,7 +414,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                         </Text>
                       </View>
                       <TouchableOpacity
-                        style={[styles.tdView, { flex: 1.4, minWidth: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}
+                        style={[styles.tdView, { flex: 1.4, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}
                         onPress={() => {
                           if (center.direccion && center.direccion !== 'N/A') {
                             const query = `${center.direccion}${center.ciudad && center.ciudad !== 'N/A' ? ', ' + center.ciudad : ''}`;
@@ -434,24 +439,24 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                           {center.direccion || 'N/A'}
                         </Text>
                       </TouchableOpacity>
-                      <Text style={[styles.tdText, { width: 120 }]}>
+                      <Text style={[styles.tdText, { flex: 0.75, minWidth: 0 }, isCompact && { fontSize: 12 }]} numberOfLines={1}>
                         {center.ciudad || 'N/A'}
                       </Text>
-                      <Text style={[styles.tdText, { width: 140 }]}>
+                      <Text style={[styles.tdText, { flex: 0.9, minWidth: 0 }, isCompact && { fontSize: 11 }]}>
                         {formatDate(center.fecha_registro || center.created_at || '17/06/2026')}
                       </Text>
-                      <View style={[styles.tdActions, { width: 120 }]}>
+                      <View style={[styles.tdActions, { flex: 0.8, minWidth: 0 }, isCompact && { gap: 4 }]}>
                         <TouchableOpacity
-                          style={[styles.actionIcon, styles.editIcon]}
+                          style={[styles.actionIcon, styles.editIcon, isCompact && { width: 24, height: 24 }]}
                           onPress={() => handleOpenEdit(center)}
                         >
-                          <Feather name="edit-2" size={14} color="#FFFFFF" />
+                          <Feather name="edit-2" size={isCompact ? 12 : 14} color="#FFFFFF" />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={[styles.actionIcon, styles.deleteIcon]}
+                          style={[styles.actionIcon, styles.deleteIcon, isCompact && { width: 24, height: 24 }]}
                           onPress={() => handleDelete(center.id_centro)}
                         >
-                          <Feather name="trash-2" size={14} color="#FFFFFF" />
+                          <Feather name="trash-2" size={isCompact ? 12 : 14} color="#FFFFFF" />
                         </TouchableOpacity>
                       </View>
                     </View>
