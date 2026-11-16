@@ -41,8 +41,10 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isDesktop = mounted && Platform.OS === 'web' && width >= 1024;
+  const isCompactMenu = height < 760 || width < 1200;
+  const isVeryShort = height < 620;
 
   // Form states
   const [email, setEmail] = useState('');
@@ -388,17 +390,35 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
       }
     };
 
+    const menuIconSize = isCompactMenu ? 16 : 18;
+    const compactItemStyle = isCompactMenu
+      ? { paddingVertical: isVeryShort ? 7 : 9, paddingHorizontal: 16, gap: 10 }
+      : undefined;
+    const compactTextStyle = isCompactMenu ? { fontSize: 13 } : undefined;
+
     const sidebarView = (
-      <View style={styles.sidebar}>
+      <View
+        style={[
+          styles.sidebar,
+          isCompactMenu && {
+            paddingVertical: isVeryShort ? 10 : 14,
+            width: isDesktop && width < 1200 ? 210 : 240,
+          },
+        ]}
+      >
         {/* Profile Header */}
         <TouchableOpacity
-          style={[styles.profileHeader, { justifyContent: 'space-between', alignItems: 'center' }]}
+          style={[
+            styles.profileHeader,
+            { justifyContent: 'space-between', alignItems: 'center' },
+            isCompactMenu && { marginBottom: isVeryShort ? 8 : 14, paddingHorizontal: 16 },
+          ]}
           onPress={() => {
             changeTab('perfil');
             setMobileMenuOpen(false);
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
             {user.foto_perfil ? (
               <Image
                 source={{
@@ -406,18 +426,18 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
                     ? user.foto_perfil
                     : `${BASE_URL.replace('/api', '')}${user.foto_perfil}`
                 }}
-                style={styles.profileAvatar}
+                style={[styles.profileAvatar, isCompactMenu && { width: 34, height: 34, borderRadius: 17 }]}
               />
             ) : (
-              <View style={styles.profileIconBg}>
-                <Feather name="user" size={20} color="#64748B" />
+              <View style={[styles.profileIconBg, isCompactMenu && { width: 34, height: 34, borderRadius: 17 }]}>
+                <Feather name="user" size={isCompactMenu ? 17 : 20} color="#64748B" />
               </View>
             )}
             <View style={{ flex: 1 }}>
-              <Text style={styles.profileName} numberOfLines={1}>
+              <Text style={[styles.profileName, isCompactMenu && { fontSize: 14 }]} numberOfLines={1}>
                 {user.nombre}
               </Text>
-              <Text style={{ color: '#94A3B8', fontSize: 11 }} numberOfLines={1}>
+              <Text style={{ color: '#94A3B8', fontSize: isCompactMenu ? 10 : 11 }} numberOfLines={1}>
                 Ver / Editar Perfil
               </Text>
             </View>
@@ -430,78 +450,82 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         </TouchableOpacity>
 
         {/* Navigation Items */}
-        <View style={styles.menuList}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.menuList, { flex: 0 }, isCompactMenu && { gap: 2 }]}
+          showsVerticalScrollIndicator={false}
+        >
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'productos' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'productos' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('productos');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'productos' && <View style={styles.activeBar} />}
-              <Feather name="box" size={18} color={activeTab === 'productos' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'productos' && styles.menuItemTextActive]}>
+              <Feather name="box" size={menuIconSize} color={activeTab === 'productos' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'productos' && styles.menuItemTextActive]}>
                 Productos
               </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'pedidos' && styles.menuItemActive]}
+            style={[styles.menuItem, compactItemStyle, activeTab === 'pedidos' && styles.menuItemActive]}
             onPress={() => {
               changeTab('pedidos');
               setMobileMenuOpen(false);
             }}
           >
             {activeTab === 'pedidos' && <View style={styles.activeBar} />}
-            <Feather name="file-text" size={18} color={activeTab === 'pedidos' ? '#F97316' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'pedidos' && styles.menuItemTextActive]}>
+            <Feather name="file-text" size={menuIconSize} color={activeTab === 'pedidos' ? '#F97316' : '#94A3B8'} />
+            <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'pedidos' && styles.menuItemTextActive]}>
               Pedidos
             </Text>
           </TouchableOpacity>
 
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'centros' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'centros' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('centros');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'centros' && <View style={styles.activeBar} />}
-              <Feather name="book-open" size={18} color={activeTab === 'centros' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'centros' && styles.menuItemTextActive]}>
+              <Feather name="book-open" size={menuIconSize} color={activeTab === 'centros' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'centros' && styles.menuItemTextActive]}>
                 Centros
               </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'fichaje' && styles.menuItemActive]}
+            style={[styles.menuItem, compactItemStyle, activeTab === 'fichaje' && styles.menuItemActive]}
             onPress={() => {
               changeTab('fichaje');
               setMobileMenuOpen(false);
             }}
           >
             {activeTab === 'fichaje' && <View style={styles.activeBar} />}
-            <Feather name="clock" size={18} color={activeTab === 'fichaje' ? '#F97316' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'fichaje' && styles.menuItemTextActive]}>
+            <Feather name="clock" size={menuIconSize} color={activeTab === 'fichaje' ? '#F97316' : '#94A3B8'} />
+            <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'fichaje' && styles.menuItemTextActive]}>
               Control Horario
             </Text>
           </TouchableOpacity>
 
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'alta' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'alta' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('alta');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'alta' && <View style={styles.activeBar} />}
-              <Feather name="user-plus" size={18} color={activeTab === 'alta' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'alta' && styles.menuItemTextActive]}>
+              <Feather name="user-plus" size={menuIconSize} color={activeTab === 'alta' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'alta' && styles.menuItemTextActive]}>
                 Dar de alta
               </Text>
             </TouchableOpacity>
@@ -509,15 +533,15 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
           {user.rol === 'super_admin' && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'control' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'control' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('control');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'control' && <View style={styles.activeBar} />}
-              <Feather name="grid" size={18} color={activeTab === 'control' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'control' && styles.menuItemTextActive]}>
+              <Feather name="grid" size={menuIconSize} color={activeTab === 'control' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'control' && styles.menuItemTextActive]}>
                 Control
               </Text>
             </TouchableOpacity>
@@ -525,15 +549,15 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'vacaciones' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'vacaciones' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('vacaciones');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'vacaciones' && <View style={styles.activeBar} />}
-              <Feather name="sun" size={18} color={activeTab === 'vacaciones' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'vacaciones' && styles.menuItemTextActive]}>
+              <Feather name="sun" size={menuIconSize} color={activeTab === 'vacaciones' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'vacaciones' && styles.menuItemTextActive]}>
                 Vacaciones
               </Text>
             </TouchableOpacity>
@@ -541,39 +565,42 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
 
           {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
-              style={[styles.menuItem, activeTab === 'analitica' && styles.menuItemActive]}
+              style={[styles.menuItem, compactItemStyle, activeTab === 'analitica' && styles.menuItemActive]}
               onPress={() => {
                 changeTab('analitica');
                 setMobileMenuOpen(false);
               }}
             >
               {activeTab === 'analitica' && <View style={styles.activeBar} />}
-              <Feather name="bar-chart-2" size={18} color={activeTab === 'analitica' ? '#F97316' : '#94A3B8'} />
-              <Text style={[styles.menuItemText, activeTab === 'analitica' && styles.menuItemTextActive]}>
+              <Feather name="bar-chart-2" size={menuIconSize} color={activeTab === 'analitica' ? '#F97316' : '#94A3B8'} />
+              <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'analitica' && styles.menuItemTextActive]}>
                 Analítica
               </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            style={[styles.menuItem, activeTab === 'descargas' && styles.menuItemActive]}
+            style={[styles.menuItem, compactItemStyle, activeTab === 'descargas' && styles.menuItemActive]}
             onPress={() => {
               changeTab('descargas');
               setMobileMenuOpen(false);
             }}
           >
             {activeTab === 'descargas' && <View style={styles.activeBar} />}
-            <Feather name="arrow-down" size={18} color={activeTab === 'descargas' ? '#F97316' : '#94A3B8'} />
-            <Text style={[styles.menuItemText, activeTab === 'descargas' && styles.menuItemTextActive]}>
+            <Feather name="arrow-down" size={menuIconSize} color={activeTab === 'descargas' ? '#F97316' : '#94A3B8'} />
+            <Text style={[styles.menuItemText, compactTextStyle, activeTab === 'descargas' && styles.menuItemTextActive]}>
               Descargas
             </Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Feather name="log-out" size={18} color="#FFFFFF" />
-          <Text style={styles.logoutBtnText}>Cerrar Sesión</Text>
+        <TouchableOpacity
+          style={[styles.logoutBtn, isCompactMenu && { height: 42 }]}
+          onPress={handleLogout}
+        >
+          <Feather name="log-out" size={menuIconSize} color="#FFFFFF" />
+          <Text style={[styles.logoutBtnText, isCompactMenu && { fontSize: 14 }]}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
     );
