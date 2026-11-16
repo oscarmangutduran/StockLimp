@@ -815,7 +815,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
               />
             </View>
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { paddingVertical: 16, paddingHorizontal: 20 }]}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.cancelModalBtn]}
                 onPress={() => setModalVisible(false)}
@@ -980,7 +980,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                     </View>
                   </View>
 
-                  <View style={{ flex: 1, minHeight: 220, maxHeight: 380 }}>
+                  <View style={{ flexShrink: 1, minHeight: 140, maxHeight: 340 }}>
                     {hoursLoading ? (
                       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
                         <ActivityIndicator size="large" color="#5C8E8D" />
@@ -1046,7 +1046,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
               );
             })()}
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { paddingVertical: 16, paddingHorizontal: 20 }]}>
               <TouchableOpacity
                 style={[styles.modalBtn, styles.cancelModalBtn]}
                 onPress={() => setHoursModalVisible(false)}

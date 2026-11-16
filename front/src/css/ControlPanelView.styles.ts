@@ -370,6 +370,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
+    marginBottom: 12,
     elevation: 5,
     shadowColor: '#000',
     shadowOpacity: 0.2,
