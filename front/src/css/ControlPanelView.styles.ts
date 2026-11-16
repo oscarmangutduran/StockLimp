@@ -82,7 +82,7 @@ export const styles = StyleSheet.create({
     height: '100%',
     fontSize: 14,
     color: '#1E293B',
-    outlineStyle: 'none',
+    outlineStyle: 'none' as any,
   },
   loadingContainer: {
     flex: 1,
