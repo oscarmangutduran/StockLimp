@@ -528,15 +528,15 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
           </View>
         ) : (
           <View style={{ flex: 1 }}>
-            <ScrollView horizontal={true} style={styles.scrollContainer}>
-              <View style={[styles.tableContainer, { minWidth: 1180 }]}>
+            <ScrollView horizontal={true} style={styles.scrollContainer} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
+              <View style={[styles.tableContainer, { minWidth: 1180, width: '100%' }]}>
                 {/* Table Header */}
                 <View style={styles.tableHeader}>
                   <Text style={[styles.thText, { width: 60 }]}>ID</Text>
-                  <Text style={[styles.thText, { width: 170 }]}>Nombre Completo</Text>
-                  <Text style={[styles.thText, { width: 190 }]}>Correo Electrónico</Text>
+                  <Text style={[styles.thText, { flex: 1.2, minWidth: 170 }]}>Nombre Completo</Text>
+                  <Text style={[styles.thText, { flex: 1.3, minWidth: 190 }]}>Correo Electrónico</Text>
                   <Text style={[styles.thText, { width: 150 }]}>Rol Asignado</Text>
-                  <Text style={[styles.thText, { width: 240 }]}>Centro Asignado</Text>
+                  <Text style={[styles.thText, { flex: 1.5, minWidth: 240 }]}>Centro Asignado</Text>
                   <Text style={[styles.thText, { width: 90 }]}>Estado</Text>
                   <Text style={[styles.thText, { width: 120 }]}>Fecha de Registro</Text>
                   <Text style={[styles.thText, { width: 160, textAlign: 'center' }]}>Acciones</Text>
@@ -567,16 +567,16 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                           ]}
                         >
                           <Text style={[styles.tdText, { width: 60, fontWeight: '600' }]}>#{user.id_user}</Text>
-                          <Text style={[styles.tdText, { width: 170, fontWeight: '500' }]} numberOfLines={2}>
+                          <Text style={[styles.tdText, { flex: 1.2, minWidth: 170, fontWeight: '500' }]} numberOfLines={2}>
                             {`${user.nombre} ${user.apellido || ''}`.trim()}
                           </Text>
-                          <Text style={[styles.tdText, { width: 190 }]} numberOfLines={1}>{user.email}</Text>
+                          <Text style={[styles.tdText, { flex: 1.3, minWidth: 190 }]} numberOfLines={1}>{user.email}</Text>
                           <View style={{ width: 150 }}>
                             <View style={[styles.roleTag, { backgroundColor: roleStyle.bg }]}>
                               <Text style={[styles.roleText, { color: roleStyle.text }]}>{roleStyle.label}</Text>
                             </View>
                           </View>
-                          <View style={{ width: 240, paddingRight: 10 }}>
+                          <View style={{ flex: 1.5, minWidth: 240, paddingRight: 10 }}>
                             {hasCentros ? (
                               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
                                 <Feather name="map-pin" size={13} color="#5C8E8D" style={{ marginTop: 2 }} />

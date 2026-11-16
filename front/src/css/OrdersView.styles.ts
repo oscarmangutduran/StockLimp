@@ -74,6 +74,7 @@ export const styles = StyleSheet.create({
   },
   tableContainer: {
     minWidth: 1120,
+    width: '100%',
   },
   tableHeader: {
     flexDirection: 'row',

@@ -331,13 +331,13 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
                 )}
               </View>
             ) : (
-              <ScrollView horizontal={true} style={styles.scrollContainer}>
+              <ScrollView horizontal={true} style={styles.scrollContainer} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
                 <View style={styles.tableContainer}>
                   {/* Table Header */}
                   <View style={styles.tableHeader}>
                     <Text style={[styles.thText, { width: 80 }]}>ID</Text>
-                    <Text style={[styles.thText, { width: 180 }]}>Nombre Completo</Text>
-                    <Text style={[styles.thText, { width: 220 }]}>Correo Electrónico</Text>
+                    <Text style={[styles.thText, { flex: 1, minWidth: 180 }]}>Nombre Completo</Text>
+                    <Text style={[styles.thText, { flex: 1.2, minWidth: 220 }]}>Correo Electrónico</Text>
                     <Text style={[styles.thText, { width: 120 }]}>Rol Solicitado</Text>
                     <Text style={[styles.thText, { width: 140 }]}>Fecha Registro</Text>
                     <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
@@ -353,8 +353,8 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
                       ]}
                     >
                       <Text style={[styles.tdText, { width: 80, fontWeight: '600' }]}>#{user.id_user}</Text>
-                      <Text style={[styles.tdText, { width: 180, fontWeight: '500' }]}>{user.nombre}</Text>
-                      <Text style={[styles.tdText, { width: 220 }]}>{user.email}</Text>
+                      <Text style={[styles.tdText, { flex: 1, minWidth: 180, fontWeight: '500' }]}>{user.nombre}</Text>
+                      <Text style={[styles.tdText, { flex: 1.2, minWidth: 220 }]}>{user.email}</Text>
                       <Text style={[styles.tdText, { width: 120, textTransform: 'uppercase' }]}>{user.rol}</Text>
                       <Text style={[styles.tdText, { width: 140 }]}>{user.fecha_creacion || '2026-06-17'}</Text>
                       <View style={[styles.tdActions, { width: 120 }]}>

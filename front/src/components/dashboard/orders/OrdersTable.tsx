@@ -65,8 +65,8 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
 }) => {
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.scrollContainer} horizontal={true}>
-        <View style={[styles.tableContainer, { minWidth: tableMinWidth }]}>
+      <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
+        <View style={[styles.tableContainer, { minWidth: tableMinWidth, width: '100%' }]}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
             {isDesktop && userRole === 'repartidor' && (
@@ -86,10 +86,10 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
               </View>
             )}
             <Text style={[styles.thText, { width: colWidths.id }]}>ID Pedido</Text>
-            {userRole !== 'usuario' && <Text style={[styles.thText, { width: colWidths.operario }]}>Operario</Text>}
-            <Text style={[styles.thText, { width: colWidths.productos }]}>Productos Pedidos</Text>
+            {userRole !== 'usuario' && <Text style={[styles.thText, { flex: 0.8, minWidth: colWidths.operario }]}>Operario</Text>}
+            <Text style={[styles.thText, { flex: 1.5, minWidth: colWidths.productos }]}>Productos Pedidos</Text>
             <Text style={[styles.thText, { width: colWidths.fecha }]}>Fecha de pedido</Text>
-            {isDesktop && <Text style={[styles.thText, { width: colWidths.centro }]}>Centro Destino</Text>}
+            {isDesktop && <Text style={[styles.thText, { flex: 1, minWidth: colWidths.centro }]}>Centro Destino</Text>}
             <Text style={[styles.thText, { width: colWidths.estado }]}>Estado</Text>
             {isTabletOrDesktop && <Text style={[styles.thText, { width: colWidths.acciones, textAlign: 'center' }]}>Acciones</Text>}
           </View>
@@ -137,11 +137,11 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                       </Text>
                     </TouchableOpacity>
                     {userRole !== 'usuario' && (
-                      <Text style={[styles.tdText, { width: colWidths.operario, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 0.8, minWidth: colWidths.operario, fontWeight: '500' }]}>
                         {order.operario}
                       </Text>
                     )}
-                    <View style={{ width: colWidths.productos, paddingRight: 10 }}>
+                    <View style={{ flex: 1.5, minWidth: colWidths.productos, paddingRight: 10 }}>
                       <Text style={[styles.totalUdsText, { color: '#5C8E8D', fontWeight: 'bold' }]}>{totalUds} uds.</Text>
                       <Text style={styles.detailsText} numberOfLines={2}>
                         {detailString || 'Sin productos'}
@@ -151,7 +151,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                       {order.fecha_creacion}
                     </Text>
                     {isDesktop && (
-                      <Text style={[styles.tdText, { width: colWidths.centro, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
+                      <Text style={[styles.tdText, { flex: 1, minWidth: colWidths.centro, fontWeight: '500', color: '#0F172A' }]} numberOfLines={1}>
                         {order.centro?.nombre || 'N/A'}
                       </Text>
                     )}

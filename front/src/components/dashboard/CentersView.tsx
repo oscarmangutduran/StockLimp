@@ -352,14 +352,14 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <ScrollView style={styles.scrollContainer} horizontal={true}>
+          <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
             <View style={styles.tableContainer}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.thText, { width: 80 }]}>ID Centro</Text>
-                <Text style={[styles.thText, { width: 220 }]}>Nombre</Text>
-                <Text style={[styles.thText, { width: 180 }]}>Operario Asignado</Text>
-                <Text style={[styles.thText, { width: 280 }]}>Dirección</Text>
+                <Text style={[styles.thText, { flex: 1.2, minWidth: 220 }]}>Nombre</Text>
+                <Text style={[styles.thText, { flex: 1, minWidth: 180 }]}>Operario Asignado</Text>
+                <Text style={[styles.thText, { flex: 1.4, minWidth: 280 }]}>Dirección</Text>
                 <Text style={[styles.thText, { width: 120 }]}>Ciudad</Text>
                 <Text style={[styles.thText, { width: 140 }]}>Fecha de registro</Text>
                 <Text style={[styles.thText, { width: 120, textAlign: 'center' }]}>Acciones</Text>
@@ -383,10 +383,10 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                       <Text style={[styles.tdText, { width: 80, fontWeight: '600' }]}>
                         {center.id_centro}
                       </Text>
-                      <Text style={[styles.tdText, { width: 220, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 1.2, minWidth: 220, fontWeight: '500' }]}>
                         {center.nombre}
                       </Text>
-                      <View style={[styles.tdView, { width: 180, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}>
+                      <View style={[styles.tdView, { flex: 1, minWidth: 180, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 8 }]}>
                         <Feather
                           name="user"
                           size={13}
@@ -409,7 +409,7 @@ export default function CentersView({ baseUrl }: CentersViewProps) {
                         </Text>
                       </View>
                       <TouchableOpacity
-                        style={[styles.tdView, { width: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}
+                        style={[styles.tdView, { flex: 1.4, minWidth: 280, flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 10 }]}
                         onPress={() => {
                           if (center.direccion && center.direccion !== 'N/A') {
                             const query = `${center.direccion}${center.ciudad && center.ciudad !== 'N/A' ? ', ' + center.ciudad : ''}`;

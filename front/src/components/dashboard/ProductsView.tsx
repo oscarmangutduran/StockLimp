@@ -362,16 +362,16 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
         </View>
       ) : (
         <View style={{ flex: 1 }}>
-          <ScrollView style={styles.scrollContainer} horizontal={true}>
-            <View style={[styles.tableContainer, { minWidth: isTabletOrDesktop ? 920 : 320 }]}>
+          <ScrollView style={styles.scrollContainer} horizontal={true} contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}>
+            <View style={[styles.tableContainer, { minWidth: isTabletOrDesktop ? 920 : 320, width: '100%' }]}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
                 <Text style={[styles.thText, { width: 60 }]}>ID Producto</Text>
                 <Text style={[styles.thText, { width: 80 }]}>Imagen</Text>
-                <Text style={[styles.thText, { width: 180 }]}>Nombre</Text>
+                <Text style={[styles.thText, { flex: 1.5, minWidth: 180 }]}>Nombre</Text>
                 {isTabletOrDesktop && (
                   <>
-                    <Text style={[styles.thText, { width: 120 }]}>SKU</Text>
+                    <Text style={[styles.thText, { flex: 1, minWidth: 120 }]}>SKU</Text>
                     <Text style={[styles.thText, { width: 100 }]}>¿Tóxico?</Text>
                     <Text style={[styles.thText, { width: 100 }]}>Precio Unidad</Text>
                     <Text style={[styles.thText, { width: 100 }]}>Stock Actual</Text>
@@ -425,12 +425,12 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                           );
                         })()}
                       </TouchableOpacity>
-                      <Text style={[styles.tdText, { width: 180, fontWeight: '500' }]}>
+                      <Text style={[styles.tdText, { flex: 1.5, minWidth: 180, fontWeight: '500' }]}>
                         {product.nombre}
                       </Text>
                       {isTabletOrDesktop && (
                         <>
-                          <Text style={[styles.tdText, { width: 120, color: '#64748B' }]}>
+                          <Text style={[styles.tdText, { flex: 1, minWidth: 120, color: '#64748B' }]}>
                             {product.sku || 'N/A'}
                           </Text>
                           <Text
