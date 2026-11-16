@@ -641,7 +641,7 @@ export default function ControlPanelView({ baseUrl, currentUser }: ControlPanelV
                             >
                               <Feather name="edit-2" size={isCompact ? 12 : 14} color="#475569" />
                             </TouchableOpacity>
-                            {(!currentUser?.rol || currentUser.rol === 'super_admin') && (
+                            {(!currentUser?.rol || currentUser.rol === 'super_admin' || currentUser.rol === 'admin') && (
                               <TouchableOpacity
                                 style={[styles.actionIcon, styles.hoursBtn, isCompact && { width: 24, height: 24 }]}
                                 onPress={() => handleOpenUserHours(user)}

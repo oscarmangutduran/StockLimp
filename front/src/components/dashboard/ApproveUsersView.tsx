@@ -30,12 +30,13 @@ interface ApproveUsersViewProps {
 }
 
 export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersViewProps) {
+  const isAdminOrSuper = userRole === 'super_admin' || userRole === 'admin';
   const { width } = useWindowDimensions();
   const isCompact = width < 1240;
   const isMobile = width < 768;
-  // Super Admin view states
+  // Super Admin / Admin view states
   const [users, setUsers] = useState<PendingUser[]>([]);
-  const [loading, setLoading] = useState(userRole === 'super_admin');
+  const [loading, setLoading] = useState(isAdminOrSuper);
 
   // Admin view form states
   const [formNombre, setFormNombre] = useState('');
@@ -51,7 +52,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
   const showAlert = (message: string, title = 'Aviso') => setAlertConfig({ visible: true, title, message, showCancel: false, onConfirm: undefined });
 
   const fetchPendingUsers = async () => {
-    if (userRole !== 'super_admin') return;
+    if (!isAdminOrSuper) return;
     setLoading(true);
     try {
       const response = await fetch(`${baseUrl}/usuarios`);
@@ -205,7 +206,7 @@ export default function ApproveUsersView({ baseUrl, userRole }: ApproveUsersView
   };
 
   // Conditional Rendering: Admin registration form
-  if (userRole !== 'super_admin') {
+  if (!isAdminOrSuper) {
     return (
       <View style={styles.container}>
         <Text style={styles.viewTitle}>FORMULARIO DE ALTA DE NUEVO PERSONAL</Text>

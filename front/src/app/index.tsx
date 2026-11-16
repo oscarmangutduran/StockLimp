@@ -370,7 +370,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         case 'alta':
           return <ApproveUsersView baseUrl={BASE_URL} userRole={user.rol} />;
         case 'control':
-          return user.rol === 'super_admin' ? (
+          return (user.rol === 'super_admin' || user.rol === 'admin') ? (
             <ControlPanelView baseUrl={BASE_URL} currentUser={user} />
           ) : (
             <CentersView baseUrl={BASE_URL} />
@@ -531,7 +531,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
             </TouchableOpacity>
           )}
 
-          {user.rol === 'super_admin' && (
+          {(user.rol === 'super_admin' || user.rol === 'admin') && (
             <TouchableOpacity
               style={[styles.menuItem, compactItemStyle, activeTab === 'control' && styles.menuItemActive]}
               onPress={() => {

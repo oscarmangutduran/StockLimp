@@ -443,7 +443,7 @@ export default function DownloadsView({ baseUrl, userRole = 'operario' }: Downlo
               </Text>
             </TouchableOpacity>
 
-            {initialRole === 'super_admin' && (
+            {isPrivilegedUser && (
               <TouchableOpacity
                 style={[styles.rolePillBtn, selectedRole === 'super_admin' && styles.rolePillBtnActive]}
                 onPress={() => handleRoleChange('super_admin')}
