@@ -685,36 +685,70 @@ export default function OrdersView({ baseUrl, userRole = 'admin', userId, idCent
           {userRole === 'usuario' ? 'MIS PEDIDOS' : 'GESTIÓN DE PEDIDOS'}
         </Text>
         <View style={[styles.headerActions, isMobile && { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
-          {userRole === 'repartidor' && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={[styles.selectWrapper, { height: 40, width: 160, marginBottom: 0, overflow: 'hidden', borderRadius: 20, borderColor: '#E2E8F0', borderWidth: 1 }]}>
-                <select
+          {userRole === 'repartidor' && (() => {
+            const bulkColors = getStatusStyle(bulkStatus);
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View
                   style={{
-                    ...styles.htmlSelect,
-                    height: '100%',
-                    fontSize: 14,
-                    outlineStyle: 'none',
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    MozAppearance: 'none',
-                  } as any}
-                  value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value)}
+                    position: 'relative',
+                    height: 38,
+                    width: 165,
+                    borderRadius: 19,
+                    backgroundColor: bulkColors.bg,
+                    borderWidth: 1,
+                    borderColor: `${bulkColors.text}33`,
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
                 >
-                  <option value="PENDIENTE">PENDIENTE</option>
-                  <option value="EN_PREPARACION">EN_PREPARACION</option>
-                  <option value="ENTREGADO">ENTREGADO</option>
-                  <option value="CANCELADO">CANCELADO</option>
-                </select>
+                  <select
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: bulkColors.text,
+                      fontSize: 13,
+                      fontWeight: '700',
+                      padding: '0 28px 0 14px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                    } as any}
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value)}
+                  >
+                    <option value="PENDIENTE" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>PENDIENTE</option>
+                    <option value="EN_PREPARACION" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>EN PREPARACIÓN</option>
+                    <option value="ENTREGADO" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>ENTREGADO</option>
+                    <option value="CANCELADO" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>CANCELADO</option>
+                  </select>
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      right: 10,
+                      top: 0,
+                      bottom: 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Feather name="chevron-down" size={15} color={bulkColors.text} />
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: '#10B981', height: 38 }]}
+                  onPress={handleBulkStatusUpdate}
+                >
+                  <Text style={styles.btnText}>CAMBIAR ESTADO</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: '#10B981' }]}
-                onPress={handleBulkStatusUpdate}
-              >
-                <Text style={styles.btnText}>CAMBIAR ESTADO</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            );
+          })()}
 
           {userRole === 'usuario' && (
             <TouchableOpacity

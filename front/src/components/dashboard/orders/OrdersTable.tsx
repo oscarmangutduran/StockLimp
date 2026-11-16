@@ -158,35 +158,71 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                         {order.centro?.nombre || 'N/A'}
                       </Text>
                     )}
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      {userRole === 'repartidor' ? (
-                        <View style={[styles.selectWrapper, { height: 34, width: '95%', marginBottom: 0, overflow: 'hidden', borderRadius: 18, borderColor: '#CBD5E1', borderWidth: 1 }]}>
-                          <select
+                    <View style={{ flex: 1, minWidth: 0, paddingRight: 6 }}>
+                      {userRole === 'repartidor' ? (() => {
+                        const currentVal = orderStatuses[order.id_pedido] !== undefined ? orderStatuses[order.id_pedido] : order.estado;
+                        const activeColors = getStatusStyle(currentVal);
+                        return (
+                          <View
                             style={{
-                              ...styles.htmlSelect,
-                              height: '100%',
-                              fontSize: 13,
-                              paddingHorizontal: 8,
-                              outlineStyle: 'none',
-                              appearance: 'none',
-                              WebkitAppearance: 'none',
-                              MozAppearance: 'none',
-                            } as any}
-                            value={orderStatuses[order.id_pedido] !== undefined ? orderStatuses[order.id_pedido] : order.estado}
-                            onChange={(e) => {
-                              setOrderStatuses({
-                                ...orderStatuses,
-                                [order.id_pedido]: e.target.value
-                              });
+                              position: 'relative',
+                              height: 32,
+                              width: '100%',
+                              maxWidth: 165,
+                              borderRadius: 16,
+                              backgroundColor: activeColors.bg,
+                              borderWidth: 1,
+                              borderColor: `${activeColors.text}33`,
+                              justifyContent: 'center',
+                              overflow: 'hidden',
                             }}
                           >
-                            <option value="PENDIENTE">PENDIENTE</option>
-                            <option value="EN_PREPARACION">EN_PREPARACION</option>
-                            <option value="ENTREGADO">ENTREGADO</option>
-                            <option value="CANCELADO">CANCELADO</option>
-                          </select>
-                        </View>
-                      ) : (
+                            <select
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                border: 'none',
+                                backgroundColor: 'transparent',
+                                color: activeColors.text,
+                                fontSize: isCompact ? 11 : 12,
+                                fontWeight: '700',
+                                padding: '0 26px 0 12px',
+                                outline: 'none',
+                                cursor: 'pointer',
+                                appearance: 'none',
+                                WebkitAppearance: 'none',
+                                MozAppearance: 'none',
+                                textOverflow: 'ellipsis',
+                              } as any}
+                              value={currentVal}
+                              onChange={(e) => {
+                                setOrderStatuses({
+                                  ...orderStatuses,
+                                  [order.id_pedido]: e.target.value
+                                });
+                              }}
+                            >
+                              <option value="PENDIENTE" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>PENDIENTE</option>
+                              <option value="EN_PREPARACION" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>EN PREPARACIÓN</option>
+                              <option value="ENTREGADO" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>ENTREGADO</option>
+                              <option value="CANCELADO" style={{ color: '#1E293B', backgroundColor: '#FFFFFF' }}>CANCELADO</option>
+                            </select>
+                            <View
+                              pointerEvents="none"
+                              style={{
+                                position: 'absolute',
+                                right: 9,
+                                top: 0,
+                                bottom: 0,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Feather name="chevron-down" size={14} color={activeColors.text} />
+                            </View>
+                          </View>
+                        );
+                      })() : (
                         <View
                           style={[
                             styles.statusTag,
@@ -194,7 +230,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                           ]}
                         >
                           <Text style={[styles.statusText, { color: statusColors.text }]}>
-                            {order.estado}
+                            {order.estado === 'EN_PREPARACION' ? 'EN PREPARACIÓN' : order.estado}
                           </Text>
                         </View>
                       )}
