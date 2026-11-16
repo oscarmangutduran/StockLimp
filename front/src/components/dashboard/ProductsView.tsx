@@ -97,6 +97,18 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
   const [modalType, setModalType] = useState<'info' | 'create' | 'edit' | 'image' | 'document'>('info');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+
+  const getProductImageUri = (imagen?: string | null): string | null => {
+    if (!imagen) return null;
+    if (imagen.startsWith('http://') || imagen.startsWith('https://')) {
+      return imagen;
+    }
+    const clean = imagen.replace(/^\/+/, '');
+    const path = clean.startsWith('uploads/') ? clean : `uploads/productos/${clean}`;
+    const origin = baseUrl.replace(/\/api\/?$/, '');
+    return `${origin}/${encodeURI(path)}`;
+  };
   
   // Form states
   const [formNombre, setFormNombre] = useState('');
@@ -390,16 +402,28 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                         onPress={() => handleOpenImage(product)}
                         activeOpacity={0.7}
                       >
-                        {product.imagen ? (
-                          <Image
-                            source={{ uri: product.imagen.startsWith('http') ? product.imagen : `${baseUrl.replace('/api', '')}/${encodeURI(product.imagen)}` }}
-                            style={styles.thumbnailImage}
-                          />
-                        ) : (
-                          <View style={styles.imagePlaceholder}>
-                            <Feather name="image" size={18} color="#94A3B8" />
-                          </View>
-                        )}
+                        {(() => {
+                          const imageUri = !failedImages[product.id_producto]
+                            ? getProductImageUri(product.imagen)
+                            : null;
+                          if (imageUri) {
+                            return (
+                              <Image
+                                source={{ uri: imageUri }}
+                                style={styles.thumbnailImage}
+                                resizeMode="cover"
+                                onError={() =>
+                                  setFailedImages((prev) => ({ ...prev, [product.id_producto]: true }))
+                                }
+                              />
+                            );
+                          }
+                          return (
+                            <View style={styles.imagePlaceholder}>
+                              <Feather name="image" size={18} color="#94A3B8" />
+                            </View>
+                          );
+                        })()}
                       </TouchableOpacity>
                       <Text style={[styles.tdText, { width: 180, fontWeight: '500' }]}>
                         {product.nombre}
@@ -588,17 +612,26 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                 >
                   <Feather name="x" size={18} color="#FFFFFF" />
                 </TouchableOpacity>
-                {selectedProduct.imagen ? (
-                  <Image
-                    source={{ uri: selectedProduct.imagen.startsWith('http') ? selectedProduct.imagen : `${baseUrl.replace('/api', '')}/${encodeURI(selectedProduct.imagen)}` }}
-                    style={{ width: '100%', height: 300, borderRadius: 12, resizeMode: 'contain' }}
-                  />
-                ) : (
-                  <View style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                    <Feather name="image" size={48} color="#94A3B8" />
-                    <Text style={{ color: '#64748B', fontSize: 14 }}>Sin imagen disponible</Text>
-                  </View>
-                )}
+                {(() => {
+                  const modalImageUri = !failedImages[selectedProduct.id_producto]
+                    ? getProductImageUri(selectedProduct.imagen)
+                    : null;
+                  if (modalImageUri) {
+                    return (
+                      <Image
+                        source={{ uri: modalImageUri }}
+                        style={{ width: '100%', height: 300, borderRadius: 12 }}
+                        resizeMode="contain"
+                      />
+                    );
+                  }
+                  return (
+                    <View style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                      <Feather name="image" size={48} color="#94A3B8" />
+                      <Text style={{ color: '#64748B', fontSize: 14 }}>Sin imagen disponible</Text>
+                    </View>
+                  );
+                })()}
               </View>
             )}
 
