@@ -230,6 +230,7 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 480,
+    maxHeight: '90%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,

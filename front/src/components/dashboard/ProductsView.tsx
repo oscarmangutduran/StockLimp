@@ -595,7 +595,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
               </View>
             )}
 
-            {modalType === 'image' && selectedProduct && (
+            {modalType === 'image' && selectedProduct ? (
               <View style={[styles.modalBody, { alignItems: 'center', justifyContent: 'center', padding: 20 }]}>
                 <TouchableOpacity 
                   style={{ 
@@ -624,22 +624,20 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                     return (
                       <Image
                         source={{ uri: modalImageUri }}
-                        style={{ width: '100%', height: 300, borderRadius: 12 }}
+                        style={{ width: '100%', height: 280, borderRadius: 12 }}
                         resizeMode="contain"
                       />
                     );
                   }
                   return (
-                    <View style={{ width: '100%', height: 300, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                    <View style={{ width: '100%', height: 260, borderRadius: 12, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                       <Feather name="image" size={48} color="#94A3B8" />
                       <Text style={{ color: '#64748B', fontSize: 14 }}>Sin imagen disponible</Text>
                     </View>
                   );
                 })()}
               </View>
-            )}
-
-            {modalType === 'document' && selectedProduct ? (
+            ) : modalType === 'document' && selectedProduct ? (
               <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#F8FAFC' }}>
                 {Platform.OS === 'web' ? (
                   React.createElement('iframe', {
@@ -670,7 +668,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                 )}
               </View>
             ) : modalType === 'info' && selectedProduct ? (
-              <View style={styles.modalBody}>
+              <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={[styles.modalBody, isCompact && { padding: 14 }]} showsVerticalScrollIndicator={true}>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>ID Producto:</Text>
                   <Text style={styles.detailVal}>#{selectedProduct.id_producto}</Text>
@@ -727,9 +725,9 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                     </TouchableOpacity>
                   </View>
                 ) : null}
-              </View>
+              </ScrollView>
             ) : (
-              <View style={styles.modalBody}>
+              <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={[styles.modalBody, isCompact && { padding: 14 }]} showsVerticalScrollIndicator={true}>
                 <Text style={styles.label}>Nombre del Producto *</Text>
                 <TextInput
                   style={styles.modalInput}
@@ -778,7 +776,7 @@ export default function ProductsView({ baseUrl }: ProductsViewProps) {
                     thumbColor={formEsToxico ? '#EF4444' : '#F1F5F9'}
                   />
                 </View>
-              </View>
+              </ScrollView>
             )}
 
             {modalType !== 'image' && modalType !== 'document' && (
