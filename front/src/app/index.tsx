@@ -53,13 +53,14 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   const [solicitaRestablecimiento, setSolicitaRestablecimiento] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
-  // Chat states
+  // AI Chat states
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{text: string, isUser: boolean}[]>([
-    { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
+    { text: "¡Hola! Soy el asistente IA de StockLimp. ¿En qué puedo ayudarte hoy?", isUser: false }
   ]);
   const [chatInput, setChatInput] = useState('');
-  const [chatUserName, setChatUserName] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatScrollRef = React.useRef<ScrollView>(null);
   
   // App states
   const [loading, setLoading] = useState(false);
@@ -137,11 +138,10 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
   useEffect(() => {
     if (chatMessages.length > 1) {
       const timer = setTimeout(() => {
-        setChatUserName('');
         setChatMessages([
-          { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
+          { text: "¡Hola! Soy el asistente IA de StockLimp. ¿En qué puedo ayudarte hoy?", isUser: false }
         ]);
-        setChatOpen(false); // Cerramos el chat para limpiar la pantalla
+        setChatOpen(false);
       }, 120000);
       return () => clearTimeout(timer);
     }
@@ -200,63 +200,65 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     }
   };
 
-  const handleSendChat = (presetText?: string) => {
-    const textToSend = typeof presetText === 'string' ? presetText : chatInput;
-    if (!textToSend.trim()) return;
-    
-    const isFirstMessage = !chatUserName;
-    if (isFirstMessage) {
-      setChatUserName(textToSend.trim());
-    }
+  const handleSendChat = async (presetText?: string) => {
+    const textToSend = (typeof presetText === 'string' ? presetText : chatInput).trim();
+    if (!textToSend || chatLoading) return;
+
+    const historyPayload = chatMessages.slice(1).map((m) => ({
+      role: m.isUser ? 'user' : 'model',
+      text: m.text,
+    }));
 
     const newUserMsg = { text: textToSend, isUser: true };
-    setChatMessages(prev => [...prev, newUserMsg]);
+    setChatMessages((prev) => [...prev, newUserMsg]);
     if (typeof presetText !== 'string') setChatInput('');
-    
-    setTimeout(() => {
-      if (isFirstMessage) {
-        setChatMessages(prev => [...prev, {
-          text: `¡Encantado, ${textToSend.trim()}!\n¿En qué puedo ayudarte?\n1. Contraseña olvidada\n2. Fechas de pedidos\n3. Falta un producto\n4. Pedir vacaciones\n5. Hasta pronto (cerrar)`,
-          isUser: false
-        }]);
-        return;
+    setChatLoading(true);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const response = await fetch(`${BASE_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          message: textToSend,
+          history: historyPayload,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const rawText = await response.text();
+      let data: any = {};
+      try {
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch {
+        data = { message: 'Respuesta no válida del servidor.' };
       }
 
-      const lowerInput = newUserMsg.text.toLowerCase();
-      
-      let responseText = "No he entendido bien tu pregunta. Por favor, escribe un número del 1 al 5, o descríbeme tu duda (contraseñas, pedidos, faltas, vacaciones).";
-      
-      if (lowerInput === '1' || lowerInput.includes('contraseña') || lowerInput.includes('password') || lowerInput.includes('olvid') || lowerInput.includes('recordar')) {
-        responseText = "Si no recuerdas tu contraseña, debes escribir un correo a direccion@adarvelimpiezas.net con el asunto 'Olvidado'.";
-      } else if (lowerInput === '2' || (lowerInput.includes('pedido') && (lowerInput.includes('dia') || lowerInput.includes('fecha') || lowerInput.includes('modificar') || lowerInput.includes('cuando')))) {
-        responseText = "Puedes hacer y modificar tus pedidos del 2 al 20 de cada mes.";
-      } else if (lowerInput === '3' || (lowerInput.includes('falta') && (lowerInput.includes('producto') || lowerInput.includes('material')))) {
-        responseText = "Si te falta algún producto, debes escribir a la persona encargada de entregar el pedido.";
-      } else if (lowerInput === '4' || lowerInput.includes('vacacion') || lowerInput.includes('vacaciones') || lowerInput.includes('descanso')) {
-        responseText = "Para pedir tus vacaciones, debes ir a la sección de 'Control Horario' (fichaje) dentro de la aplicación una vez inicies sesión.";
-      } else if (lowerInput === '5' || lowerInput.includes('hasta pronto') || lowerInput.includes('adios') || lowerInput.includes('adiós') || lowerInput.includes('cerrar')) {
-        setChatMessages(prev => [...prev, {
-          text: "¡Hasta pronto! Que tengas un excelente día.",
-          isUser: false
-        }]);
-        
-        setTimeout(() => {
-          setChatUserName('');
-          setChatMessages([
-            { text: "¡Hola! Antes de empezar, ¿cómo te llamas?", isUser: false }
-          ]);
-          setChatOpen(false);
-        }, 1500);
-        return;
-      } else if (lowerInput.includes('pedido') || lowerInput.includes('producto')) {
-        responseText = "Sobre pedidos: los puedes hacer del 2 al 20 de cada mes. Si falta algún producto, avisa a la persona encargada de entregarlo.";
+      if (response.ok && data.success && data.reply) {
+        setChatMessages((prev) => [...prev, { text: data.reply, isUser: false }]);
+      } else {
+        setChatMessages((prev) => [
+          ...prev,
+          { text: data.message || 'No se pudo obtener respuesta del asistente IA.', isUser: false },
+        ]);
       }
-
-      setChatMessages(prev => [...prev, {
-        text: responseText,
-        isUser: false
-      }]);
-    }, 1000);
+    } catch (err: any) {
+      console.error('Error en chat IA:', err);
+      const isTimeout = err?.name === 'AbortError';
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          text: isTimeout
+            ? 'El asistente tardó demasiado en responder. Inténtalo de nuevo.'
+            : 'Error de conexión con el servidor del asistente IA. Asegúrate de que el backend esté encendido en http://localhost:8000.',
+          isUser: false,
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -768,34 +770,64 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
         </View>
       </View>
 
-      {/* Live Chat Widget */}
+      {/* Live AI Chat Widget */}
       <View style={styles.chatWidgetContainer}>
         {chatOpen ? (
           <View style={styles.chatWindow}>
             <View style={styles.chatHeader}>
-              <Text style={styles.chatTitle}>Chat de Soporte</Text>
-              <TouchableOpacity onPress={() => setChatOpen(false)}>
-                <Feather name="x" size={20} color="#fff" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Feather name="cpu" size={17} color="#fff" />
+                <Text style={styles.chatTitle}>Asistente IA StockLimp</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <TouchableOpacity
+                  onPress={() =>
+                    setChatMessages([
+                      { text: "¡Hola! Soy el asistente IA de StockLimp. ¿En qué puedo ayudarte hoy?", isUser: false },
+                    ])
+                  }
+                >
+                  <Feather name="refresh-cw" size={16} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setChatOpen(false)}>
+                  <Feather name="x" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <ScrollView style={styles.chatMessages} contentContainerStyle={{ padding: 12 }}>
+            <ScrollView
+              ref={chatScrollRef}
+              style={styles.chatMessages}
+              contentContainerStyle={{ padding: 12 }}
+              onContentSizeChange={() => chatScrollRef.current?.scrollToEnd({ animated: true })}
+            >
               {chatMessages.map((msg, i) => (
                 <View key={i} style={[styles.chatBubble, msg.isUser ? styles.chatBubbleUser : styles.chatBubbleBot]}>
                   <Text style={[styles.chatText, msg.isUser ? styles.chatTextUser : styles.chatTextBot]}>{msg.text}</Text>
                 </View>
               ))}
+              {chatLoading && (
+                <View style={[styles.chatBubble, styles.chatBubbleBot, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+                  <ActivityIndicator size="small" color="#5C8E8D" />
+                  <Text style={[styles.chatText, styles.chatTextBot]}>Pensando...</Text>
+                </View>
+              )}
             </ScrollView>
 
             <View style={styles.chatInputContainer}>
               <TextInput
                 style={styles.chatTextInput}
-                placeholder="Escribe un mensaje..."
+                placeholder="Pregúntame lo que necesites..."
                 placeholderTextColor="#94A3B8"
                 value={chatInput}
                 onChangeText={setChatInput}
                 onSubmitEditing={() => handleSendChat()}
+                editable={!chatLoading}
               />
-              <TouchableOpacity style={styles.chatSendBtn} onPress={() => handleSendChat()}>
+              <TouchableOpacity
+                style={[styles.chatSendBtn, chatLoading && { opacity: 0.6 }]}
+                onPress={() => handleSendChat()}
+                disabled={chatLoading}
+              >
                 <Feather name="send" size={16} color="#fff" />
               </TouchableOpacity>
             </View>
