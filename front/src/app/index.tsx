@@ -204,7 +204,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     const textToSend = (typeof presetText === 'string' ? presetText : chatInput).trim();
     if (!textToSend || chatLoading) return;
 
-    const historyPayload = chatMessages.slice(1).map((m) => ({
+    const historyPayload = chatMessages.slice(1).slice(-6).map((m) => ({
       role: m.isUser ? 'user' : 'model',
       text: m.text,
     }));
@@ -217,6 +217,77 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      // En Web usamos streaming SSE para mostrar la respuesta conforme se genera
+      if (Platform.OS === 'web') {
+        const streamRes = await fetch(`${BASE_URL}/chat/stream`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+          body: JSON.stringify({
+            message: textToSend,
+            history: historyPayload,
+          }),
+          signal: controller.signal,
+        });
+
+        if (streamRes.ok && streamRes.body) {
+          const reader = streamRes.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let sseBuffer = '';
+          let botBubbleCreated = false;
+          let streamError: string | null = null;
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            sseBuffer += decoder.decode(value, { stream: true });
+            const lines = sseBuffer.split('\n');
+            sseBuffer = lines.pop() || '';
+
+            for (const rawLine of lines) {
+              const line = rawLine.trim();
+              if (!line.startsWith('data:')) continue;
+              const jsonStr = line.slice(5).trim();
+              if (!jsonStr) continue;
+
+              try {
+                const evt = JSON.parse(jsonStr);
+                if (evt.chunk) {
+                  if (!botBubbleCreated) {
+                    botBubbleCreated = true;
+                    setChatMessages((prev) => [...prev, { text: evt.chunk, isUser: false }]);
+                  } else {
+                    setChatMessages((prev) => {
+                      const updated = [...prev];
+                      const lastIdx = updated.length - 1;
+                      if (lastIdx >= 0 && !updated[lastIdx].isUser) {
+                        updated[lastIdx] = { ...updated[lastIdx], text: updated[lastIdx].text + evt.chunk };
+                      }
+                      return updated;
+                    });
+                  }
+                } else if (evt.error) {
+                  streamError = evt.error;
+                }
+              } catch {
+                // Ignorar líneas incompletas
+              }
+            }
+          }
+
+          clearTimeout(timeoutId);
+          if (!botBubbleCreated) {
+            setChatMessages((prev) => [
+              ...prev,
+              { text: streamError || 'No se pudo obtener respuesta del asistente IA.', isUser: false },
+            ]);
+          }
+          return;
+        }
+      }
+
+      // Fallback JSON rápido (Android / iOS o si no hay stream)
       const response = await fetch(`${BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -805,7 +876,7 @@ export function HomeScreen({ initialTab }: { initialTab?: TabType } = {}) {
                   <Text style={[styles.chatText, msg.isUser ? styles.chatTextUser : styles.chatTextBot]}>{msg.text}</Text>
                 </View>
               ))}
-              {chatLoading && (
+              {chatLoading && (chatMessages.length === 0 || chatMessages[chatMessages.length - 1].isUser) && (
                 <View style={[styles.chatBubble, styles.chatBubbleBot, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
                   <ActivityIndicator size="small" color="#5C8E8D" />
                   <Text style={[styles.chatText, styles.chatTextBot]}>Pensando...</Text>

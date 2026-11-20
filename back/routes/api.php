@@ -67,3 +67,4 @@ Route::put('/vacaciones/{id}/cancelar', [VacacionController::class, 'pedirCancel
 // Endpoint del Agente IA (Google AI Studio / Gemini)
 use App\Http\Controllers\AiChatController;
 Route::post('/chat', [AiChatController::class, 'chat']);
+Route::post('/chat/stream', [AiChatController::class, 'chatStream']);
